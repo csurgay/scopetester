@@ -1,4 +1,4 @@
-class Object {
+class pObject {
     constructor(pX,pY,pW,pH) {
         this.x=pX;
         this.y=pY;
@@ -7,6 +7,8 @@ class Object {
         return this;
     }
     turn(event) {
+    }
+    click(event) {
     }
     hit(event) {
         var pX=event.clientX-canvas.getBoundingClientRect().left;
@@ -19,7 +21,7 @@ class Object {
     }
 }
 
-class Icon extends Object {
+class Icon extends pObject {
     constructor(pX,pY,pFunc) {
         var ret=super(pX,pY,20,20);
         this.f=pFunc;
@@ -36,27 +38,42 @@ class Icon extends Object {
     }
 }
 
-class Label extends Object {
-    constructor(pX,pY,pS) {
-        var ret=super(pX,pY,20,20);
+class Label extends pObject {
+    constructor(pX,pY,pS,pSize) {        
+        var ret=super(pX,pY,getTextWidth(pS,pSize),pSize+1);
         this.s=pS;
+        this.size=pSize;
+        ui.push(this);
     }
     draw(ctx) {
         ctx.beginPath();
+        ctx.fillStyle=bgcolor;
+        ctx.fillRect(this.x-this.w/2-10,this.y-this.h,this.w+20,this.h+4);
+//        ctx.rect(this.x-this.w/2-10,this.y-this.h,this.w+20,this.h+4);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
         ctx.fillStyle="black";
-        ctx.font = '12px Arial';
+        ctx.font = this.size+'px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(this.s,this.x,this.y)
         ctx.stroke();
     }
 }
 
-class Knob extends Object {
-    constructor(pX,pY,pR,pTicks,pValue) {
+function getTextWidth(pS,pSize) {
+    ctx.font = pSize+'px Arial';
+    return Math.floor(ctx.measureText(pS).width);
+}
+
+class Knob extends pObject {
+    constructor(pX,pY,pR,pTicks,pValue,pLabel,lpos) {
         var ret=super(pX-pR,pY-pR,2*pR,2*pR);
         this.r=pR;
         this.ticks=pTicks;
         this.value=pValue;
+        this.l=pLabel;
+        new Label(pX,pY+[0,-25,63,-42][lpos],pLabel,12);
         ui.push(this);
         return ret;
     }
@@ -87,14 +104,11 @@ class Knob extends Object {
         }
 }
 
-class DoubleKnob extends Object {
-    constructor(pX,pY,pTicks,pTicks_,pLabel) {
-        var ret=super(pX-35,pY-35,2*35,2*35);
-        this.r=35;
-        this.r_=20;
-        ui.push(new Label(pX-30,pY-60,pLabel));
-        this.k=new Knob(pX,pY,this.r,pTicks,0);
-        this.k_=new Knob(pX,pY,this.r_,pTicks_,0);
+class DoubleKnob extends pObject {
+    constructor(pX,pY,pTicks,pTicks_,pLabel,lpos,pR,pR_) {
+        var ret=super(pX-pR,pY-pR,2*pR,2*pR);
+        this.k=new Knob(pX,pY,pR,pTicks,0,pLabel,lpos);
+        this.k_=new Knob(pX,pY,pR_,pTicks_,0,"",0);
         return ret;
     }
     turn(event) {
@@ -103,9 +117,17 @@ class DoubleKnob extends Object {
     }
 }
 
-class FuncKnob extends DoubleKnob {
+class TimeKnob extends DoubleKnob {
     constructor(pX,pY) {
-        var ret=super(pX,pY,bufgen.length,33,"Func");
+        var ret=super(pX,pY,21,21,"Sweep",2,50,25);
+        return ret;
+    }
+}
+
+class FuncKnob extends DoubleKnob {
+    constructor(pX,pY,pValue) {
+        var ret=super(pX,pY,bufgen.length,33,"",0,35,17);
+        this.k.value=pValue;
         this.iconCircle(ui,pX-8,pY,50,bufgen);
         return ret;
     }
@@ -113,5 +135,52 @@ class FuncKnob extends DoubleKnob {
         var n=bufgen.length;
         for (var i=0; i<n; i++)
             ui.push(new Icon(x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),bufgen[i].f));
+    }
+}
+
+class Frame extends pObject {
+    constructor(pX,pY,pW,pH,pLabel,pPos) {
+        super(pX,pY,pW,pH);
+        var x=pX+pW/2; if (pPos==1) x=pX+3*pW/4;
+        ui.push(this);
+        new Label(x,pY+4,pLabel,15);
+    }
+    draw(ctx) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.lineWidth=2;
+        ctx.strokeStyle = "rgb(0, 25, 0)";
+        ctx.roundRect(this.x, this.y, this.w, this.h, 20);
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+class button extends pObject {
+    constructor(pX,pY,pW,pH,pLabel,pType) {
+        super(pX,pY,pW,pH);
+        this.state=0;
+        this.type=pType;
+        ui.push(this);
+        new Label(pX+[0,15,0,0,-28][pType],pY+[0,-10,0,0,12][pType],pLabel,15);
+    }
+    click(event) {
+        this.state=1-this.state;
+    }
+    draw(ctx) {
+        ctx.save();
+        ctx.beginPath();
+        var grd = ctx.createRadialGradient(this.x+this.w/2,this.y+this.h/2,
+            2*this.w/5, this.x+this.w/2,this.y+this.h/2,
+            2*this.w/3);
+        grd.addColorStop(0, "rgb(10,30,30)");
+        grd.addColorStop(1, bgcolor);
+        ctx.fillStyle = grd;
+        if (this.type==1) 
+            ctx.fillRect(this.x-dVfd,this.y-dVfd/2,this.w+2*dVfd,this.h+dVfd);
+        else if (this.type==4) 
+            ctx.fillRect(this.x-dVfd,this.y-dVfd/4,this.w+2*dVfd,this.h+dVfd/2);
+        ctx.fill();
+        var img=led_off; if (this.state==1) img=led_on;
+        ctx.drawImage(img,0,0,225,216,this.x,this.y,this.w,this.h);
     }
 }
