@@ -6,9 +6,9 @@ class Scope extends pObject {
         this.dd=pDD;
         ui.push(this);
         new Frame(630,15,220,250,"Horizontal",1);
-        new Frame(630,270,220,170,"Vertical",1);
-        b_chon=[new button(690,30,24,16,"CH1",4),
-            new button(790,30,24,16,"CH2",4)];
+        new Frame(630,278,220,170,"Vertical",1);
+        b_chon=[new ChOnButton(690,30,24,16,"CH1",4),
+            new ChOnButton(790,30,24,16,"CH2",4)];
         this.ch=[new ScopeChannel(690,110), new ScopeChannel(790,110)];
         k_time=new TimeKnob(740,190);
     }
@@ -71,7 +71,7 @@ class Scope extends pObject {
         ctx.roundRect(this.x+3, this.y+3, this.w-6, this.h-6, 20);
         ctx.clip();
         ctx.beginPath();
-        for (var c=0; c<2; c++) if (b_power.state==1) {
+        for (var c=0; c<2; c++) if (b_chon[c].state==1) {
             var py=this.ch[c].k_pos.k.value; if (py>24) py-=49;
             var px=this.ch[c].k_pos.k_.value; if (px>24) px-=49;
             py=this.y+dd+(3+c*2)*d+py*10;

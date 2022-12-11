@@ -155,7 +155,7 @@ class Frame extends pObject {
         ctx.restore();
     }
 }
-class button extends pObject {
+class Button extends pObject {
     constructor(pX,pY,pW,pH,pLabel,pType) {
         super(pX,pY,pW,pH);
         this.state=0;
@@ -182,5 +182,17 @@ class button extends pObject {
         ctx.fill();
         var img=led_off; if (this.state==1) img=led_on;
         ctx.drawImage(img,0,0,225,216,this.x,this.y,this.w,this.h);
+    }
+}
+class PowerButton extends Button {
+    click(event) {
+        super.click(event);
+        for (var c=0; c<2; c++) b_chon[c].state=this.state;
+        if (this.state==0) for (var c=0; c<2; c++) b_ch[c].state=0;
+    }
+}
+class ChOnButton extends Button {
+    click(event) {
+        if (b_power.state==1) super.click(event);
     }
 }

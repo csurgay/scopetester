@@ -1,10 +1,11 @@
 const dVfd=16;
 
 class Vfd extends pObject {
-    constructor(pX,pY,pDigits,pGetValueCallback) {
+    constructor(pX,pY,pDigits,pGetValueCallback,pOffCondCallback) {
         super(pX,pY-dVfd,pDigits*dVfd,2*dVfd);
         this.digits=pDigits;
         this.getValue=pGetValueCallback;
+        this.getOffCond=pOffCondCallback;
         ui.push(this);
     }
     draw(ctx) {
@@ -25,11 +26,16 @@ class Vfd extends pObject {
         ctx.fillStyle = grd;
         ctx.fillRect(this.x-dVfd,this.y-dVfd/2,this.w+2*dVfd,this.h+dVfd);
         ctx.fill();
+        if (this.getOffCond()) s="888888888888".substring(0,this.digits);
         for (var i=0; i<l; i++) {
             var digit = parseInt(s[i]);
             var decimal = " ";
             if (i<s.length-1) if (s[i+1]=='.') { decimal='.'; i++; }
             drawVfdDigit(ctx,digit,decimal,this.x+(dx++)*dVfd,this.y,dVfd);
+        }
+        if (this.getOffCond()) {
+            ctx.fillStyle="rgba(10,30,30,0.7)";
+            ctx.fillRect(this.x,this.y,this.w,this.h);
         }
         ctx.stroke();
         ctx.restore();
