@@ -1,15 +1,19 @@
-var b_chon, k_time;
 class Scope extends pObject {
     constructor(pX,pY,pD,pDD) {
         super(pX,pY,10*pD+2*pDD,8*pD+2*pDD);
         this.d=pD;
         this.dd=pDD;
         ui.push(this);
-        new Frame(630,15,220,250,"Horizontal",1);
-        new Frame(630,278,220,170,"Vertical",1);
-        b_chon=[new ChOnButton(690,30,24,16,"CH1",4),
-            new ChOnButton(790,30,24,16,"CH2",4)];
+        new Frame(630,15,220,250,"Horizontal","center");
+        new Frame(630,278,220,170,"Vertical","center");
+        new Frame(750,465,105,310,"Trigger","center");
+        b_xy=new ChOnButton(805,500,24,16,"X-Y","on");
+        b_chon=[new ChOnButton(690,30,24,16,"CH1","on"),
+            new ChOnButton(790,30,24,16,"CH2","on")];
         this.ch=[new ScopeChannel(690,110), new ScopeChannel(790,110)];
+        k_intensity=new Knob(30,120,15,41,0,"Intensity","knob");
+        k_focus=new Knob(30,180,15,50,0,"Focus","knob");
+        k_illum=new Knob(30,240,15,50,0,"Illum","knob");
         k_time=new TimeKnob(740,190);
     }
     draw(ctx) {
@@ -71,26 +75,34 @@ class Scope extends pObject {
         ctx.roundRect(this.x+3, this.y+3, this.w-6, this.h-6, 20);
         ctx.clip();
         ctx.beginPath();
-        for (var c=0; c<2; c++) if (b_chon[c].state==1) {
-            var py=this.ch[c].k_pos.k.value; if (py>24) py-=49;
-            var px=this.ch[c].k_pos.k_.value; if (px>24) px-=49;
-            py=this.y+dd+(3+c*2)*d+py*10;
-            px=this.x+dd+px*10;
-            var l=this.ch[c].k_level.k.value; if (l>24) l-=49;
-            var l_=this.ch[c].k_level.k_.value; if (l_>24) l_-=49;
-            ctx.strokeStyle="rgb(0,"+(213+2*int)+",0)";
-            ctx.lineWidth=3+int/7;
-            ctx.filter="blur("+Math.abs(blur/5)+"px)";
-            if (b_ch[c].state==1)
-                ctx.moveTo(px,py-Math.pow(1.01,l*20+l_)*ch[c][0]/2);
-            else
-                ctx.moveTo(px,py-0*ch[c][0]/2);
-            for (var i=0; i<ch[c].length; i++) {
-                if (b_ch[c].state==1)
-                    ctx.lineTo(px+i,py-Math.pow(1.01,l*20+l_)*ch[c][i]/2);
+        ctx.strokeStyle="rgb(0,"+(213+2*int)+",0)";
+        ctx.lineWidth=3+int/7;
+        ctx.filter="blur("+Math.abs(blur/5)+"px)";
+        if (b_xy.state==0) {
+            for (var c=0; c<2; c++) if (b_chon[c].state==1) {
+                var py=this.ch[c].k_pos.k.value; if (py>24) py-=49;
+                var px=this.ch[c].k_pos.k_.value; if (px>24) px-=49;
+                py=this.y+dd+(3+c*2)*d+py*10;
+                px=this.x+dd+px*10;
+                var l=this.ch[c].k_level.k.value; if (l>24) l-=49;
+                var l_=this.ch[c].k_level.k_.value; if (l_>24) l_-=49;
+                if (siggen[c].b_ch.state==1)
+                    ctx.moveTo(px,py-Math.pow(1.01,l*20+l_)*ch[c][0]/2);
                 else
-                    ctx.lineTo(px+i,py-0*ch[c][i]/2);
+                    ctx.moveTo(px,py-0*ch[c][0]/2);
+                for (var i=0; i<ch[c].length; i++) {
+                    if (siggen[c].b_ch.state==1)
+                        ctx.lineTo(px+i,py-Math.pow(1.01,l*20+l_)*ch[c][i]/2);
+                    else
+                        ctx.lineTo(px+i,py-0*ch[c][i]/2);
+                }
             }
+        }
+        else if (b_xy.state==1) {
+            ctx.moveTo(this.x+dd+5*d+ch[0][0],this.y+dd+4*d+ch[1][0]);    
+            for (var i=1; i<512; i++)
+                ctx.lineTo(this.x+dd+5*d+ch[0][i],this.y+dd+4*d+ch[1][i]);    
+            ctx.lineTo(this.x+dd+5*d+ch[0][0],this.y+dd+4*d+ch[1][0]);    
         }
         ctx.stroke();
         ctx.restore();
@@ -99,7 +111,7 @@ class Scope extends pObject {
 }
 class ScopeChannel {
     constructor(pX,pY) {
-        this.k_pos=new DoubleKnob(pX,pY,49,49,"Pos Y/X",3,35,17);
-        this.k_level=new DoubleKnob(pX,pY+230,49,49,"Volts/Div",3,35,17);
+        this.k_pos=new DoubleKnob(pX,pY,49,49,"Pos Y/X","double",35,17);
+        this.k_level=new DoubleKnob(pX,pY+230,49,49,"Volts/Div","double",35,17);
     }
 }

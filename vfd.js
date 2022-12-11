@@ -1,5 +1,3 @@
-const dVfd=16;
-
 class Vfd extends pObject {
     constructor(pX,pY,pDigits,pGetValueCallback,pOffCondCallback) {
         super(pX,pY-dVfd,pDigits*dVfd,2*dVfd);

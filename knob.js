@@ -40,7 +40,7 @@ class Icon extends pObject {
 
 class Label extends pObject {
     constructor(pX,pY,pS,pSize) {        
-        var ret=super(pX,pY,getTextWidth(pS,pSize),pSize+1);
+        var ret=super(pX,pY,getTextWidth(ctx,pS,pSize),pSize+1);
         this.s=pS;
         this.size=pSize;
         ui.push(this);
@@ -49,7 +49,7 @@ class Label extends pObject {
         ctx.beginPath();
         ctx.fillStyle=bgcolor;
         ctx.fillRect(this.x-this.w/2-10,this.y-this.h,this.w+20,this.h+4);
-//        ctx.rect(this.x-this.w/2-10,this.y-this.h,this.w+20,this.h+4);
+//ctx.rect(this.x-this.w/2-10,this.y-this.h,this.w+20,this.h+4); // debug
         ctx.fill();
         ctx.stroke();
         ctx.beginPath();
@@ -61,19 +61,20 @@ class Label extends pObject {
     }
 }
 
-function getTextWidth(pS,pSize) {
+function getTextWidth(ctx,pS,pSize) {
     ctx.font = pSize+'px Arial';
     return Math.floor(ctx.measureText(pS).width);
 }
 
 class Knob extends pObject {
     constructor(pX,pY,pR,pTicks,pValue,pLabel,lpos) {
+        const pos={"knob":-25,"double":-42,"sweep":63};
         var ret=super(pX-pR,pY-pR,2*pR,2*pR);
         this.r=pR;
         this.ticks=pTicks;
         this.value=pValue;
         this.l=pLabel;
-        new Label(pX,pY+[0,-25,63,-42][lpos],pLabel,12);
+        new Label(pX,pY+pos[lpos],pLabel,12);
         ui.push(this);
         return ret;
     }
@@ -119,14 +120,14 @@ class DoubleKnob extends pObject {
 
 class TimeKnob extends DoubleKnob {
     constructor(pX,pY) {
-        var ret=super(pX,pY,21,21,"Sweep",2,50,25);
+        var ret=super(pX,pY,21,21,"Sweep","sweep",50,25);
         return ret;
     }
 }
 
 class FuncKnob extends DoubleKnob {
     constructor(pX,pY,pValue) {
-        var ret=super(pX,pY,bufgen.length,33,"",0,35,17);
+        var ret=super(pX,pY,bufgen.length,33,"","none",35,17);
         this.k.value=pValue;
         this.iconCircle(ui,pX-8,pY,50,bufgen);
         return ret;
@@ -141,9 +142,9 @@ class FuncKnob extends DoubleKnob {
 class Frame extends pObject {
     constructor(pX,pY,pW,pH,pLabel,pPos) {
         super(pX,pY,pW,pH);
-        var x=pX+pW/2; if (pPos==1) x=pX+3*pW/4;
+        var x={"center":pX+pW/2,"rightish":pX+3*pW/4};
         ui.push(this);
-        new Label(x,pY+4,pLabel,15);
+        new Label(x[pPos],pY+4,pLabel,15);
     }
     draw(ctx) {
         ctx.save();
@@ -157,11 +158,13 @@ class Frame extends pObject {
 }
 class Button extends pObject {
     constructor(pX,pY,pW,pH,pLabel,pType) {
+        var xpos={"power":15,"on":-28, "inv":-20};
+        var ypos={"power":-10,"on":12,"inv":5};
         super(pX,pY,pW,pH);
         this.state=0;
         this.type=pType;
         ui.push(this);
-        new Label(pX+[0,15,0,0,-28][pType],pY+[0,-10,0,0,12][pType],pLabel,15);
+        new Label(pX+xpos[pType],pY+ypos[pType],pLabel,15);
     }
     click(event) {
         this.state=1-this.state;
@@ -175,9 +178,9 @@ class Button extends pObject {
         grd.addColorStop(0, "rgb(10,30,30)");
         grd.addColorStop(1, bgcolor);
         ctx.fillStyle = grd;
-        if (this.type==1) 
+        if (this.type=="power") 
             ctx.fillRect(this.x-dVfd,this.y-dVfd/2,this.w+2*dVfd,this.h+dVfd);
-        else if (this.type==4) 
+        else if (this.type=="on-nem") 
             ctx.fillRect(this.x-dVfd,this.y-dVfd/4,this.w+2*dVfd,this.h+dVfd/2);
         ctx.fill();
         var img=led_off; if (this.state==1) img=led_on;
@@ -187,8 +190,14 @@ class Button extends pObject {
 class PowerButton extends Button {
     click(event) {
         super.click(event);
-        for (var c=0; c<2; c++) b_chon[c].state=this.state;
-        if (this.state==0) for (var c=0; c<2; c++) b_ch[c].state=0;
+        for (var c=0; c<2; c++) 
+            b_chon[c].state=this.state;
+        if (this.state==0) 
+            for (var c=0; c<2; c++) {
+                siggen[c].b_ch.state=0;
+                siggen[c].b_inv.state=0;
+            }
+            b_xy.state=0;
     }
 }
 class ChOnButton extends Button {

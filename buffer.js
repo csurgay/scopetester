@@ -1,8 +1,3 @@
-var bufgen=[];
-var ch1=new Array(512), ch2=new Array(512);
-var ch=[ch1,ch2];
-var order, ampl, freq, ampls=[0,0], freqs=[0,0], freqs_=[0,0], phases=[0,0];
-
 class BufferGenerator {
     constructor(pName,pFunction) {
         this.name=pName;
@@ -24,30 +19,31 @@ function initBufgen() {
 //    bufgen.push(new BufferGenerator("Triangle7",f_triangle_harmonic));
 }
 
-var sqrt=1.07177347; // ^10=2
-sqrt=1.0293022366; // ^24=2
-
 function initChannels() {
     for (var i=0; i<2; i++) {
-        ampls[i]=k_ampl[i].value; if (ampls[i]>k_ampl[i].ticks/2) ampls[i]-=k_ampl[i].ticks; ampls[i]=140+ampls[i]*10;
-        freqs[i]=k_freq[i].k.value; if (freqs[i]>k_freq[i].k.ticks/2) freqs[i]-=k_freq[i].k.ticks;
-        freqs_[i]=k_freq[i].k_.value; if (freqs_[i]>k_freq[i].k_.ticks/2) freqs_[i]-=k_freq[i].k_.ticks;
-        freqs[i]=Math.pow(sqrt,10*freqs[i]+freqs_[i]);
-        var offset=Math.floor(512.0*k_phase[i].k.value/k_phase[i].k.ticks);
-        var off_=k_phase[i].k_.value; if (off_>10) off_-=21;
-        var offset_=Math.floor(512.0/k_phase[i].k.ticks*off_/k_phase[i].k_.ticks);
+        var s=siggen[i];
+        ampls[i]=s.k_ampl.value; if (ampls[i]>s.k_ampl.ticks/2) ampls[i]-=s.k_ampl.ticks; ampls[i]=140+ampls[i]*10;
+        freqs[i]=s.k_freq.k.value; if (freqs[i]>s.k_freq.k.ticks/2) freqs[i]-=s.k_freq.k.ticks;
+        freqs_[i]=s.k_freq.k_.value; if (freqs_[i]>s.k_freq.k_.ticks/2) freqs_[i]-=s.k_freq.k_.ticks;
+        console.log(freqs[i]);
+        freqs[i]=0.5*freqs[i]+Math.pow(sqrt,freqs_[i]);
+        console.log(freqs[i]);
+        var offset=Math.floor(512.0*s.k_phase.k.value/s.k_phase.k.ticks);
+        var off_=s.k_phase.k_.value; if (off_>10) off_-=21;
+        var offset_=Math.floor(512.0/s.k_phase.k.ticks*off_/s.k_phase.k_.ticks);
         phases[i]=offset+offset_; if (phases[i]<0) phases[i]+=512;
     }
     for (var i=0; i<2; i++) {
+        var s=siggen[i];
         ampl=ampls[i];
         freq=freqs[i];
-        order=k_func[i].k_.value;
+        order=s.k_func.k_.value;
         for (var x=0; x<512; x++) {
             var phaseX=x+phases[i];
             if (phaseX>=512) phaseX-=512;
             if (phaseX<0) phaseX+=512;
 //            ch[i][phaseX]=bufgen[k_func[i].k.value].f(freq*(x-256));
-            ch[i][phaseX]=bufgen[k_func[i].k.value].f(freq*x);
+            ch[i][phaseX]=(1-2*s.b_inv.state)*bufgen[s.k_func.k.value].f(freq*x);
         }
     }
 }
