@@ -126,9 +126,9 @@ class TimeKnob extends DoubleKnob {
 }
 
 class FuncKnob extends DoubleKnob {
-    constructor(pX,pY,pValue) {
+    constructor(pX,pY) {
         var ret=super(pX,pY,bufgen.length,33,"","none",35,17);
-        this.k.value=pValue;
+        this.k.value=0;
         this.iconCircle(ui,pX-8,pY,50,bufgen);
         return ret;
     }
@@ -158,13 +158,18 @@ class Frame extends pObject {
 }
 class Button extends pObject {
     constructor(pX,pY,pW,pH,pLabel,pType) {
-        var xpos={"power":15,"on":-28, "inv":-20};
-        var ypos={"power":-10,"on":12,"inv":5};
         super(pX,pY,pW,pH);
         this.state=0;
         this.type=pType;
         ui.push(this);
-        new Label(pX+xpos[pType],pY+ypos[pType],pLabel,15);
+        this.label=new Label(pX,pY,pLabel,15);
+        this.setLabelXY(pType);
+    }
+    setLabelXY(pType) {
+        var xpos={"power":15,"on":-28, "small":10};
+        var ypos={"power":-10,"on":12,"small":-7};
+        this.label.x=this.x+xpos[pType];
+        this.label.y=this.y+ypos[pType];
     }
     click(event) {
         this.state=1-this.state;
@@ -190,18 +195,42 @@ class Button extends pObject {
 class PowerButton extends Button {
     click(event) {
         super.click(event);
-        for (var c=0; c<2; c++) 
-            b_chon[c].state=this.state;
-        if (this.state==0) 
+        if (this.state==1)
+            b_dual.state=1;
+        if (this.state==0) {
             for (var c=0; c<2; c++) {
                 siggen[c].b_ch.state=0;
                 siggen[c].b_inv.state=0;
             }
-            b_xy.state=0;
+            for (var i=0; i<radio.b.length; i++) {
+                radio.b[i].state=0;
+            }
+            b_find.state=0;
+        }
     }
 }
 class ChOnButton extends Button {
     click(event) {
         if (b_power.state==1) super.click(event);
+    }
+}
+class Radio extends pObject {
+    constructor(pX,pY,pListButtons) {
+        super(pX,pY,25,pListButtons.length*dButton);
+        this.b=pListButtons;
+        for (var i=0; i<pListButtons.length; i++) {
+            pListButtons[i].y=pY+i*dButton;
+            pListButtons[i].setLabelXY(pListButtons[i].type);
+        }
+        ui.push(this);
+    }
+    click(event) {
+        for (var i=0; i<this.b.length; i++) {
+            if (this.b[i].hit(event)) if (this.b[i].state==0) {
+                for (var j=0; j<this.b.length; j++)
+                    this.b[j].state=0;
+                this.b[i].click(event);
+            }
+        }
     }
 }

@@ -25,9 +25,7 @@ function initChannels() {
         ampls[i]=s.k_ampl.value; if (ampls[i]>s.k_ampl.ticks/2) ampls[i]-=s.k_ampl.ticks; ampls[i]=140+ampls[i]*10;
         freqs[i]=s.k_freq.k.value; if (freqs[i]>s.k_freq.k.ticks/2) freqs[i]-=s.k_freq.k.ticks;
         freqs_[i]=s.k_freq.k_.value; if (freqs_[i]>s.k_freq.k_.ticks/2) freqs_[i]-=s.k_freq.k_.ticks;
-        console.log(freqs[i]);
-        freqs[i]=0.5*freqs[i]+Math.pow(sqrt,freqs_[i]);
-        console.log(freqs[i]);
+        freqs[i]=Math.pow(frq[Math.abs(freqs[i])],Math.sign(freqs[i]))-1+Math.pow(sqrt,freqs_[i]);
         var offset=Math.floor(512.0*s.k_phase.k.value/s.k_phase.k.ticks);
         var off_=s.k_phase.k_.value; if (off_>10) off_-=21;
         var offset_=Math.floor(512.0/s.k_phase.k.ticks*off_/s.k_phase.k_.ticks);
@@ -67,7 +65,7 @@ function f_sinc(x) {
 function f_square_ideal(x) {
     var o=order; if (o>16) o-=33;
     x = x % 512;
-    if (x<256+256*o/16) return ampl; else return -ampl;
+    if (x<256+256*o/16) return ampl; else return 0;
 }
 function f_square_harmonic(x) {
     var o=order+1;

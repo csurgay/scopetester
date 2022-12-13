@@ -6,7 +6,10 @@ function init() {
     ctx = canvas.getContext("2d");
     mouseInit(canvas);
     initBufgen();
-    siggen=[new Siggen(75,530,"1",3),new Siggen(445,530,"2",7)];
+    siggen=[new Siggen(75,530,"1"),new Siggen(445,530,"2")];
+    siggen[0].k_func.k.value=6; siggen[1].k_func.k.value=2;
+    siggen[0].k_ampl.value=15; siggen[1].k_ampl.value=6;
+    siggen[0].k_func.k_.value=10; siggen[1].k_freq.k.value=19;
     initChannels();
     scope=new Scope(70,10,51,17);
     no_images_to_load=3;
