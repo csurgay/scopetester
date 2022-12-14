@@ -26,10 +26,10 @@ function initChannels() {
         freqs[i]=s.k_freq.k.value; if (freqs[i]>s.k_freq.k.ticks/2) freqs[i]-=s.k_freq.k.ticks;
         freqs_[i]=s.k_freq.k_.value; if (freqs_[i]>s.k_freq.k_.ticks/2) freqs_[i]-=s.k_freq.k_.ticks;
         freqs[i]=Math.pow(frq[Math.abs(freqs[i])],Math.sign(freqs[i]))-1+Math.pow(sqrt,freqs_[i]);
-        var offset=Math.floor(512.0*s.k_phase.k.value/s.k_phase.k.ticks);
+        var offset=Math.round(512.0*s.k_phase.k.value/s.k_phase.k.ticks);
         var off_=s.k_phase.k_.value; if (off_>10) off_-=21;
-        var offset_=Math.floor(512.0/s.k_phase.k.ticks*off_/s.k_phase.k_.ticks);
-        phases[i]=offset+offset_; if (phases[i]<0) phases[i]+=512;
+        var offset_=Math.round(512.0/s.k_phase.k.ticks*2*off_/s.k_phase.k_.ticks);
+        phases[i]=offset+offset_;
     }
     for (var i=0; i<2; i++) {
         var s=siggen[i];
@@ -37,11 +37,8 @@ function initChannels() {
         freq=freqs[i];
         order=s.k_func.k_.value;
         for (var x=0; x<512; x++) {
-            var phaseX=x+phases[i];
-            if (phaseX>=512) phaseX-=512;
-            if (phaseX<0) phaseX+=512;
-//            ch[i][phaseX]=bufgen[k_func[i].k.value].f(freq*(x-256));
-            ch[i][phaseX]=(1-2*s.b_inv.state)*bufgen[s.k_func.k.value].f(freq*x);
+            var phaseX=phases[i];
+            ch[i][x]=(1-2*s.b_inv.state)*bufgen[s.k_func.k.value].f(freq*x+phaseX);
         }
     }
 }
@@ -53,7 +50,9 @@ function f_gnd(x) {
 function f_sine(x) {
     var o=order; if (o>16) o-=33;
     var angle_rad = 1.0 * x * Math.PI / 256;
-    return ampl*Math.sin((1+o/16)*angle_rad);
+    if (o==0) return ampl*Math.pow(Math.sin(angle_rad),1);
+    else if (o>0) return ampl*(2*Math.pow(Math.sin((angle_rad+Math.PI/2)/2),2*(o+1))-1);
+    else return ampl*(-(2*Math.pow(Math.sin((angle_rad+3*Math.PI/2)/2),2*(-(o-1)))-1));
 }
 function f_sinc(x) {
     x-=256;

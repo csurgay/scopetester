@@ -74,6 +74,9 @@ class Knob extends pObject {
         this.ticks=pTicks;
         this.value=pValue;
         this.l=pLabel;
+        this.color="#EEEEEE";
+        this.haircolor="gray";
+        this.pointercolor="red";
         new Label(pX,pY+pos[lpos],pLabel,12);
         ui.push(this);
         return ret;
@@ -87,9 +90,9 @@ class Knob extends pObject {
     draw(ctx) {
         var x=this.x+this.r, y=this.y+this.r, r=this.r, n=this.ticks, k=this.value;
         ctx.beginPath();
-        ctx.strokeStyle="gray";
+        ctx.strokeStyle=this.haircolor;
         ctx.lineTo(x+r,y);
-        ctx.fillStyle = "#EEEEEE";
+        ctx.fillStyle = this.color;
         ctx.arc(x,y,r,0,2*Math.PI);
         ctx.fill();
         for(var i=0; i<n; i++) {
@@ -98,10 +101,12 @@ class Knob extends pObject {
         }
         ctx.stroke();
         ctx.beginPath();
-        ctx.strokeStyle="red";
+        ctx.lineWidth=2;
+        ctx.strokeStyle=this.pointercolor;
         ctx.moveTo(x+r*Math.sin(2*Math.PI*k/n),y-r*Math.cos(2*Math.PI*k/n));
-        ctx.lineTo(x+2*r/3*Math.sin(2*Math.PI*k/n),y-2*r/3*Math.cos(2*Math.PI*k/n));
+        ctx.lineTo(x+3*r/5*Math.sin(2*Math.PI*k/n),y-3*r/5*Math.cos(2*Math.PI*k/n));
         ctx.stroke();
+        ctx.lineWidth=1;
         }
 }
 
@@ -120,8 +125,51 @@ class DoubleKnob extends pObject {
 
 class TimeKnob extends DoubleKnob {
     constructor(pX,pY) {
-        var ret=super(pX,pY,21,21,"Sweep","sweep",50,25);
+        var ret=super(pX,pY,17,21,"","sweep",50,25);
+        this.k_.color="rgb(200,20,20)";
+        this.k_.haircolor=this.k_.color;
+        this.k_.pointercolor="#EEEEEE";
+        this.iconCircle(ui,pX,pY+5,62,tb);
+        new Dekor(pX,pY);
         return ret;
+    }
+    iconCircle(ui,x,y,r,tb) {
+        var n=tb.length;
+        for (var i=0; i<n; i++) {
+            var kt=i; if (kt>this.k.ticks/2) kt-=this.k.ticks;
+            var sv=tb[kt+8]; var su="ms"; // value and unit
+            if (sv>=100) { sv/=1000; su="s"; }
+            else if (sv<=0.05) { sv*=1000; su="us"; }
+            var sl=""+sv; sl=sl.replace("0.",".");
+            ui.push(new Label(x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),sl));
+        }
+    }
+}
+
+class Dekor extends pObject {
+    constructor(pX,pY) {
+        var ret=super(pX,pY,0,0);
+        ui.push(this);
+        return ret;
+    }
+    draw(ctx) {
+        super.draw(ctx);
+        ctx.beginPath();
+        ctx.lineWidth=16;
+        ctx.strokeStyle="rgba(80,160,80,0.35)";
+        ctx.arc(this.x,this.y,62,Math.PI*58/68,Math.PI*130/68);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.strokeStyle="rgba(160,160,160,0.35)";
+        ctx.arc(this.x,this.y,62,Math.PI*131/68,Math.PI*33/68);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.lineWidth=1;
+        ctx.fillText("ms",this.x-68,this.y-48);
+        ctx.fillText("us",this.x+68,this.y+55);
+        ctx.fillText("sec",this.x-65,this.y+55);
+        ctx.fill();
+        ctx.stroke();
     }
 }
 
@@ -134,8 +182,9 @@ class FuncKnob extends DoubleKnob {
     }
     iconCircle(ui,x,y,r,bufgen) {
         var n=bufgen.length;
-        for (var i=0; i<n; i++)
+        for (var i=0; i<n; i++) {
             ui.push(new Icon(x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),bufgen[i].f));
+        }
     }
 }
 
@@ -197,13 +246,17 @@ class PowerButton extends Button {
         super.click(event);
         if (this.state==1)
             b_dual.state=1;
+            b_auto.state=1;
         if (this.state==0) {
             for (var c=0; c<2; c++) {
                 siggen[c].b_ch.state=0;
                 siggen[c].b_inv.state=0;
             }
-            for (var i=0; i<radio.b.length; i++) {
-                radio.b[i].state=0;
+            for (var i=0; i<radio_mode.b.length; i++) {
+                radio_mode.b[i].state=0;
+            }
+            for (var i=0; i<radio_trigger.b.length; i++) {
+                radio_trigger.b[i].state=0;
             }
             b_find.state=0;
         }

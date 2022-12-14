@@ -12,8 +12,10 @@ function init() {
     siggen[0].k_func.k_.value=10; siggen[1].k_freq.k.value=19;
     initChannels();
     scope=new Scope(70,10,51,17);
-    no_images_to_load=3;
+    timebase=1000000; // microseconds
     b_power=new PowerButton(15,30,30,30,"POWER","power");
+    b_power.click(null); // switch scope on at startup
+    no_images_to_load=3;
     vfd=new Image(); vfd.src='./images/vfd.jpg'; vfd.onload=()=>wait();
     led_on=new Image(); led_on.src='./images/led_on.jpg'; led_on.onload=()=>wait();
     led_off=new Image(); led_off.src='./images/led_off.jpg'; led_off.onload=()=>wait();
@@ -21,7 +23,7 @@ function init() {
 
 function wait() {
     no_images_to_load--;
-    if (no_images_to_load==0) draw();
+    if (no_images_to_load==0) setTimeout(start,100);
 }
 
 function draw() {
@@ -30,5 +32,29 @@ function draw() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.restore();
     for (var i=0; i<ui.length; i++) ui[i].draw(ctx);
-//    for (var i=0; i<2; i++) drawChannel(i+1,ch[i]);
+}
+
+function start() {
+    draw();
+    setTimeout(run,1000);
+}
+
+var i=0, prevX=70, prevY=250;
+function run() {
+    scope.drawScreen(ctx);
+    ctx.save();
+    ctx.beginPath();
+    ctx.lineWidth=6;
+    ctx.strokeStyle="rgb(200,200,200)"
+    ctx.moveTo(prevX,prevY);
+    prevX=i; prevY=220-ch[0][i++]; if (i>=512) i=0;
+    prevX+=20; if (prevX>600) prevX=70; 
+    prevY+=Math.floor(3*Math.random())-1;
+    if (prevX!=70) ctx.lineTo(prevX,prevY);
+    ctx.stroke();
+    ctx.restore();
+    var kt=k_time.k.value; if (kt>k_time.k.ticks/2) kt-=k_time.k.ticks;
+    var kt_=k_time.k_.value; if (kt_>k_time.k_.ticks/2) kt_-=k_time.k_.ticks;
+    timebase=tb[kt+9]*tb_[kt_+10];
+    if (b_power.state==1) setTimeout(run,timebase);
 }

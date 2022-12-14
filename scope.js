@@ -6,41 +6,46 @@ class Scope extends pObject {
         ui.push(this);
         new Frame(630,15,220,250,"Horizontal","center");
         new Frame(630,278,220,170,"Vertical","center");
-        new Frame(750,465,105,310,"Trigger","center");
-        b_ch1=new ChOnButton(805,500,24,16,"CH1","on");
-        b_ch2=new ChOnButton(805,500,24,16,"CH2","on");
-        b_dual=new ChOnButton(805,500,24,16,"Dual","on");
-        b_add=new ChOnButton(805,500,24,16,"Add","on");
-        b_mod=new ChOnButton(805,500,24,16,"Mod","on");
-        b_xy=new ChOnButton(805,500,24,16,"X-Y","on");
+        new Frame(750,465,105,150,"Mode","center");
+        new Frame(750,630,105,145,"Trigger","center");
+        b_ch1=new ChOnButton(810,500,24,16,"CH1","on");
+        b_ch2=new ChOnButton(810,500,24,16,"CH2","on");
+        b_dual=new ChOnButton(810,500,24,16,"Dual","on");
+        b_add=new ChOnButton(810,500,24,16,"Add","on");
+        b_mod=new ChOnButton(810,500,24,16,"Mod","on");
+        b_xy=new ChOnButton(810,500,24,16,"X-Y","on");
+        radio_mode=new Radio(810,485,[b_ch1,b_ch2,b_dual,b_add,b_mod,b_xy]);
+        b_auto=new ChOnButton(810,500,24,16,"Auto","on");
+        b_dso=new ChOnButton(810,500,24,16,"DSO","on");
+        b_single=new ChOnButton(810,500,24,16,"Single","on");
+        radio_trigger=new Radio(810,650,[b_auto,b_dso,b_single]);
         b_find=new ChOnButton(20,300,24,16,"Find","small");
         b_find.label.size=12;
-        radio=new Radio(805,500,[b_ch1,b_ch2,b_dual,b_add,b_mod,b_xy]);
         b_chon=[b_ch1,b_ch2];
         this.ch=[new ScopeChannel(690,80), new ScopeChannel(790,80)];
         k_intensity=new Knob(30,120,15,41,0,"Intensity","knob");
         k_focus=new Knob(30,180,15,50,0,"Focus","knob");
         k_illum=new Knob(30,240,15,50,0,"Illum","knob");
-        k_time=new TimeKnob(740,160);
+        k_time=new TimeKnob(740,180);
         k_xpos=new Knob(740,410,20,49,0,"Pos X","knob");
     }
-    draw(ctx) {
+    drawScreen(ctx) {
         // draw screen
         ctx.beginPath();
         ctx.strokeStyle = "rgb(0, 25, 0)";
         ctx.lineWidth=6;
-        ctx.fillStyle = "rgba(0, 50, 0, .5)";
+        ctx.fillStyle = "rgba(50, 100, 50, 1)";
         ctx.roundRect(this.x, this.y, this.w, this.h, 20);
         ctx.stroke();
         ctx.fill();
         ctx.beginPath();
         ctx.lineWidth=1;
         // draw grid
+        var d=this.d;
+        var dd=this.dd;
         var illum=k_illum.value;
         if (illum>0)
             ctx.strokeStyle = "rgb("+(128+illum*3)+", "+(128+illum*3)+", "+(128+illum*3)+")";
-        var d=this.d;
-        var dd=this.dd;
         for (var i=dd; i<=this.w-dd+1; i+=d) {
             ctx.moveTo(this.x+i,this.y+dd);
             ctx.lineTo(this.x+i,this.y+this.h-dd);
@@ -76,6 +81,11 @@ class Scope extends pObject {
             ctx.lineTo(this.x+i,this.y+dd+d+d/2+1);
         }
         ctx.stroke();
+    }
+    draw(ctx) {
+        var d=this.d;
+        var dd=this.dd;
+        this.drawScreen(ctx);
         // draw beams
         var int=k_intensity.value; if (int>k_intensity.ticks/2) int-=k_intensity.ticks;
         var blur=k_focus.value; if (blur>k_focus.ticks/2) blur-=k_focus.ticks;
