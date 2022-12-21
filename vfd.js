@@ -9,11 +9,11 @@ class Vfd extends pObject {
     draw(ctx) {
         var dx=0;
         var s=""+this.getValue();
-        if (s.indexOf('.')<0 && s.length<4) s+='.00';
-        s=s.substring(0,this.digits);
-        var l=s.length; if (s.indexOf('.')>=0) l--;
-        s="000000000000".substring(0,this.digits-l)+s;
-        l=s.length; if (s.indexOf('.')>=0) l++;
+        if (s.indexOf('.')<0) s+='.'; var ss=s.split('.');
+        if (ss[0].length<this.digits/2) ss[0]=("000000"+ss[0]).slice(-this.digits/2);
+        ss[1]=(ss[1]+"000000").substring(0,this.digits/2);
+        s=(ss[0]+"."+ss[1]).substring(0,this.digits+1);
+        var l=s.length; if (s.indexOf('.')>=0) l++;
         ctx.save();
         ctx.beginPath();
         var grd = ctx.createRadialGradient(this.x+this.w/2,this.y+this.h/2,

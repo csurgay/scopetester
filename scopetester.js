@@ -1,7 +1,6 @@
 // ScopeTester - Peter Csurgay 2022
 
 function init() {
-    console.log("ScopeTester - Peter Csurgay 2022");
     canvas = document.getElementById("myCanvas");
     ctx = canvas.getContext("2d");
     mouseInit(canvas);
@@ -10,8 +9,8 @@ function init() {
     siggen[0].k_func.k.value=6; siggen[1].k_func.k.value=2;
     siggen[0].k_ampl.value=15; siggen[1].k_ampl.value=6;
     siggen[0].k_func.k_.value=10; siggen[1].k_freq.k.value=19;
-    initChannels();
     scope=new Scope(70,10,51,17);
+    initChannels();
     timebase=1000000; // microseconds
     b_power=new PowerButton(15,30,30,30,"POWER","power");
     b_power.click(null); // switch scope on at startup
@@ -36,18 +35,23 @@ function draw() {
 
 function start() {
     draw();
-    setTimeout(run,1000);
+//    setTimeout(run,10);
+}
+
+function run() {
+    draw();
+    if (b_power.state==1) setTimeout(run,1000);
 }
 
 var i=0, prevX=70, prevY=250;
-function run() {
+function run1() {
     scope.drawScreen(ctx);
     ctx.save();
     ctx.beginPath();
     ctx.lineWidth=6;
     ctx.strokeStyle="rgb(200,200,200)"
     ctx.moveTo(prevX,prevY);
-    prevX=i; prevY=220-ch[0][i++]; if (i>=512) i=0;
+    prevX=i; prevY=220-ch[0][i++]; if (i>=L) i=0;
     prevX+=20; if (prevX>600) prevX=70; 
     prevY+=Math.floor(3*Math.random())-1;
     if (prevX!=70) ctx.lineTo(prevX,prevY);

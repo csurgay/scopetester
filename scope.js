@@ -10,6 +10,7 @@ class Scope extends pObject {
         new Frame(750,630,105,145,"Trigger","center");
         b_ch1=new ChOnButton(810,500,24,16,"CH1","on");
         b_ch2=new ChOnButton(810,500,24,16,"CH2","on");
+        b_chon=[b_ch1,b_ch2];
         b_dual=new ChOnButton(810,500,24,16,"Dual","on");
         b_add=new ChOnButton(810,500,24,16,"Add","on");
         b_mod=new ChOnButton(810,500,24,16,"Mod","on");
@@ -19,15 +20,20 @@ class Scope extends pObject {
         b_dso=new ChOnButton(810,500,24,16,"DSO","on");
         b_single=new ChOnButton(810,500,24,16,"Single","on");
         radio_trigger=new Radio(810,650,[b_auto,b_dso,b_single]);
-        b_find=new ChOnButton(20,300,24,16,"Find","small");
+        b_find=new FindButton(20,300,24,16,"Find","small");
         b_find.label.size=12;
-        b_chon=[b_ch1,b_ch2];
+        b_monitor=new MonitorButton(20,340,24,16,"Monitor","small");
+        b_monitor.label.size=12;
+        b_mic=new MicButton(20,380,24,16,"Mic","small");
+        b_mic.label.size=12;
+        b_debug=new DebugButton(20,420,24,16,"Debug","small");
+        b_debug.label.size=12;
         this.ch=[new ScopeChannel(690,80), new ScopeChannel(790,80)];
-        k_intensity=new Knob(30,120,15,41,0,"Intensity","knob");
-        k_focus=new Knob(30,180,15,50,0,"Focus","knob");
-        k_illum=new Knob(30,240,15,50,0,"Illum","knob");
+        k_intensity=new Knob(8,30,120,15,17,0,"Intensity","knob");
+        k_focus=new Knob(-1,30,180,15,17,0,"Focus","knob");
+        k_illum=new Knob(18,30,240,15,17,0,"Illum","knob");
         k_time=new TimeKnob(740,180);
-        k_xpos=new Knob(740,410,20,49,0,"Pos X","knob");
+        k_xpos=new Knob(24,740,410,20,49,0,"Pos X","knob");
     }
     drawScreen(ctx) {
         // draw screen
@@ -43,9 +49,9 @@ class Scope extends pObject {
         // draw grid
         var d=this.d;
         var dd=this.dd;
-        var illum=k_illum.value;
+        var illum=Math.floor(127*k_illum.value/k_illum.ticks);
         if (illum>0)
-            ctx.strokeStyle = "rgb("+(128+illum*3)+", "+(128+illum*3)+", "+(128+illum*3)+")";
+            ctx.strokeStyle = "rgb("+(128+illum)+", "+(128+illum)+", "+(128+illum)+")";
         for (var i=dd; i<=this.w-dd+1; i+=d) {
             ctx.moveTo(this.x+i,this.y+dd);
             ctx.lineTo(this.x+i,this.y+this.h-dd);
@@ -86,49 +92,65 @@ class Scope extends pObject {
         var d=this.d;
         var dd=this.dd;
         this.drawScreen(ctx);
-        // draw beams
+        // intensity and focus
         var int=k_intensity.value; if (int>k_intensity.ticks/2) int-=k_intensity.ticks;
         var blur=k_focus.value; if (blur>k_focus.ticks/2) blur-=k_focus.ticks;
+        // draw beams
         ctx.save();
         ctx.roundRect(this.x+3, this.y+3, this.w-6, this.h-6, 20);
         ctx.clip();
         ctx.beginPath();
-        ctx.strokeStyle="rgb(0,"+(213+2*int)+",0)";
-        ctx.lineWidth=3+int/7;
-        ctx.filter="blur("+Math.abs(blur/5)+"px)";
-        y=[new Array(512), new Array(512)];
+        ctx.strokeStyle="rgb(0,"+(255-5*k_intensity.ticks/2+5*int)+",0)";
+        ctx.lineWidth=3+int/3+Math.abs(blur/2);
+        ctx.filter="blur("+Math.abs(blur/2)+"px)";
+        y=[new Array(L), new Array(L)];
         var px,py0,py=[0,0];
+        var minY=1000000, maxY=-1000000;
+        // timebase
+        var kt=k_time.k.value; if (kt>k_time.k.ticks/2) kt-=k_time.k.ticks;
+        var kt_=k_time.k_.value; if (kt_>k_time.k_.ticks/2) kt_-=k_time.k_.ticks;
+        timebase=tb[kt+8]*tb_[kt_+10];
+        q=timebase*L/512;
+        // loop of channels
         for (var c=1; c>=0; c--) {
             py[c]=this.ch[c].k_ypos.value; if (py[c]>24) py[c]-=49;
             px=k_xpos.value; if (px>24) px-=49;
-            if (b_find.state==1) py[c]/=7;
+            if (findState!="off") py[c]/=findValue;
             py0=this.y+dd+4*d+py[c]*10;
             py[c]=py0+(c*2-1)*d;
             px=this.x+dd+px*10;
             var l=this.ch[c].k_level.k.value; if (l>24) l-=49;
             var l_=this.ch[c].k_level.k_.value; if (l_>24) l_-=49;
-            for (var i=0; i<ch[c].length; i++) {
+            for (var i=0; i<L; i++) {
                 if (siggen[c].b_ch.state==1) {
-                    y[c][i]=Math.pow(1.01,l*20+l_)*ch[c][i]/2;
-                    if (b_find.state==1) y[c][i]/=10;
+                    var qi=Math.round(10*freqs[c]*i*q)%L; if (qi<0) qi+=L;
+                    y[c][i]=Math.pow(1.01,l*20+l_)*sch[c][qi]/2;
+                    if (findState!="off") y[c][i]/=findValue;
+                    if (y[c][i]<minY) minY=y[c][i];
+                    if (y[c][i]>maxY) maxY=y[c][i];
                 }
                 else 
                     y[c][i]=0;
             }
         }
+        if (findState=="search" && minY>-4*dd && maxY<4*dd) {
+            findState="found";
+        }
         if (b_dual.state==1) {
             for (var c=0; c<2; c++) {
                 ctx.moveTo(px,py[c]-y[c][0]);
-                for (var i=0; i<ch[c].length; i++) {
-                    ctx.lineTo(px+i,py[c]-y[c][i]);
+                for (var i=0; i<512; i++) {
+//                    var qi = Math.round((10.0*q*i))%L; if (qi<0) qi+=L;
+                    var qi = i;
+                    ctx.lineTo(px+i,py[c]-y[c][qi]);
                 }
             }
         }
         else if (b_xy.state==1) {
-            ctx.moveTo(this.x+dd+5*d+ch[0][0],this.y+dd+4*d+ch[1][0]);    
+            ctx.moveTo(this.x+dd+5*d+y[0][0],this.y+dd+4*d+y[1][0]);    
             for (var i=1; i<512; i++)
-                ctx.lineTo(this.x+dd+5*d+ch[0][i],this.y+dd+4*d+ch[1][i]);    
-            ctx.lineTo(this.x+dd+5*d+ch[0][0],this.y+dd+4*d+ch[1][0]);    
+                ctx.lineTo(this.x+dd+5*d+y[0][i],this.y+dd+4*d+y[1][i]);    
+            ctx.lineTo(this.x+dd+5*d+y[0][0],this.y+dd+4*d+y[1][0]);    
         }
         else {
             if (b_ch1.state==1) ctx.moveTo(px,py0-y[0][0]);
@@ -136,10 +158,12 @@ class Scope extends pObject {
             else if (b_add.state==1) ctx.moveTo(px,py0-(y[0][0]+y[1][0]));
             else if (b_mod.state==1) ctx.moveTo(px,py0-y[0][0]*y[1][0]/ampls[1]);
             for (var i=1; i<512; i++) {
-                if (b_ch1.state==1) ctx.lineTo(px+i,py0-y[0][i]);
-                else if (b_ch2.state==1) ctx.lineTo(px+i,py0-y[1][i]);
-                else if (b_add.state==1) ctx.lineTo(px+i,py0-(y[0][i]+y[1][i]));
-                else if (b_mod.state==1) ctx.lineTo(px+i,py0-y[0][i]*y[1][i]/ampls[1]);
+//                    var qi = Math.round((10.0*q*i))%L; if (qi<0) qi+=L;
+                var qi = i;
+                if (b_ch1.state==1) ctx.lineTo(px+i,py0-y[0][qi]);
+                else if (b_ch2.state==1) ctx.lineTo(px+i,py0-y[1][qi]);
+                else if (b_add.state==1) ctx.lineTo(px+i,py0-(y[0][qi]+y[1][qi]));
+                else if (b_mod.state==1) ctx.lineTo(px+i,py0-y[0][qi]*y[1][qi]/ampls[1]);
             }
         }
         ctx.stroke();
@@ -149,7 +173,7 @@ class Scope extends pObject {
 }
 class ScopeChannel {
     constructor(pX,pY) {
-        this.k_ypos=new Knob(pX,pY,20,49,0,"Pos Y","knob");
+        this.k_ypos=new Knob(24,pX,pY,20,49,0,"Pos Y","knob");
         this.k_level=new DoubleKnob(pX,pY+260,49,49,"Volts/Div","double",35,17);
     }
 }
