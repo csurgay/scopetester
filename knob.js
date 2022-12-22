@@ -5,6 +5,7 @@ class Knob extends pObject {
         this.limit=pLimit; // ticks/2: végállásos, -1: körbeforog
         this.r=pR;
         this.ticks=pTicks;
+        this.defaultValue=pValue;
         this.value=pValue;
         this.l=pLabel;
         this.color="#EEEEEE";
@@ -13,6 +14,10 @@ class Knob extends pObject {
         new Label(pX,pY+pos[lpos],pLabel,12);
         ui.push(this);
         return ret;
+    }
+    click(event) {
+        this.value=this.defaultValue;
+        super.click();
     }
     turn(event) {
         var pDelta=event.deltaY;
@@ -151,5 +156,36 @@ class ScaleKnob extends Knob {
             else if (unit==".1") unit="100";
             new Label(x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),unit,12);
         }
+    }
+}
+
+class MonitorKnob extends Knob {
+    constructor(pX,pY) {
+        var ret=super(-1,pX,pY,20,a_monitor.length,4,"none","none");
+        this.iconCircle(pX,pY+5,32,a_monitor);
+        ui.push(this);
+        return ret;
+    }
+    iconCircle(x,y,r,a_monitor) {
+        var n=a_monitor.length;
+        for (var i=0; i<n; i++) {
+            new Label(x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),a_monitor[i],12);
+        }
+    }
+    on() {
+        return a_monitor[this.value]!="Off";
+    }
+    turn(event) {
+        super.turn(event);
+        if (this.on()) switchBuffer();
+        else this.switchOff();
+    }
+    callSwitchOff(event) {
+        this.value=this.defaultValue; // this have to be "Off"
+        this.switchOff();
+    }
+    switchOff() {
+        stopBuffer(aptr);
+        astarted=false;
     }
 }

@@ -13,7 +13,7 @@ function recordAudio() {
     },
     function (e) {
         // creates the audio context
-        context = new AudioContext();
+        context = new AudioContext({sampleRate: 40960});
         // creates an audio node from the microphone incoming stream
         mediaStream = context.createMediaStreamSource(e);
         // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createScriptProcessor
@@ -27,6 +27,7 @@ function recordAudio() {
             recorder = context.createJavaScriptNode(bufferSize, numberOfInputChannels, numberOfOutputChannels);
         }
         recorder.onaudioprocess = function (e) {
+            if (b_debug.state==1) console.log("onaudioprocess");
             leftchannel=new Float32Array(e.inputBuffer.getChannelData(0));
             rightchannel=new Float32Array(e.inputBuffer.getChannelData(1));
             for (var i=0; i<ch[0].length; i++) {

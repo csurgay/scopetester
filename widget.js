@@ -5,17 +5,17 @@ class pObject {
         this.w=pW;
         this.h=pH;
         this.switchBufferNeeded=false;
-        this.live=true;
+        this.live=true; // labels are non-live pObjects
         return this;
     }
     setSwitchBufferNeeded() {
         this.switchBufferNeeded=true;
     }
     turn(event) {
-        if (this.live && b_monitor.state==1 && this.switchBufferNeeded) setTimeout(switchBuffer,1);
+        if (this.live && k_monitor.on() && this.switchBufferNeeded) setTimeout(switchBuffer,1);
     }
     click(event) {
-        if (this.live && b_monitor.state==1 && this.switchBufferNeeded) setTimeout(switchBuffer,1);
+        if (this.live && k_monitor.on() && this.switchBufferNeeded) setTimeout(switchBuffer,1);
     }
     hit(event) {
         if (this.live) {
@@ -49,6 +49,15 @@ class Icon extends pObject {
                 ctx.lineTo(this.x+i,this.y-this.h*this.f(Math.floor(L*i/this.w))/ampl);
             ctx.stroke();
         }
+    }
+}
+
+class DebugIcon extends Icon {
+    constructor(pX,pY,pW,pH,pFunc) {
+        var ret=super(pX,pY,pW,pH,pFunc);
+    }
+    draw(ctx) {
+        if (b_debug.state==1) super.draw(ctx);
     }
 }
 

@@ -7,14 +7,15 @@ class BufferGenerator {
 
 function initBufgen() {
 //    bufgen.push(new BufferGenerator("GND",f_gnd));
-    bufgen.push(new BufferGenerator("Ramp",f_ramp));
     bufgen.push(new BufferGenerator("Sine",f_sine));
+    bufgen.push(new BufferGenerator("Ramp",f_ramp));
     bufgen.push(new BufferGenerator("PWM",f_pwm));
     bufgen.push(new BufferGenerator("Square",f_square_ideal));
     bufgen.push(new BufferGenerator("Square7",f_square_harmonic));
     bufgen.push(new BufferGenerator("Triangle",f_triangle_ideal));
     bufgen.push(new BufferGenerator("Trapezoid",f_trapezoid));
     bufgen.push(new BufferGenerator("Sinc",f_sinc));
+    bufgen.push(new BufferGenerator("Beats",f_beats));
     bufgen.push(new BufferGenerator("ECG",f_ecg));
 //    bufgen.push(new BufferGenerator("Sawtooth",f_sawtooth));
 //    bufgen.push(new BufferGenerator("Triangle7",f_triangle_harmonic));
@@ -44,7 +45,7 @@ function initChannels() {
         for (var x=0; x<L; x++) {
             var phaseX=phases[i];
             if (b_mic.state==1) {
-                ch[i][x]=(1-2*s.b_inv.state)*micch[i][(freq*x+phaseX)];
+                sch[i][x]=(1-2*s.b_inv.state)*micch[i][(freq*x+phaseX)];
             }
             else {
 //                ch[i][x]=(1-2*s.b_inv.state)*bufgen[s.k_func.k.value].f(freq*x+phaseX);
@@ -65,8 +66,13 @@ function f_sine(x) {
     else if (o>0) return ampl*(2*Math.pow(Math.sin((angle_rad+Math.PI/2)/2),2*(o+1))-1);
     else return ampl*(-(2*Math.pow(Math.sin((angle_rad+3*Math.PI/2)/2),2*(-(o-1)))-1));
 }
+function f_beats(x) {
+    var o=order+2;
+    var angle_rad = 1.0 * x * Math.PI / L2;
+    return ampl*Math.sin(angle_rad*o)*Math.sin(angle_rad);
+}
 function f_sinc(x) {
-    x-=256;
+    x-=L/2;
 //    if (x==0) return (1+o/16)*ampl;
     var o=order; if (o>16) o-=33;
     var angle_rad = 1.0 * x * Math.PI / L2;

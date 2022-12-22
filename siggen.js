@@ -20,7 +20,7 @@ class Siggen extends pObject {
         new Vfd(pX3,pY2,6,()=>{return ampls[0+pNo-1];},()=>{return this.b_ch.state==0;});
         new Vfd(pX3,pY3,6,()=>{return 360*phases[0+pNo-1]/L;},()=>{return this.b_ch.state==0;});
         this.b_inv=new ChOnButton(pX,pY3,24,16,"INV","on");
-        this.display=new Icon(pX-50,pY+180,100,20,(x)=>{return sch[pNo-1][x];});
+        this.display=new DebugIcon(pX-50,pY+180,100,20,(x)=>{return sch[pNo-1][x];});
         this.display.ChOnType=true;
         this.display.parent=this;
     }

@@ -39,7 +39,6 @@ class PowerButton extends Button {
     click(event) {
         if (this.state==0)
             b_dual.state=1;
-            b_auto.state=1;
         if (this.state==1) {
             for (var c=0; c<2; c++) {
                 siggen[c].b_ch.state=0;
@@ -48,11 +47,8 @@ class PowerButton extends Button {
             for (var i=0; i<radio_mode.b.length; i++) {
                 radio_mode.b[i].state=0;
             }
-            for (var i=0; i<radio_trigger.b.length; i++) {
-                radio_trigger.b[i].state=0;
-            }
             b_find.state=0;
-            b_monitor.callSwitchOff(event);
+            k_monitor.callSwitchOff(event);
             b_mic.callSwitchOff(event);
             b_debug.callSwitchOff(event);
         }
@@ -81,23 +77,6 @@ function setFind() {
         findValue*=1.2;
         scope.draw(ctx);
         setTimeout(setFind,10);
-    }
-}
-class MonitorButton extends ChOnButton {
-    click(event) {
-        super.click(event);
-        if (this.state==1) switchBuffer();
-        else if (this.state==0) this.switchOff();
-    }
-    callSwitchOff(event) {
-        if (this.state==1) {
-            super.click(event);
-            this.switchOff();
-        }
-    }
-    switchOff() {
-        stopBuffer(aptr);
-        astarted=false;
     }
 }
 class MicButton extends ChOnButton {
