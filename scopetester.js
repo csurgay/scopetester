@@ -6,9 +6,9 @@ function init() {
     mouseInit(canvas);
     initBufgen();
     siggen=[new Siggen(75,530,"1"),new Siggen(445,530,"2")];
-    siggen[0].k_func.k.value=6; siggen[1].k_func.k.value=2;
-    siggen[0].k_ampl.value=15; siggen[1].k_ampl.value=6;
-    siggen[0].k_func.k_.value=10; siggen[1].k_freq.k.value=19;
+//    siggen[0].k_func.k.value=6; siggen[1].k_func.k.value=2;
+//    siggen[0].k_ampl.value=15; siggen[1].k_ampl.value=6;
+//    siggen[0].k_func.k_.value=10; siggen[1].k_freq.k.value=19;
     scope=new Scope(70,10,51,17);
     initChannels();
     timebase=1000000; // microseconds

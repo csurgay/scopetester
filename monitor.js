@@ -6,6 +6,7 @@ var astarted,
     gainNode=new Array(N).fill(null);
 var aptr=0;
 function switchBuffer() {
+    if (b_debug.state==1) console.log("switchBuffer aptr:"+aptr)
     var prevAptr=aptr; aptr=(aptr+1)%N;
     if (audioCtx[aptr]==null) {
         audioCtx[aptr]=new window.AudioContext({sampleRate: 40960});
@@ -33,12 +34,14 @@ function switchBuffer() {
     // This gives us the actual array that contains the data
         var nowBuffering = myArrayBuffer[aptr].getChannelData(c);
         var q=freqs[c]*100;
+        var v=k_vol.value; if (v>Math.floor(k_vol.ticks/2)) v-=k_vol.ticks;
         for (let i = 0; i < nowBuffering.length; i++) {
             nowBuffering[i] = 0;
             var sel=a_monitor[k_monitor.value];
             var qi=Math.round(q*i)%L; if (qi<0) qi+=L;
             if (sel=="Beam") {
-                nowBuffering[i] = scope.calcModeY(sch[0][qi],sch[1][qi]) / 290;
+                if (siggen[c].b_ch.state==1) 
+                    nowBuffering[i] = scope.calcModeY(c,sch[0][qi],sch[1][qi]) / 290;
             }
             else if (sel!="Off") {
                 if ( (c==0 && (sel=="Ch1" || sel=="Stereo") && siggen[0].b_ch.state==1) 
@@ -52,14 +55,16 @@ function switchBuffer() {
     // destination so we can hear the sound
 //    source.connect(audioCtx.destination);
     // start the source playing
-    gainNode[aptr].gain.linearRampToValueAtTime(1,audioCtx[aptr].currentTime+0.30);
+    gainNode[aptr].gain.linearRampToValueAtTime(0.5*Math.pow(1.1,v),audioCtx[aptr].currentTime+0.30);
     source[aptr].start();
     astarted=true;
     draw(ctx);
 }
 function stopBuffer(aptr) {
-    gainNode[aptr].gain.linearRampToValueAtTime(0.000001,audioCtx[aptr].currentTime+0.25);
-    source[aptr].stop(audioCtx[aptr].currentTime+0.30);
+    if (gainNode[aptr]!=null) {
+        gainNode[aptr].gain.linearRampToValueAtTime(0.000001,audioCtx[aptr].currentTime+0.25);
+        source[aptr].stop(audioCtx[aptr].currentTime+0.30);
+    }
 }
 new DebugIcon(0,500,900,200,(x)=>{return myArrayBuffer[aptr]==null?0:100*myArrayBuffer[aptr].getChannelData(0)[x];});
 new DebugIcon(0,700,900,200,(x)=>{return myArrayBuffer[aptr]==null?0:100*myArrayBuffer[aptr].getChannelData(1)[x];});

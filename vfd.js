@@ -36,6 +36,12 @@ class Vfd extends pObject {
             ctx.fillRect(this.x,this.y,this.w,this.h);
         }
         ctx.stroke();
+        ctx.beginPath();
+        ctx.strokeStyle="#dddddd";
+        ctx.lineWidth=1;
+        var d=4;
+        ctx.rect(this.x-d,this.y-d,this.w+2*d,this.h+2*d);
+        ctx.stroke();
         ctx.restore();
     }
 }

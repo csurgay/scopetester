@@ -4,11 +4,12 @@ class Scope extends pObject {
         this.d=pD;
         this.dd=pDD;
         ui.push(this);
-        new Frame(630,15,220,250,"Horizontal","center");
-        new Frame(630,278,220,170,"Vertical","center");
+        new Frame(630,15,300,250,"Horizontal","center");
+        new Frame(630,278,300,170,"Vertical","center");
         new Frame(750,465,105,150,"Mode","center");
         new Frame(750,630,105,145,"Monitor","center");
         k_vol=new Knob(8,800,675,20,17,0,"Volume","knob");
+        k_vol.setSwitchBufferNeeded();
         k_monitor=new MonitorKnob(800,735);
         b_ch1=new ChOnButton(810,500,24,16,"CH1","on");
         b_ch2=new ChOnButton(810,500,24,16,"CH2","on");
@@ -24,12 +25,15 @@ class Scope extends pObject {
         b_mic.label.size=12;
         b_debug=new DebugButton(20,420,24,16,"Debug","small");
         b_debug.label.size=12;
-        this.ch=[new ScopeChannel(690,80), new ScopeChannel(790,80)];
+        this.ch=[new ScopeChannel(690,80), new ScopeChannel(830,80)];
         k_intensity=new Knob(8,30,120,15,17,0,"Intensity","knob");
         k_focus=new Knob(-1,30,180,15,17,0,"Focus","knob");
         k_illum=new Knob(18,30,240,15,17,0,"Illum","knob");
-        k_time=new TimeKnob(740,180);
-        k_xpos=new Knob(24,740,410,20,49,0,"Pos X","knob");
+        k_time=new TimeKnob(850,180);
+        new Vfd(715,75,4,()=>{return 10*k_delay.k.value+k_delay.k_.value;},()=>{return 10*k_delay.k.value+k_delay.k_.value==0;});
+        k_delay=new DoubleKnob(670,75,100,100,"Delay","double",35,20);
+        k_delaybase=new DelaybaseKnob(705,180);
+        k_xpos=new Knob(24,850,75,20,49,0,"Pos X","knob");
     }
     drawScreen(ctx) {
         // draw screen
@@ -104,8 +108,13 @@ class Scope extends pObject {
         // timebase
         var kt=k_time.k.value; if (kt>k_time.k.ticks/2) kt-=k_time.k.ticks;
         var kt_=k_time.k_.value; if (kt_>k_time.k_.ticks/2) kt_-=k_time.k_.ticks;
-        timebase=tb[kt+8]*tb_[kt_+10];
+        timebase=tb[kt+Math.floor(k_time.k.ticks/2-1)]*tb_[kt_+Math.floor(k_time.k_.ticks/2)];
         q=timebase*L/512;
+        var kdb=k_delaybase.k.value; if (kdb>k_delaybase.k.ticks/2) kdb-=k_delaybase.k.ticks;
+        var kdb_=k_delaybase.k_.value; if (kdb_>k_delaybase.k_.ticks/2) kdb_-=k_delaybase.k_.ticks;
+        delay=tb[kdb+Math.floor(k_delaybase.k.ticks/2-1)]*tb_[kdb_+Math.floor(k_delaybase.k_.ticks/2)];
+        delay=(10*k_delay.k.value+k_delay.k_.value)*delay;
+        delay=delay*L;
         // loop of channels
         for (var c=1; c>=0; c--) {
             py[c]=this.ch[c].k_ypos.value; if (py[c]>24) py[c]-=49;
@@ -114,11 +123,11 @@ class Scope extends pObject {
             py0=this.y+dd+4*d+py[c]*10;
             py[c]=py0+(c*2-1)*d;
             px=this.x+dd+px*10;
-            var l=this.ch[c].k_level.k.value; if (l>24) l-=49;
-            var l_=this.ch[c].k_level.k_.value; if (l_>24) l_-=49;
+            var l=this.ch[c].k_volts.k.value; if (l>24) l-=49;
+            var l_=this.ch[c].k_volts.k_.value; if (l_>24) l_-=49;
             for (var i=0; i<L; i++) {
                 if (siggen[c].b_ch.state==1) {
-                    var qi=Math.round(10*freqs[c]*i*q)%L; if (qi<0) qi+=L;
+                    var qi=Math.round(freqs[c]*(10*q*i+delay))%L; if (qi<0) qi+=L;
                     y[c][i]=Math.pow(1.01,l*20+l_)*sch[c][qi]/2;
                     if (findState!="off") y[c][i]/=findValue;
                     if (y[c][i]<minY) minY=y[c][i];
@@ -146,27 +155,27 @@ class Scope extends pObject {
             ctx.lineTo(this.x+dd+5*d+y[0][0],this.y+dd+4*d+y[1][0]);    
         }
         else {
-            ctx.moveTo(px,py0-this.calcModeY(y[0][0],y[1][0]));
+            ctx.moveTo(px,py0-this.calcModeY(-1,y[0][0],y[1][0]));
             for (var i=1; i<512; i++) {
                 var qi = i;
-                ctx.lineTo(px+i,py0-this.calcModeY(y[0][qi],y[1][qi]));
+                ctx.lineTo(px+i,py0-this.calcModeY(-1,y[0][qi],y[1][qi]));
             }
         }
         ctx.stroke();
         ctx.restore();
         ctx.lineWidth=1;
     }
-    calcModeY(ych0,ych1) {
+    calcModeY(c,ych0,ych1) {
         if (b_ch1.state==1) return ych0;
         else if (b_ch2.state==1) return ych1;
         else if (b_add.state==1) return ych0+ych1;
         else if (b_mod.state==1) return ych0*ych1/ampls[1];
-        else if (b_dual.state==1) return ych1;
+        else if (b_dual.state==1) return [ych0,ych1][c];
     }
 }
 class ScopeChannel {
     constructor(pX,pY) {
-        this.k_ypos=new Knob(24,pX,pY,20,49,0,"Pos Y","knob");
-        this.k_level=new DoubleKnob(pX,pY+260,49,49,"Volts/Div","double",35,17);
+        this.k_ypos=new Knob(24,pX+70,pY+340,20,49,0,"Pos Y","knob");
+        this.k_volts=new VoltsKnob(pX,pY+270);
     }
 }

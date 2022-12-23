@@ -51,6 +51,7 @@ class PowerButton extends Button {
             k_monitor.callSwitchOff(event);
             b_mic.callSwitchOff(event);
             b_debug.callSwitchOff(event);
+            k_delay.k.value=0; k_delay.k_.value=0;
         }
         super.click(event);
     }

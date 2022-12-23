@@ -1,6 +1,7 @@
 class Knob extends pObject {
     constructor(pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos) {
-        const pos={"knob":-25,"double":-42,"sweep":63};
+        const pos={"knob":-25,"double":-42,"sweep":80, 
+            "delay":80, "func":-55, "range":-53, "volts":-53};
         var ret=super(pX-pR,pY-pR,2*pR,2*pR);
         this.limit=pLimit; // ticks/2: végállásos, -1: körbeforog
         this.r=pR;
@@ -72,14 +73,15 @@ class DoubleKnob extends pObject {
     }
 }
 
-class TimeKnob extends DoubleKnob {
-    constructor(pX,pY) {
-        var ret=super(pX,pY,tb.length,21,"","sweep",50,25);
+class DekorKnob extends DoubleKnob {
+    constructor(pX,pY,vals,vals_,pLabel,posLabel,r,r_,rDekor) {
+        var ret=super(pX,pY,vals.length,vals_.length,pLabel,posLabel,r,r_);
+        this.rDekor=rDekor;
         this.k_.color="rgb(200,20,20)";
         this.k_.haircolor=this.k_.color;
         this.k_.pointercolor="#EEEEEE";
-        this.iconCircle(ui,pX,pY+5,62,tb);
-        new Dekor(pX,pY);
+        this.iconCircle(ui,pX,pY+5,this.rDekor,vals);
+        this.captionCircle(ui,pX,pY+3,this.rDekor);
         return ret;
     }
     iconCircle(ui,x,y,r,tb) {
@@ -93,11 +95,57 @@ class TimeKnob extends DoubleKnob {
             ui.push(new Label(x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),sl));
         }
     }
+    captionCircle(ui,x,y,r) {
+        ui.push(new Label(x-r-4,y-r+12,"ms",12));
+        ui.push(new Label(x+r+1,y+r-7,"us",12));
+        ui.push(new Label(x-r-1,y+r-7,"sec",12));
+    }
 }
 
-class Dekor extends pObject {
+class TimeKnob extends DekorKnob {
     constructor(pX,pY) {
+        var ret=super(pX,pY,tb,tb_,"Sweep Timebase","sweep",50,25,62);
+        new TimeDekor(pX,pY,this.rDekor);
+        return ret;
+    }
+}
+
+class DelaybaseKnob extends DekorKnob {
+    constructor(pX,pY) {
+        var ret=super(pX,pY,tb,tb_,"Delay Timebase","delay",40,20,52);
+        new TimeDekor(pX,pY,this.rDekor);
+        return ret;
+    }
+}
+
+class VoltsKnob extends DekorKnob {
+    constructor(pX,pY) {
+        var ret=super(pX,pY,vpd,vpd_,"Volts/Div","volts",30,15,40);
+        this.k.limit=9;
+        new VoltDekor(pX,pY,this.rDekor);
+        return ret;
+    }
+    iconCircle(ui,x,y,r,vpd) {
+        var n=vpd.length;
+        for (var i=0; i<n; i++) {
+            var kt=i; if (kt>this.k.ticks/2) kt-=this.k.ticks;
+            var sv=vpd[kt+Math.round(this.k.ticks/2)-1]; 
+            var su="V"; // value and unit
+            if (sv>=100) { sv/=1000; su="kV"; }
+            else if (sv<=0.05) { sv*=1000; su="mV"; }
+            var sl=""+sv; sl=sl.replace("0.",".");
+            ui.push(new Label(x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),sl));
+        }
+    }
+    captionCircle(ui,x,y,r) {
+        ui.push(new Label(x,y+r+16,"mV",12));
+    }
+}
+
+class TimeDekor extends pObject {
+    constructor(pX,pY,pR) {
         var ret=super(pX,pY,0,0);
+        this.r=pR;
         ui.push(this);
         return ret;
     }
@@ -106,26 +154,40 @@ class Dekor extends pObject {
         ctx.beginPath();
         ctx.lineWidth=16;
         ctx.strokeStyle="rgba(80,160,80,0.35)";
-        ctx.arc(this.x,this.y,62,Math.PI*61/69,Math.PI*130/69);
+        ctx.arc(this.x,this.y,this.r,Math.PI*61/69,Math.PI*130/69);
         ctx.stroke();
         ctx.beginPath();
-        ctx.strokeStyle="rgba(120,120,120,0.35)";
-        ctx.arc(this.x,this.y,62,Math.PI*131/69,Math.PI*37/69);
+        ctx.strokeStyle="rgba(100,100,100,0.35)";
+        ctx.arc(this.x,this.y,this.r,Math.PI*131/69,Math.PI*37/69);
         ctx.stroke();
-        ctx.beginPath();
         ctx.lineWidth=1;
-        ctx.fillText("ms",this.x-68,this.y-48);
-        ctx.fillText("us",this.x+68,this.y+55);
-        ctx.fillText("sec",this.x-65,this.y+55);
-        ctx.fill();
+    }
+}
+
+class VoltDekor extends pObject {
+    constructor(pX,pY,pR) {
+        var ret=super(pX,pY,0,0);
+        this.r=pR;
+        ui.push(this);
+        return ret;
+    }
+    draw(ctx) {
+        super.draw(ctx);
+        ctx.beginPath();
+        ctx.lineWidth=16;
+        ctx.strokeStyle="rgba(100,100,100,0.35)";
+        ctx.arc(this.x,this.y,this.r,Math.PI*-4/180,Math.PI*135/180);
         ctx.stroke();
+        ctx.lineWidth=1;
     }
 }
 
 class FuncKnob extends DoubleKnob {
     constructor(pX,pY) {
-        var ret=super(pX,pY,bufgen.length,33,"","none",35,17);
+        var ret=super(pX,pY,bufgen.length,33,"Func                 Duty","func",35,19);
         this.k.value=0;
+        this.k_.color="gray";
+        this.k_.haircolor="#EEEEEE";
         this.iconCircle(pX-8,pY,50,bufgen);
         return ret;
     }
@@ -139,8 +201,8 @@ class FuncKnob extends DoubleKnob {
 
 class ScaleKnob extends Knob {
     constructor(pX,pY) {
-        var ret=super(-1,pX,pY,30,scale.length,0,"none","none");
-        this.iconCircle(pX,pY+4,43,scale);
+        var ret=super(-1,pX,pY,25,scale.length,0,"Range","range");
+        this.iconCircle(pX,pY+4,40,scale);
         ui.push(this);
         return ret;
     }
