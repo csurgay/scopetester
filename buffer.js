@@ -1,15 +1,16 @@
 class BufferGenerator {
-    constructor(pName,pFunction) {
+    constructor(pName,pFunction,pHalfIcon) {
         this.name=pName;
         this.f=pFunction;
+        this.halfIcon=pHalfIcon;
     }
 }
-
+var mmx=[], mmy=[];
 function initBufgen() {
 //    bufgen.push(new BufferGenerator("GND",f_gnd));
     bufgen.push(new BufferGenerator("Sine",f_sine));
     bufgen.push(new BufferGenerator("Ramp",f_ramp));
-    bufgen.push(new BufferGenerator("PWM",f_pwm));
+//    bufgen.push(new BufferGenerator("PWM",f_pwm));
     bufgen.push(new BufferGenerator("Square",f_square_ideal));
     bufgen.push(new BufferGenerator("Square7",f_square_harmonic));
     bufgen.push(new BufferGenerator("Triangle",f_triangle_ideal));
@@ -17,6 +18,17 @@ function initBufgen() {
     bufgen.push(new BufferGenerator("Sinc",f_sinc));
     bufgen.push(new BufferGenerator("Beats",f_beats));
     bufgen.push(new BufferGenerator("ECG",f_ecg));
+    bufgen.push(new BufferGenerator("ECG",f_menomanoX,"halficon"));
+    bufgen.push(new BufferGenerator("ECG",f_menomanoY,"halficon"));
+    var l=menomano.length/2;
+    for (var i=0;i<l;i++) {
+        mmy.push(2*menomano[i*2]-100);
+        mmx.push(2*menomano[i*2+1]-300);
+    }
+    for (var i=1;i<l;i++) {
+        mmy.push(2*menomano[2*l-i*2-0]-100);
+        mmx.push(2*menomano[2*l-i*2+1]-300);
+    }
 //    bufgen.push(new BufferGenerator("Sawtooth",f_sawtooth));
 //    bufgen.push(new BufferGenerator("Triangle7",f_triangle_harmonic));
 }
@@ -24,7 +36,12 @@ function initBufgen() {
 function initChannels() {
     for (var i=0; i<2; i++) {
         var s=siggen[i];
-        ampls[i]=s.k_ampl.value; if (ampls[i]>s.k_ampl.ticks/2) ampls[i]-=s.k_ampl.ticks; ampls[i]=140+ampls[i]*10;
+        // amplitude
+        ampls[i]=s.k_ampl.k.value; if (ampls[i]>s.k_ampl.k.ticks/2) ampls[i]-=s.k_ampl.k.ticks;
+        ampls_[i]=s.k_ampl.k_.value; if (ampls_[i]>s.k_ampl.k_.ticks/2) ampls_[i]-=s.k_ampl.k_.ticks;
+        ampls[i]=100*Math.pow(1.005,10*ampls[i])+ampls_[i]/10;
+        if (ampls[i]<0.1) ampls[i]=0.1;
+        // frequency
         scales[i]=parseFloat(scale[s.k_scale.value]);
         freqs[i]=s.k_freq.k.value; if (freqs[i]>s.k_freq.k.ticks/2) freqs[i]-=s.k_freq.k.ticks;
         freqs_[i]=s.k_freq.k_.value; if (freqs_[i]>s.k_freq.k_.ticks/2) freqs_[i]-=s.k_freq.k_.ticks;
@@ -32,6 +49,7 @@ function initChannels() {
         freqs_[i]/=1000.0;
         freqs[i]=scales[i]*(freqs[i]+1)+freqs_[i];
         if (freqs[i]<0.001) freqs[i]=0.001;
+        // phase
         var offset=Math.round(L*s.k_phase.k.value/s.k_phase.k.ticks);
         var off_=s.k_phase.k_.value; if (off_>10) off_-=21;
         var offset_=Math.round(L/s.k_phase.k.ticks*2*off_/s.k_phase.k_.ticks);
@@ -48,13 +66,22 @@ function initChannels() {
                 sch[i][x]=(1-2*s.b_inv.state)*micch[i][(freq*x+phaseX)];
             }
             else {
-//                ch[i][x]=(1-2*s.b_inv.state)*bufgen[s.k_func.k.value].f(freq*x+phaseX);
-                sch[i][x]=(1-2*s.b_inv.state)*bufgen[s.k_func.k.value].f(x+phaseX);
+                var yy=(1-2*s.b_inv.state)*bufgen[s.k_func.k.value].f(x+phaseX);
+                if (s.b_half.state==1 && yy<0) yy=0;
+                sch[i][x]=yy;
             }
         }
     }
 }
 
+function f_menomanoX(x) {
+    x=Math.round((x)%L*mmx.length/L);
+    return ampl*mmx[x]/200;
+}
+function f_menomanoY(x) {
+    x=Math.round((x)%L*mmy.length/L);
+    return ampl*mmy[x]/200;
+}
 function f_gnd(x) {
     var o=order; if (o>16) o-=33;
     return ampl*o/16;

@@ -11,20 +11,17 @@ class Scope extends pObject {
         k_vol=new Knob(8,800,675,20,17,0,"Volume","knob");
         k_vol.setSwitchBufferNeeded();
         k_monitor=new MonitorKnob(800,735);
-        b_ch1=new ChOnButton(810,500,24,16,"CH1","on");
-        b_ch2=new ChOnButton(810,500,24,16,"CH2","on");
+        b_ch1=new ChOnButton(810,485,24,16,"CH1","on");
+        b_ch2=new ChOnButton(810,485,24,16,"CH2","on");
         b_chon=[b_ch1,b_ch2];
-        b_dual=new ChOnButton(810,500,24,16,"Dual","on");
-        b_add=new ChOnButton(810,500,24,16,"Add","on");
-        b_mod=new ChOnButton(810,500,24,16,"Mod","on");
-        b_xy=new ChOnButton(810,500,24,16,"X-Y","on");
+        b_dual=new ChOnButton(810,485,24,16,"Dual","on");
+        b_add=new ChOnButton(810,485,24,16,"Add","on");
+        b_mod=new ChOnButton(810,485,24,16,"Mod","on");
+        b_xy=new ChOnButton(810,485,24,16,"X-Y","on");
         radio_mode=new Radio(810,485,[b_ch1,b_ch2,b_dual,b_add,b_mod,b_xy]);
         b_find=new FindButton(20,300,24,16,"Find","small");
-        b_find.label.size=12;
         b_mic=new MicButton(20,380,24,16,"Mic","small");
-        b_mic.label.size=12;
         b_debug=new DebugButton(20,420,24,16,"Debug","small");
-        b_debug.label.size=12;
         this.ch=[new ScopeChannel(690,80), new ScopeChannel(830,80)];
         k_intensity=new Knob(8,30,120,15,17,0,"Intensity","knob");
         k_focus=new Knob(-1,30,180,15,17,0,"Focus","knob");
@@ -34,6 +31,8 @@ class Scope extends pObject {
         k_delay=new DoubleKnob(670,75,100,100,"Delay","double",35,20);
         k_delaybase=new DelaybaseKnob(705,180);
         k_xpos=new Knob(24,850,75,20,49,0,"Pos X","knob");
+//        b_menomano=new MenomanoButton(20,340,24,16,"Menomano","small");
+//        b_menomano.label.size=12;
     }
     drawScreen(ctx) {
         // draw screen
@@ -110,25 +109,31 @@ class Scope extends pObject {
         var kt_=k_time.k_.value; if (kt_>k_time.k_.ticks/2) kt_-=k_time.k_.ticks;
         timebase=tb[kt+Math.floor(k_time.k.ticks/2-1)]*tb_[kt_+Math.floor(k_time.k_.ticks/2)];
         q=timebase*L/512;
+        // delay
         var kdb=k_delaybase.k.value; if (kdb>k_delaybase.k.ticks/2) kdb-=k_delaybase.k.ticks;
         var kdb_=k_delaybase.k_.value; if (kdb_>k_delaybase.k_.ticks/2) kdb_-=k_delaybase.k_.ticks;
         delay=tb[kdb+Math.floor(k_delaybase.k.ticks/2-1)]*tb_[kdb_+Math.floor(k_delaybase.k_.ticks/2)];
         delay=(10*k_delay.k.value+k_delay.k_.value)*delay;
         delay=delay*L;
-        // loop of channels
+    // loop of channels
         for (var c=1; c>=0; c--) {
+            // level (Volts/Div)
+            var l=this.ch[c].k_volts.k.value; l=(l+Math.floor(vpd.length/2))%vpd.length;
+            var l_=this.ch[c].k_volts.k_.value; l_=(l_+Math.floor(vpd_.length/2))%vpd_.length;
+            var level=vpd[l]*vpd_[l_];
+            if (b_debug.state==1) console.log("ch:"+c+" l:"+l+" l_:"+l_+" level:"+level);
+            // y value calculation
             py[c]=this.ch[c].k_ypos.value; if (py[c]>24) py[c]-=49;
             px=k_xpos.value; if (px>24) px-=49;
             if (findState!="off") py[c]/=findValue;
             py0=this.y+dd+4*d+py[c]*10;
             py[c]=py0+(c*2-1)*d;
             px=this.x+dd+px*10;
-            var l=this.ch[c].k_volts.k.value; if (l>24) l-=49;
-            var l_=this.ch[c].k_volts.k_.value; if (l_>24) l_-=49;
             for (var i=0; i<L; i++) {
                 if (siggen[c].b_ch.state==1) {
                     var qi=Math.round(freqs[c]*(10*q*i+delay))%L; if (qi<0) qi+=L;
-                    y[c][i]=Math.pow(1.01,l*20+l_)*sch[c][qi]/2;
+//                    y[c][i]=Math.pow(1.01,l*20+l_)*sch[c][qi]/2;
+                    y[c][i]=sch[c][qi]/level/2;
                     if (findState!="off") y[c][i]/=findValue;
                     if (y[c][i]<minY) minY=y[c][i];
                     if (y[c][i]>maxY) maxY=y[c][i];

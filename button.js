@@ -1,17 +1,18 @@
 class Button extends pObject {
     constructor(pX,pY,pW,pH,pLabel,pType) {
         super(pX,pY,pW,pH);
+        this.cX=pX+pW/2;
+        this.cY=pY+pH/2;
         this.state=0;
         this.type=pType;
         ui.push(this);
-        this.label=new Label(pX,pY,pLabel,15);
+        this.label=new Label(this.cX,this.cY,pLabel,pType=="small"?12:15);
         this.setLabelXY(pType);
     }
     setLabelXY(pType) {
-        var xpos={"power":0,"on":-40, "small":0};
-        var ypos={"power":-10,"on":12,"small":-7};
-        this.label.x=this.x+this.w/2+xpos[pType];
-        this.label.y=this.y+ypos[pType];
+        var xpos={"power":0,"on":-30, "small":0};
+        var ypos={"power":-27,"on":0,"small":-15};
+        this.label.adjustXY(xpos[pType],ypos[pType]);
     }
     click(event) {
         super.click();
@@ -50,6 +51,7 @@ class PowerButton extends Button {
             b_find.state=0;
             k_monitor.callSwitchOff(event);
             b_mic.callSwitchOff(event);
+            b_menomano.callSwitchOff(event);
             b_debug.callSwitchOff(event);
             k_delay.k.value=0; k_delay.k_.value=0;
         }
@@ -94,11 +96,32 @@ class MicButton extends ChOnButton {
             super.click(event);
             this.switchOff();
             initChannels();
-            draw();
+            draw(ctx);
         }
     }
     switchOff() {
         stopRecording();
+    }
+}
+class MenomanoButton extends ChOnButton {
+    click(event) {
+        super.click(event);
+        if (this.state==1) {
+            b_menomano.draw(ctx);
+            scope.drawScreen(ctx);
+            setTimeout(()=>{b_menomano.callSwitchOff(event);},600);
+            delay(500);
+        }
+        else if (this.state==0) this.switchOff();
+    }
+    callSwitchOff(event) {
+        if (this.state==1) {
+            super.click(event);
+            this.switchOff();
+            draw(ctx);
+        }
+    }
+    switchOff() {
     }
 }
 class DebugButton extends ChOnButton {
@@ -123,8 +146,9 @@ class Radio extends pObject {
         super(pX,pY,25,pListButtons.length*dButton);
         this.b=pListButtons;
         for (var i=0; i<pListButtons.length; i++) {
+            pListButtons[i].x=pX;
             pListButtons[i].y=pY+i*dButton;
-            pListButtons[i].setLabelXY(pListButtons[i].type);
+            pListButtons[i].label.adjustXY(-10,i*dButton);
         }
         ui.push(this);
     }

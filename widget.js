@@ -6,6 +6,8 @@ class pObject {
         this.h=pH;
         this.switchBufferNeeded=false;
         this.live=true; // labels are non-live pObjects
+        this.bgcolor=null;
+        this.hitPad=0;
         return this;
     }
     setSwitchBufferNeeded() {
@@ -21,19 +23,37 @@ class pObject {
         if (this.live) {
             var pX=event.clientX-canvas.getBoundingClientRect().left;
             var pY=event.clientY-canvas.getBoundingClientRect().top
-            var x=this.x, y=this.y, w=this.w, h=this.h;
-            if (pX>x && pX<x+w && pY>y && pY<y+h) return true; 
+            if (pX>this.x+this.hitPad && pX<this.x+this.w-this.hitPad && 
+                pY>this.y+this.hitPad && pY<this.y+this.h-this.hitPad) return true; 
             else return false;
         }
     }
+    adjustRect(pX,pY,pW,pH) {
+        this.x=pX; this.y=pY; this.w=pW; this.h=pH;
+    }
+    drawRect(ctx) {
+        ctx.beginPath();
+        ctx.strokeStyle="rgb(255,0,0)";
+        ctx.lineWidth=1;
+        ctx.rect(this.x-1,this.y-1,this.w+2,this.h+2);
+        ctx.stroke();
+    }
+    fillRect(ctx) {
+        if (this.bgcolor!=null) {
+            ctx.fillStyle=this.bgcolor;
+            ctx.fillRect(this.x-1,this.y-1,this.w+2,this.h+2);            
+        }
+    }
     draw(ctx) {
+        if (b_debug.state==1) this.drawRect(ctx);
     }
 }
 
 class Icon extends pObject {
-    constructor(pX,pY,pW,pH,pFunc) {
+    constructor(pX,pY,pW,pH,pFunc,pHalfIcon) {
         var ret=super(pX,pY,pW,pH);
         this.f=pFunc;
+        this.halfIcon=pHalfIcon;
         this.ChOnType=false;
         this.parent=null;
         ui.push(this);
@@ -43,10 +63,11 @@ class Icon extends pObject {
             ctx.beginPath();
             ctx.strokeStyle="black";
             ampl=127;
-            ctx.moveTo(this.x,this.y-this.h*this.f(0)/127);
+            var halfed=1; if (this.halfIcon=="halficon") halfed=3;
+            ctx.moveTo(this.x,this.y-this.h*this.f(0)/ampl/halfed);
             order=0;
             for (var i=0; i<this.w; i++) 
-                ctx.lineTo(this.x+i,this.y-this.h*this.f(Math.floor(L*i/this.w))/ampl);
+                ctx.lineTo(this.x+i,this.y-this.h*this.f(Math.floor(L*i/this.w))/ampl/halfed);
             ctx.stroke();
         }
     }
@@ -64,24 +85,36 @@ class DebugIcon extends Icon {
 class Label extends pObject {
     constructor(pX,pY,pS,pSize) {        
         var ret=super(pX,pY,getTextWidth(ctx,pS,pSize),pSize+1);
+        this.tX=pX; this.tY=pY;
+        this.adjustRect(this.tX-this.w/2-2,this.tY-this.h/2,this.w+4,this.h-3);
         this.live=false;
         this.s=pS;
         this.size=pSize;
         ui.push(this);
     }
+    adjustXY(pX,pY) {
+        this.tX+=pX;
+        this.tY+=pY;
+        ctx.font = this.size+'px Arial';
+        this.w=getTextWidth(ctx,this.s,this.size);
+        this.adjustRect(this.tX-this.w/2-2,this.tY-this.h/2,this.w+4,this.h-3);
+    }
     draw(ctx) {
         ctx.beginPath();
+        ctx.font = this.size+'px Arial';
         ctx.fillStyle=bgcolor;
-        ctx.fillRect(this.x-this.w/2-10,this.y-this.h,this.w+20,this.h+4);
-//ctx.rect(this.x-this.w/2-10,this.y-this.h,this.w+20,this.h+4); // debug
+        ctx.fillRect(this.x,this.y,this.w,this.h);
+        if (b_debug.state==1) this.drawRect(ctx);
+        this.fillRect(ctx);
         ctx.fill();
         ctx.stroke();
         ctx.beginPath();
         ctx.fillStyle="black";
-        ctx.font = this.size+'px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(this.s,this.x,this.y)
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.s,this.tX,this.tY)
         ctx.stroke();
+        super.draw(ctx);
     }
 }
 
@@ -95,7 +128,7 @@ class Frame extends pObject {
         super(pX,pY,pW,pH);
         var x={"center":pX+pW/2,"rightish":pX+3*pW/4};
         ui.push(this);
-        new Label(x[pPos],pY+4,pLabel,15);
+        new Label(x[pPos],pY+1," "+pLabel+" ",15);
     }
     draw(ctx) {
         ctx.save();

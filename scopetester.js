@@ -1,5 +1,4 @@
 // ScopeTester - Peter Csurgay 2022
-
 function init() {
     canvas = document.getElementById("myCanvas");
     ctx = canvas.getContext("2d");

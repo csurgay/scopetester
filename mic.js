@@ -46,6 +46,8 @@ function recordAudio() {
 }
 
 function stopRecording() {
-    recorder.disconnect(context.destination);
-    mediaStream.disconnect(recorder);
+    if (recorder!=null) {
+        recorder.disconnect(context.destination);
+        mediaStream.disconnect(recorder);
+    }
 }
