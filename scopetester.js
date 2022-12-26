@@ -13,8 +13,9 @@ function init() {
     timebase=1000000; // microseconds
     b_power=new PowerButton(15,30,30,30,"POWER","power");
     b_power.click(null); // switch scope on at startup
-    no_images_to_load=3;
+    no_images_to_load=4;
     vfd=new Image(); vfd.src='./images/vfd.jpg'; vfd.onload=()=>wait();
+    vfd_=new Image(); vfd_.src='./images/vfd-.jpg'; vfd_.onload=()=>wait();
     led_on=new Image(); led_on.src='./images/led_on.jpg'; led_on.onload=()=>wait();
     led_off=new Image(); led_off.src='./images/led_off.jpg'; led_off.onload=()=>wait();
 }

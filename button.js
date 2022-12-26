@@ -38,22 +38,28 @@ class Button extends pObject {
 }
 class PowerButton extends Button {
     click(event) {
-        if (this.state==0)
+        if (this.state==0) {
             b_dual.state=1;
+            b_auto.state=1;
+        }
         if (this.state==1) {
             for (var c=0; c<2; c++) {
                 siggen[c].b_ch.state=0;
+                siggen[c].b_half.state=0;
                 siggen[c].b_inv.state=0;
             }
             for (var i=0; i<radio_mode.b.length; i++) {
                 radio_mode.b[i].state=0;
             }
+            for (var i=0; i<radio_trig.b.length; i++) {
+                radio_trig.b[i].state=0;
+            }
             b_find.state=0;
             k_monitor.callSwitchOff(event);
             b_mic.callSwitchOff(event);
-            b_menomano.callSwitchOff(event);
             b_debug.callSwitchOff(event);
             k_delay.k.value=0; k_delay.k_.value=0;
+            b_resv.callSwitchOff(event);
         }
         super.click(event);
     }
@@ -103,13 +109,13 @@ class MicButton extends ChOnButton {
         stopRecording();
     }
 }
-class MenomanoButton extends ChOnButton {
+class ResvButton extends ChOnButton {
     click(event) {
         super.click(event);
         if (this.state==1) {
-            b_menomano.draw(ctx);
+            b_resv.draw(ctx);
             scope.drawScreen(ctx);
-            setTimeout(()=>{b_menomano.callSwitchOff(event);},600);
+            setTimeout(()=>{b_resv.callSwitchOff(event);},600);
             delay(500);
         }
         else if (this.state==0) this.switchOff();

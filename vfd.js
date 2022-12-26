@@ -8,12 +8,14 @@ class Vfd extends pObject {
     }
     draw(ctx) {
         var dx=0;
-        var s=""+this.getValue();
+        var v=this.getValue();
+        var s=""+Math.abs(v);
         if (s.indexOf('.')<0) s+='.'; var ss=s.split('.');
         if (ss[0].length<this.digits/2) ss[0]=("000000"+ss[0]).slice(-this.digits/2);
         ss[1]=(ss[1]+"000000").substring(0,this.digits/2);
         s=(ss[0]+"."+ss[1]).substring(0,this.digits+1);
         var l=s.length; if (s.indexOf('.')>=0) l++;
+        if (v<0) s='-'+s.slice(1);
         ctx.save();
         ctx.beginPath();
         var grd = ctx.createRadialGradient(this.x+this.w/2,this.y+this.h/2,
@@ -26,7 +28,7 @@ class Vfd extends pObject {
         ctx.fill();
         if (this.getOffCond()) s="888888888888".substring(0,this.digits);
         for (var i=0; i<l; i++) {
-            var digit = parseInt(s[i]);
+            var digit = s[i];
             var decimal = " ";
             if (i<s.length-1) if (s[i+1]=='.') { decimal='.'; i++; }
             drawVfdDigit(ctx,digit,decimal,this.x+(dx++)*dVfd,this.y,dVfd);
@@ -46,10 +48,16 @@ class Vfd extends pObject {
     }
 }
 
-function drawVfdDigit(ctx,i,dec,pX,pY,pD) {
-    if (dec=='.') {
-        ctx.drawImage(vfd, i*160+80,0, 80,160, pX,pY, dVfd,dVfd*2);
-    } else {
-        ctx.drawImage(vfd, i*160,0, 80,160, pX,pY, dVfd,dVfd*2);
+function drawVfdDigit(ctx,digit,dec,pX,pY,pD) {
+    if (digit=='-') {
+        ctx.drawImage(vfd_, 30,40, 160,320, pX,pY, dVfd,dVfd*2);
+    }
+    else {
+        var num=parseInt(digit);
+        if (dec=='.') {
+            ctx.drawImage(vfd, num*160+80,0, 80,160, pX,pY, dVfd,dVfd*2);
+        } else {
+            ctx.drawImage(vfd, num*160,0, 80,160, pX,pY, dVfd,dVfd*2);
+        }
     }
 }

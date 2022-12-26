@@ -54,6 +54,10 @@ function initChannels() {
         var off_=s.k_phase.k_.value; if (off_>10) off_-=21;
         var offset_=Math.round(L/s.k_phase.k.ticks*2*off_/s.k_phase.k_.ticks);
         phases[i]=offset+offset_;
+        // dc offset
+        dcs[i]=s.k_dc.k.value; if (dcs[i]>s.k_dc.k.ticks/2) dcs[i]-=s.k_dc.k.ticks;
+        dcs_[i]=s.k_dc.k_.value; if (dcs_[i]>s.k_dc.k_.ticks/2) dcs_[i]-=s.k_dc.k_.ticks;
+        dcs[i]=dcs[i]/10+dcs_[i]/1000;
     }
     for (var i=0; i<2; i++) {
         var s=siggen[i];
@@ -67,6 +71,7 @@ function initChannels() {
             }
             else {
                 var yy=(1-2*s.b_inv.state)*bufgen[s.k_func.k.value].f(x+phaseX);
+                yy+=100*dcs[i];
                 if (s.b_half.state==1 && yy<0) yy=0;
                 sch[i][x]=yy;
             }

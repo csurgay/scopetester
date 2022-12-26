@@ -4,21 +4,26 @@ class Scope extends pObject {
         this.d=pD;
         this.dd=pDD;
         ui.push(this);
-        new Frame(630,15,300,250,"Horizontal","center");
-        new Frame(630,278,300,170,"Vertical","center");
-        new Frame(750,465,105,150,"Mode","center");
-        new Frame(750,630,105,145,"Monitor","center");
-        k_vol=new Knob(8,800,675,20,17,0,"Volume","knob");
+        new Frame(630,15,300,255,"Horizontal","center");
+        new Frame(630,283,300,170,"Vertical","center");
+        new Frame(750,630,85,145,"Beam","center");
+        new Frame(845,630,85,145,"Monitor","center");
+        new Frame(750,465,180,150,"Trigger","center");
+        k_vol=new Knob(8,885,675,20,17,0,"Volume","knob");
         k_vol.setSwitchBufferNeeded();
-        k_monitor=new MonitorKnob(800,735);
-        b_ch1=new ChOnButton(810,485,24,16,"CH1","on");
-        b_ch2=new ChOnButton(810,485,24,16,"CH2","on");
+        k_monitor=new MonitorKnob(885,735);
+        b_ch1=new ChOnButton(800,650,24,16,"CH1","on");
+        b_ch2=new ChOnButton(800,650,24,16,"CH2","on");
         b_chon=[b_ch1,b_ch2];
-        b_dual=new ChOnButton(810,485,24,16,"Dual","on");
-        b_add=new ChOnButton(810,485,24,16,"Add","on");
-        b_mod=new ChOnButton(810,485,24,16,"Mod","on");
-        b_xy=new ChOnButton(810,485,24,16,"X-Y","on");
-        radio_mode=new Radio(810,485,[b_ch1,b_ch2,b_dual,b_add,b_mod,b_xy]);
+        b_dual=new ChOnButton(800,650,24,16,"Dual","on");
+        b_add=new ChOnButton(800,650,24,16,"Add","on");
+        b_mod=new ChOnButton(800,650,24,16,"Mod","on");
+        b_xy=new ChOnButton(800,650,24,16,"X-Y","on");
+        radio_mode=new Radio(800,650,[b_ch1,b_ch2,b_dual,b_add,b_mod,b_xy]);
+        b_auto=new ChOnButton(880,554,24,16,"Auto","on");
+        b_ch1tr=new ChOnButton(880,554,24,16,"Ch1","on");
+        b_ch2tr=new ChOnButton(880,554,24,16,"Ch2","on");
+        radio_trig=new Radio(880,554,[b_auto,b_ch1tr,b_ch2tr]);
         b_find=new FindButton(20,300,24,16,"Find","small");
         b_mic=new MicButton(20,380,24,16,"Mic","small");
         b_debug=new DebugButton(20,420,24,16,"Debug","small");
@@ -31,8 +36,11 @@ class Scope extends pObject {
         k_delay=new DoubleKnob(670,75,100,100,"Delay","double",35,20);
         k_delaybase=new DelaybaseKnob(705,180);
         k_xpos=new Knob(24,850,75,20,49,0,"Pos X","knob");
-//        b_menomano=new MenomanoButton(20,340,24,16,"Menomano","small");
-//        b_menomano.label.size=12;
+        k_trig=new DoubleKnob(800,520,50,50,"Level","double_s",30,15);
+        k_hold=new DoubleKnob(880,520,50,50,"HoldOff","double_s",30,15);
+        k_slope=new Knob(-1,800,590,17,2,0,"Slope","knob");
+        b_resv=new ResvButton(20,340,24,16,"Resv","small");
+        b_resv.label.size=12;
     }
     drawScreen(ctx) {
         // draw screen
@@ -122,18 +130,23 @@ class Scope extends pObject {
             var l_=this.ch[c].k_volts.k_.value; l_=(l_+Math.floor(vpd_.length/2))%vpd_.length;
             var level=vpd[l]*vpd_[l_];
             if (b_debug.state==1) console.log("ch:"+c+" l:"+l+" l_:"+l_+" level:"+level);
-            // y value calculation
+            // x and y pos
             py[c]=this.ch[c].k_ypos.value; if (py[c]>24) py[c]-=49;
             px=k_xpos.value; if (px>24) px-=49;
+            // find value one adjust at a time
             if (findState!="off") py[c]/=findValue;
+            // gnd lines position
             py0=this.y+dd+4*d+py[c]*10;
             py[c]=py0+(c*2-1)*d;
             px=this.x+dd+px*10;
+            // main y value buffer calculation
             for (var i=0; i<L; i++) {
+                // if CH is switched on
                 if (siggen[c].b_ch.state==1) {
+                    // main y calculation
                     var qi=Math.round(freqs[c]*(10*q*i+delay))%L; if (qi<0) qi+=L;
-//                    y[c][i]=Math.pow(1.01,l*20+l_)*sch[c][qi]/2;
                     y[c][i]=sch[c][qi]/level/2;
+                    // find
                     if (findState!="off") y[c][i]/=findValue;
                     if (y[c][i]<minY) minY=y[c][i];
                     if (y[c][i]>maxY) maxY=y[c][i];
@@ -181,6 +194,6 @@ class Scope extends pObject {
 class ScopeChannel {
     constructor(pX,pY) {
         this.k_ypos=new Knob(24,pX+70,pY+340,20,49,0,"Pos Y","knob");
-        this.k_volts=new VoltsKnob(pX,pY+270);
+        this.k_volts=new VoltsKnob(pX,pY+275);
     }
 }

@@ -1,7 +1,8 @@
 class Knob extends pObject {
     constructor(pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos) {
         const pos={"knob":-27,"double":-44,"sweep":78, 
-            "delay":78, "func":-57, "range":-55, "volts":-55};
+        "double_s":-40, "delay":78, "func":-57, "range":-55, 
+        "volts":-55, "sigdouble":-30};
         var ret=super(pX-pR,pY-pR,2*pR,2*pR);
         this.limit=pLimit; // ticks/2: végállásos, -1: körbeforog
         this.r=pR;
@@ -12,7 +13,8 @@ class Knob extends pObject {
         this.color="#EEEEEE";
         this.haircolor="gray";
         this.pointercolor="red";
-        new Label(pX,pY+pos[lpos],pLabel,12);
+        var xLabel=pX; if (lpos=="sigdouble") xLabel+=60;
+        new Label(xLabel,pY+pos[lpos],pLabel,12);
         ui.push(this);
         return ret;
     }
@@ -238,8 +240,8 @@ class ScaleKnob extends Knob {
 
 class MonitorKnob extends Knob {
     constructor(pX,pY) {
-        var ret=super(-1,pX,pY,20,a_monitor.length,4,"none","none");
-        this.iconCircle(pX,pY+5,32,a_monitor);
+        var ret=super(-1,pX,pY,18,a_monitor.length,4,"none","none");
+        this.iconCircle(pX,pY+2,30,a_monitor);
         ui.push(this);
         return ret;
     }
