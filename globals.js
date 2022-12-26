@@ -16,9 +16,10 @@ var ch=[new Array(L),new Array(L)]; // original channel buffer, will get rid of
 var y=[new Array(L), new Array(L)]; // two y buffers for scope
 var sch=[new Array(L),new Array(L)]; // signal channel buffer, no freq
 var micch=[new Array(L),new Array(L)]; // mic channel buffer
-var order, ampl, freq, ampls=[0,0], ampls_=[0,0];
+var order, ampl, freq, ampls=[0,0], ampls_=[0,0], avgs=[0,0];
 var scales=[0,0], freqs=[0,0], freqs_=[0,0], phases=[0,0], dcs=[0,0], dcs_=[0,0];
-var ui=[];
+var ui=[]; // for hit, click, turn
+var buttons=[]; // for switch off at power off
 var b_chon, k_time, k_delay, k_delaybase, k_trig, k_hold, k_slope;
 var radio_mode, b_ch1, b_ch2, b_dual, b_add, b_mod, b_xy;
 var radio_trig, b_auto, b_ch1tr, b_ch2tr;

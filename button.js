@@ -8,9 +8,13 @@ class Button extends pObject {
         ui.push(this);
         this.label=new Label(this.cX,this.cY,pLabel,pType=="small"?12:15);
         this.setLabelXY(pType);
+        buttons.push(this);
+    }
+    callSwitchOff() {
+        if (this.state==1) this.click();
     }
     setLabelXY(pType) {
-        var xpos={"power":0,"on":-30, "small":0};
+        var xpos={"power":0,"on":-35, "small":0};
         var ypos={"power":-27,"on":0,"small":-15};
         this.label.adjustXY(xpos[pType],ypos[pType]);
     }
@@ -34,33 +38,31 @@ class Button extends pObject {
         ctx.fill();
         var img=led_off; if (this.state==1) img=led_on;
         ctx.drawImage(img,0,0,225,216,this.x,this.y,this.w,this.h);
+        super.draw(ctx);
     }
 }
 class PowerButton extends Button {
+    constructor(pX,pY,pW,pH,pLabel,pType) {
+        super(pX,pY,pW,pH,pLabel,pType);
+        buttons.splice(-1); // remove this last power button from buttons
+    }
     click(event) {
+        // power switch-on event
         if (this.state==0) {
             b_dual.state=1;
             b_auto.state=1;
+            for (var i=0; i<2; i++) {
+                siggen[i].b_ch.state=1;
+                scope.ch[i].b_dc.state=1;
+            }
         }
+        // power switch-off event
         if (this.state==1) {
-            for (var c=0; c<2; c++) {
-                siggen[c].b_ch.state=0;
-                siggen[c].b_half.state=0;
-                siggen[c].b_inv.state=0;
+            for (var i=0; i<buttons.length; i++) {
+                buttons[i].callSwitchOff(event);
             }
-            for (var i=0; i<radio_mode.b.length; i++) {
-                radio_mode.b[i].state=0;
-            }
-            for (var i=0; i<radio_trig.b.length; i++) {
-                radio_trig.b[i].state=0;
-            }
-            b_find.state=0;
             k_monitor.callSwitchOff(event);
-            b_mic.callSwitchOff(event);
-            b_debug.callSwitchOff(event);
-            k_delay.k.value=0; k_delay.k_.value=0;
-            b_resv.callSwitchOff(event);
-        }
+       }
         super.click(event);
     }
 }
@@ -115,8 +117,7 @@ class ResvButton extends ChOnButton {
         if (this.state==1) {
             b_resv.draw(ctx);
             scope.drawScreen(ctx);
-            setTimeout(()=>{b_resv.callSwitchOff(event);},600);
-            delay(500);
+            setTimeout(()=>{b_resv.callSwitchOff(event);},500);
         }
         else if (this.state==0) this.switchOff();
     }
@@ -130,23 +131,6 @@ class ResvButton extends ChOnButton {
     switchOff() {
     }
 }
-class DebugButton extends ChOnButton {
-    click(event) {
-        super.click(event);
-        if (this.state==1) {
-        }
-        else if (this.state==0) this.switchOff();
-    }
-    callSwitchOff(event) {
-        if (this.state==1) {
-            super.click(event);
-            this.switchOff();
-            draw();
-        }
-    }
-    switchOff() {
-    }
-}
 class Radio extends pObject {
     constructor(pX,pY,pListButtons) {
         super(pX,pY,25,pListButtons.length*dButton);
@@ -154,7 +138,7 @@ class Radio extends pObject {
         for (var i=0; i<pListButtons.length; i++) {
             pListButtons[i].x=pX;
             pListButtons[i].y=pY+i*dButton;
-            pListButtons[i].label.adjustXY(-10,i*dButton);
+            pListButtons[i].label.adjustXY(0,i*dButton);
         }
         ui.push(this);
     }

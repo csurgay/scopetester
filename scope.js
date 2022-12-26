@@ -26,13 +26,13 @@ class Scope extends pObject {
         radio_trig=new Radio(880,554,[b_auto,b_ch1tr,b_ch2tr]);
         b_find=new FindButton(20,300,24,16,"Find","small");
         b_mic=new MicButton(20,380,24,16,"Mic","small");
-        b_debug=new DebugButton(20,420,24,16,"Debug","small");
-        this.ch=[new ScopeChannel(690,80), new ScopeChannel(830,80)];
+        b_debug=new ChOnButton(20,420,24,16,"Debug","small");
+        this.ch=[new ScopeChannel(685,80), new ScopeChannel(825,80)];
         k_intensity=new Knob(8,30,120,15,17,0,"Intensity","knob");
         k_focus=new Knob(-1,30,180,15,17,0,"Focus","knob");
         k_illum=new Knob(18,30,240,15,17,0,"Illum","knob");
         k_time=new TimeKnob(850,180);
-        new Vfd(715,75,4,()=>{return 10*k_delay.k.value+k_delay.k_.value;},()=>{return 10*k_delay.k.value+k_delay.k_.value==0;});
+        new Vfd(715,75,4,()=>{return 10*k_delay.k.value+k_delay.k_.value;},()=>{return b_power.state==0 || 10*k_delay.k.value+k_delay.k_.value==0;});
         k_delay=new DoubleKnob(670,75,100,100,"Delay","double",35,20);
         k_delaybase=new DelaybaseKnob(705,180);
         k_xpos=new Knob(24,850,75,20,49,0,"Pos X","knob");
@@ -139,20 +139,31 @@ class Scope extends pObject {
             py0=this.y+dd+4*d+py[c]*10;
             py[c]=py0+(c*2-1)*d;
             px=this.x+dd+px*10;
+            // averages for AC coupling
+            avgs[c]=0; var n=0;
+            for (var i=0; i<sch[c].length; i++) {
+                if (!isNaN(sch[c][i])) {
+                    n++;
+                    avgs[c]+=sch[c][i];
+                }
+            }
+            avgs[c]/=n;
+            if (this.ch[c].b_ac.state==0) avgs[c]=0;
             // main y value buffer calculation
             for (var i=0; i<L; i++) {
                 // if CH is switched on
-                if (siggen[c].b_ch.state==1) {
+                if (scope.ch[c].b_gnd.state==0 && siggen[c].b_ch.state==1) {
                     // main y calculation
                     var qi=Math.round(freqs[c]*(10*q*i+delay))%L; if (qi<0) qi+=L;
-                    y[c][i]=sch[c][qi]/level/2;
+                    y[c][i]=(sch[c][qi]-avgs[c])/level/2;
                     // find
                     if (findState!="off") y[c][i]/=findValue;
                     if (y[c][i]<minY) minY=y[c][i];
                     if (y[c][i]>maxY) maxY=y[c][i];
                 }
-                else 
+                else {
                     y[c][i]=0;
+                }
             }
         }
         if (findState=="search" && minY>-4*dd && maxY<4*dd) {
@@ -193,7 +204,11 @@ class Scope extends pObject {
 }
 class ScopeChannel {
     constructor(pX,pY) {
-        this.k_ypos=new Knob(24,pX+70,pY+340,20,49,0,"Pos Y","knob");
+        this.k_ypos=new Knob(24,pX+65,pY+247,20,49,0,"Pos Y","knob");
         this.k_volts=new VoltsKnob(pX,pY+275);
+        this.b_ac=new ChOnButton(pX+70,pY+312,24,16,"AC",'on');
+        this.b_gnd=new ChOnButton(pX+70,pY+312,24,16,"Gnd",'on');
+        this.b_dc=new ChOnButton(pX+70,pY+312,24,16,"DC",'on');
+        this.acdc=new Radio(pX+70,pY+312,[this.b_ac,this.b_gnd,this.b_dc]);
     }
 }

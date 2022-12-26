@@ -15,7 +15,7 @@ class Siggen extends pObject {
         this.k_freq.setSwitchBufferNeeded();
         this.k_ampl=new DoubleKnob(pX2,pY2,201,201,"Ampl","sigdouble",30,15);
         this.k_ampl.setSwitchBufferNeeded();
-        this.k_phase=new DoubleKnob(pX2,pY3,12,21,"Phase","sigdouble",30,15);
+        this.k_phase=new DoubleKnob(pX2,pY3,24,60,"Phase","sigdouble",30,15);
         this.k_phase.setSwitchBufferNeeded();
         this.k_dc=new DoubleKnob(pX2,pY4,201,101,"Offset","sigdouble",30,15);
         this.k_dc.setSwitchBufferNeeded();

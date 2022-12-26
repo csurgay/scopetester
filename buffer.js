@@ -18,8 +18,8 @@ function initBufgen() {
     bufgen.push(new BufferGenerator("Sinc",f_sinc));
     bufgen.push(new BufferGenerator("Beats",f_beats));
     bufgen.push(new BufferGenerator("ECG",f_ecg));
-    bufgen.push(new BufferGenerator("ECG",f_menomanoX,"halficon"));
-    bufgen.push(new BufferGenerator("ECG",f_menomanoY,"halficon"));
+    bufgen.push(new BufferGenerator("MenoX",f_menomanoX,"halficon"));
+    bufgen.push(new BufferGenerator("MenoY",f_menomanoY,"halficon"));
     var l=menomano.length/2;
     for (var i=0;i<l;i++) {
         mmy.push(2*menomano[i*2]-100);
@@ -50,10 +50,15 @@ function initChannels() {
         freqs[i]=scales[i]*(freqs[i]+1)+freqs_[i];
         if (freqs[i]<0.001) freqs[i]=0.001;
         // phase
-        var offset=Math.round(L*s.k_phase.k.value/s.k_phase.k.ticks);
-        var off_=s.k_phase.k_.value; if (off_>10) off_-=21;
-        var offset_=Math.round(L/s.k_phase.k.ticks*2*off_/s.k_phase.k_.ticks);
-        phases[i]=offset+offset_;
+//        var offset=Math.round(L*s.k_phase.k.value/s.k_phase.k.ticks);
+//        var off_=s.k_phase.k_.value; if (off_>10) off_-=21;
+//        var offset_=Math.round(L/s.k_phase.k.ticks*2*off_/s.k_phase.k_.ticks);
+//        phases[i]=offset+offset_;
+        var o=s.k_phase.k.value;
+        var o_=s.k_phase.k_.value; if (o_>s.k_phase.k_.ticks/2) o_-=s.k_phase.k_.ticks;
+        o=15*o+o_/2; if (o<0) o+=360;
+        if (b_debug.state==1) console.log("o:"+o);
+        phases[i]=L*o/360;
         // dc offset
         dcs[i]=s.k_dc.k.value; if (dcs[i]>s.k_dc.k.ticks/2) dcs[i]-=s.k_dc.k.ticks;
         dcs_[i]=s.k_dc.k_.value; if (dcs_[i]>s.k_dc.k_.ticks/2) dcs_[i]-=s.k_dc.k_.ticks;
