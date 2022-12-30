@@ -1,3 +1,6 @@
+var d, dd; // for UI layout geometry calculations
+var illum, int, blur; // for scale grid illumination, inensity and focus blur value
+
 class Scope extends pObject {
     constructor(pX,pY,pD,pDD) {
         super(pX,pY,10*pD+2*pDD,8*pD+2*pDD);
@@ -6,20 +9,20 @@ class Scope extends pObject {
         ui.push(this);
         new Frame(630,15,300,255,"Horizontal","center");
         new Frame(630,283,300,170,"Vertical","center");
-        new Frame(750,630,85,145,"Beam","center");
+        new Frame(750,630,85,145,"Mode","center");
         new Frame(845,630,85,145,"Monitor","center");
         new Frame(750,465,180,150,"Trigger","center");
         k_vol=new Knob(8,885,675,20,17,0,"Volume","knob");
         k_vol.setSwitchBufferNeeded();
         k_monitor=new MonitorKnob(885,735);
-        b_ch1=new ChOnButton(800,650,24,16,"CH1","on");
-        b_ch2=new ChOnButton(800,650,24,16,"CH2","on");
+        b_ch1=new ChOnButton(795,650,24,16,"CH1","on");
+        b_ch2=new ChOnButton(795,650,24,16,"CH2","on");
         b_chon=[b_ch1,b_ch2];
-        b_dual=new ChOnButton(800,650,24,16,"Dual","on");
-        b_add=new ChOnButton(800,650,24,16,"Add","on");
-        b_mod=new ChOnButton(800,650,24,16,"Mod","on");
-        b_xy=new ChOnButton(800,650,24,16,"X-Y","on");
-        radio_mode=new Radio(800,650,[b_ch1,b_ch2,b_dual,b_add,b_mod,b_xy]);
+        b_dual=new ChOnButton(795,650,24,16,"Dual","on");
+        b_add=new ChOnButton(795,650,24,16,"Add","on");
+        b_mod=new ChOnButton(795,650,24,16,"Mod","on");
+        b_xy=new ChOnButton(795,650,24,16,"X-Y","on");
+        radio_mode=new Radio(795,650,[b_ch1,b_ch2,b_dual,b_add,b_mod,b_xy]);
         b_auto=new ChOnButton(880,554,24,16,"Auto","on");
         b_ch1tr=new ChOnButton(880,554,24,16,"Ch1","on");
         b_ch2tr=new ChOnButton(880,554,24,16,"Ch2","on");
@@ -30,10 +33,12 @@ class Scope extends pObject {
         this.ch=[new ScopeChannel(685,80), new ScopeChannel(825,80)];
         k_intensity=new Knob(8,30,120,15,17,0,"Intensity","knob");
         k_focus=new Knob(-1,30,180,15,17,0,"Focus","knob");
-        k_illum=new Knob(18,30,240,15,17,0,"Illum","knob");
+        k_illum=new Knob(16,30,240,15,17,0,"Illum","knob");
         k_time=new TimeKnob(850,180);
         new Vfd(715,75,4,()=>{return 10*k_delay.k.value+k_delay.k_.value;},()=>{return b_power.state==0 || 10*k_delay.k.value+k_delay.k_.value==0;});
         k_delay=new DoubleKnob(670,75,100,100,"Delay","double",35,20);
+        k_delay.k.limit=k_delay.k.ticks-1;
+        k_delay.k_.limit=k_delay.k_.ticks-1;
         k_delaybase=new DelaybaseKnob(705,180);
         k_xpos=new Knob(24,850,75,20,49,0,"Pos X","knob");
         k_trig=new DoubleKnob(800,520,50,50,"Level","double_s",30,15);
@@ -54,9 +59,9 @@ class Scope extends pObject {
         ctx.beginPath();
         ctx.lineWidth=1;
         // draw grid
-        var d=this.d;
-        var dd=this.dd;
-        var illum=Math.floor(127*k_illum.value/k_illum.ticks);
+        d=this.d;
+        dd=this.dd;
+        illum=Math.floor(127*k_illum.value/k_illum.ticks);
         if (illum>0)
             ctx.strokeStyle = "rgb("+(128+illum)+", "+(128+illum)+", "+(128+illum)+")";
         for (var i=dd; i<=this.w-dd+1; i+=d) {
@@ -96,12 +101,12 @@ class Scope extends pObject {
         ctx.stroke();
     }
     draw(ctx) {
-        var d=this.d;
-        var dd=this.dd;
+        d=this.d;
+        dd=this.dd;
         this.drawScreen(ctx);
         // intensity and focus
-        var int=k_intensity.value; if (int>k_intensity.ticks/2) int-=k_intensity.ticks;
-        var blur=k_focus.value; if (blur>k_focus.ticks/2) blur-=k_focus.ticks;
+        int=k_intensity.value0;
+        blur=k_focus.value0;
         // draw beams
         ctx.save();
         ctx.roundRect(this.x+3, this.y+3, this.w-6, this.h-6, 20);
@@ -113,13 +118,13 @@ class Scope extends pObject {
         var px,py0,py=[0,0];
         var minY=1000000, maxY=-1000000;
         // timebase
-        var kt=k_time.k.value; if (kt>k_time.k.ticks/2) kt-=k_time.k.ticks;
-        var kt_=k_time.k_.value; if (kt_>k_time.k_.ticks/2) kt_-=k_time.k_.ticks;
+        var kt=k_time.k.value0;
+        var kt_=k_time.k_.value0;
         timebase=tb[kt+Math.floor(k_time.k.ticks/2-1)]*tb_[kt_+Math.floor(k_time.k_.ticks/2)];
         q=timebase*L/512;
         // delay
-        var kdb=k_delaybase.k.value; if (kdb>k_delaybase.k.ticks/2) kdb-=k_delaybase.k.ticks;
-        var kdb_=k_delaybase.k_.value; if (kdb_>k_delaybase.k_.ticks/2) kdb_-=k_delaybase.k_.ticks;
+        var kdb=k_delaybase.k.value0;
+        var kdb_=k_delaybase.k_.value0;
         delay=tb[kdb+Math.floor(k_delaybase.k.ticks/2-1)]*tb_[kdb_+Math.floor(k_delaybase.k_.ticks/2)];
         delay=(10*k_delay.k.value+k_delay.k_.value)*delay;
         delay=delay*L;
@@ -131,8 +136,8 @@ class Scope extends pObject {
             var level=vpd[l]*vpd_[l_];
             if (b_debug.state==1) console.log("ch:"+c+" l:"+l+" l_:"+l_+" level:"+level);
             // x and y pos
-            py[c]=this.ch[c].k_ypos.value; if (py[c]>24) py[c]-=49;
-            px=k_xpos.value; if (px>24) px-=49;
+            py[c]=-this.ch[c].k_ypos.value0;
+            px=k_xpos.value0;
             // find value one adjust at a time
             if (findState!="off") py[c]/=findValue;
             // gnd lines position
@@ -178,10 +183,12 @@ class Scope extends pObject {
             }
         }
         else if (b_xy.state==1) {
-            ctx.moveTo(this.x+dd+5*d+y[0][0],this.y+dd+4*d+y[1][0]);    
+            px+=5*d;
+            var py=(py[0]+py[1])/2;
+            ctx.moveTo(px+y[0][0],py-y[1][0]);    
             for (var i=1; i<512; i++)
-                ctx.lineTo(this.x+dd+5*d+y[0][i],this.y+dd+4*d+y[1][i]);    
-            ctx.lineTo(this.x+dd+5*d+y[0][0],this.y+dd+4*d+y[1][0]);    
+                ctx.lineTo(px+y[0][i],py-y[1][i]);    
+            ctx.lineTo(px+y[0][0],py-y[1][0]);    
         }
         else {
             ctx.moveTo(px,py0-this.calcModeY(-1,y[0][0],y[1][0]));

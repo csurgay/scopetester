@@ -5,14 +5,15 @@ function init() {
     mouseInit(canvas);
     initBufgen();
     siggen=[new Siggen(75,530,"1"),new Siggen(445,530,"2")];
-//    siggen[0].k_func.k.value=6; siggen[1].k_func.k.value=2;
-//    siggen[0].k_ampl.value=15; siggen[1].k_ampl.value=6;
-//    siggen[0].k_func.k_.value=10; siggen[1].k_freq.k.value=19;
     scope=new Scope(70,10,51,17);
     initChannels();
     timebase=1000000; // microseconds
+    new DebugLabel(300,800,"free memory",15,()=>{return ""+
+        "heap:"+window.performance.memory.totalJSHeapSize+
+        " used:"+window.performance.memory.usedJSHeapSize+
+        " limit:"+window.performance.memory.jsHeapSizeLimit;});
     b_power=new PowerButton(15,30,30,30,"POWER","power");
-    b_power.click(null); // switch scope on at startup
+    // b_power.click(null); // need to switch on beacuse of media policy: on click needed before sound can be played
     no_images_to_load=4;
     vfd=new Image(); vfd.src='./images/vfd.jpg'; vfd.onload=()=>wait();
     vfd_=new Image(); vfd_.src='./images/vfd-.jpg'; vfd_.onload=()=>wait();
@@ -57,8 +58,8 @@ function run1() {
     if (prevX!=70) ctx.lineTo(prevX,prevY);
     ctx.stroke();
     ctx.restore();
-    var kt=k_time.k.value; if (kt>k_time.k.ticks/2) kt-=k_time.k.ticks;
-    var kt_=k_time.k_.value; if (kt_>k_time.k_.ticks/2) kt_-=k_time.k_.ticks;
+    var kt=k_time.k.value0;
+    var kt_=k_time.k_.value0;
     timebase=tb[kt+9]*tb_[kt_+10];
     if (b_power.state==1) setTimeout(run,timebase);
 }

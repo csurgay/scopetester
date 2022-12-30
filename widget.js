@@ -5,7 +5,7 @@ class pObject {
         this.w=pW;
         this.h=pH;
         this.switchBufferNeeded=false;
-        this.live=true; // labels are non-live pObjects
+        this.live=false; // live pObjects: Button, Knob, Radio
         this.bgcolor=null;
         this.hitPad=0;
         return this;
@@ -67,7 +67,7 @@ class Icon extends pObject {
             ctx.moveTo(this.x,this.y-this.h*this.f(0)/ampl/halfed);
             order=0;
             for (var i=0; i<this.w; i++) 
-                ctx.lineTo(this.x+i,this.y-this.h*this.f(Math.floor(L*i/this.w))/ampl/halfed);
+                ctx.lineTo(this.x+i,this.y-this.h*this.f(Math.floor(L*i/this.w),0)/ampl/halfed);
             ctx.stroke();
         }
     }
@@ -87,7 +87,6 @@ class Label extends pObject {
         var ret=super(pX,pY,getTextWidth(ctx,pS,pSize),pSize+1);
         this.tX=pX; this.tY=pY;
         this.adjustRect(this.tX-this.w/2-2,this.tY-this.h/2,this.w+4,this.h-3);
-        this.live=false;
         this.s=pS;
         this.size=pSize;
         ui.push(this);
@@ -115,6 +114,19 @@ class Label extends pObject {
         ctx.fillText(this.s,this.tX,this.tY)
         ctx.stroke();
         super.draw(ctx);
+    }
+}
+
+class DebugLabel extends Label {
+    constructor(pX,pY,pS,pSize,pCalcFunc) {
+        super(pX,pY,pS,pSize);
+        this.calcFunc=pCalcFunc;
+    }
+    draw(ctx) {
+        if (b_debug.state==1) {
+            this.s=this.calcFunc();
+            super.draw(ctx);
+        }
     }
 }
 

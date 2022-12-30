@@ -1,7 +1,6 @@
 function mouseInit(canvas) {
     canvas.addEventListener('wheel', function(event) {
         mouseWheel(event);
-        event.preventDefault();
     }, false);
     canvas.addEventListener('click', function(event) {
         mouseClick(event);
@@ -11,6 +10,7 @@ function mouseInit(canvas) {
 function mouseWheel(event) {
     for (var i=ui.length-1; i>=0; i--) {
         if (ui[i].hit(event)) {
+            event.preventDefault();
             ui[i].turn(event);
             break;
         }

@@ -1,6 +1,14 @@
+// Button Label position per pType
+var xpos={"power":0,"on":-30, "small":0};
+var ypos={"power":-27,"on":0,"small":-15};
+
+var grd; // for grad on Canvas
+var img; // for LEDon/LEDoff images
+
 class Button extends pObject {
     constructor(pX,pY,pW,pH,pLabel,pType) {
         super(pX,pY,pW,pH);
+        this.live=true;
         this.cX=pX+pW/2;
         this.cY=pY+pH/2;
         this.state=0;
@@ -14,8 +22,6 @@ class Button extends pObject {
         if (this.state==1) this.click();
     }
     setLabelXY(pType) {
-        var xpos={"power":0,"on":-35, "small":0};
-        var ypos={"power":-27,"on":0,"small":-15};
         this.label.adjustXY(xpos[pType],ypos[pType]);
     }
     click(event) {
@@ -25,7 +31,7 @@ class Button extends pObject {
     draw(ctx) {
         ctx.save();
         ctx.beginPath();
-        var grd = ctx.createRadialGradient(this.x+this.w/2,this.y+this.h/2,
+        grd = ctx.createRadialGradient(this.x+this.w/2,this.y+this.h/2,
             2*this.w/5, this.x+this.w/2,this.y+this.h/2,
             2*this.w/3);
         grd.addColorStop(0, "rgb(10,30,30)");
@@ -36,7 +42,7 @@ class Button extends pObject {
         else if (this.type=="on-nem") 
             ctx.fillRect(this.x-dVfd,this.y-dVfd/4,this.w+2*dVfd,this.h+dVfd/2);
         ctx.fill();
-        var img=led_off; if (this.state==1) img=led_on;
+        img=led_off; if (this.state==1) img=led_on;
         ctx.drawImage(img,0,0,225,216,this.x,this.y,this.w,this.h);
         super.draw(ctx);
     }
@@ -134,6 +140,7 @@ class ResvButton extends ChOnButton {
 class Radio extends pObject {
     constructor(pX,pY,pListButtons) {
         super(pX,pY,25,pListButtons.length*dButton);
+        this.live=true;
         this.b=pListButtons;
         for (var i=0; i<pListButtons.length; i++) {
             pListButtons[i].x=pX;

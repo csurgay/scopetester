@@ -1,56 +1,89 @@
+function lastDigits(x) {
+    x/=1000000;
+    x-=Math.floor(x);
+    x*=1000000;
+    return Math.floor(x);
+}
+
+var pDelta; // for holding -event.delta
+var xd, yd, rd, nd, kd; // for x,y for drawing
+
 class Knob extends pObject {
     constructor(pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos) {
         const pos={"knob":-27,"double":-44,"sweep":78, 
         "double_s":-40, "delay":78, "func":-57, "range":-55, 
         "volts":-55, "sigdouble":-30};
-        var ret=super(pX-pR,pY-pR,2*pR,2*pR);
+        super(pX-pR,pY-pR,2*pR,2*pR);
+        this.lastTurn=lastDigits(Date.now());
+        this.turnCount=0;
+        this.fastRate=1;
+        this.live=true;
         this.limit=pLimit; // ticks/2: végállásos, -1: körbeforog
         this.r=pR;
         this.ticks=pTicks;
         this.defaultValue=pValue;
         this.value=pValue;
+        this.value0=pValue; this.setValue0(); // value0 is (- 0 +) not (0 + ++)
         this.l=pLabel;
         this.color="#EEEEEE";
         this.haircolor="gray";
         this.pointercolor="red";
-        var xLabel=pX; if (lpos=="sigdouble") xLabel+=60;
+        var xLabel=pX; if (lpos=="sigdouble") xLabel+=70;
         new Label(xLabel,pY+pos[lpos],pLabel,12);
         ui.push(this);
-        return ret;
+    }
+    setValue0() {
+        this.value0=this.value;
+        if (this.value0>this.ticks/2) this.value0-=this.ticks;
     }
     click(event) {
         this.value=this.defaultValue;
+        this.setValue0();
         super.click();
     }
     turn(event) {
-        var pDelta=event.deltaY;
-        if (this.limit!=-1) {
-            if (this.value==this.limit && pDelta>0) return;
-            if (this.value==this.limit+1 && pDelta<0) return;
+        pDelta=-event.deltaY;
+        // accelerated turn if fastRate>limit within duration milliseconds
+        now=lastDigits(Date.now());
+        if (now-this.lastTurn>50) { this.turnCount=0; }
+        this.turnCount++;
+        this.fastRate=this.turnCount<3?1:10;
+        this.lastTurn=now;
+        // no fastRate turn below 50 tick knobs
+        if (this.ticks<50) this.fastRate=1;
+        // set new value within limit
+        for (var i=0; i<this.fastRate; i++) {
+            if (this.limit==-1 ||
+                ((this.value!=this.limit || pDelta<0) &&
+                (this.value!=(this.limit+1)%this.ticks || pDelta>0))) {
+                this.value+=Math.sign(pDelta);
+                if (this.value<0) this.value+=this.ticks;
+                else if (this.value>this.ticks-1) this.value-=this.ticks;
+            }
         }
-        this.value+=Math.sign(pDelta);
-        if (this.value<0) this.value+=this.ticks;
-        else if (this.value>this.ticks-1) this.value-=this.ticks;
+        this.setValue0();
         super.turn();
     }
     draw(ctx) {
-        var x=this.x+this.r, y=this.y+this.r, r=this.r, n=this.ticks, k=this.value;
+        xd=this.x+this.r;
+        yd=this.y+this.r;
+        rd=this.r; nd=this.ticks; kd=this.value;
         ctx.beginPath();
         ctx.strokeStyle=this.haircolor;
-        ctx.lineTo(x+r,y);
+        ctx.lineTo(xd+rd,yd);
         ctx.fillStyle = this.color;
-        ctx.arc(x,y,r,0,2*Math.PI);
+        ctx.arc(xd,yd,rd,0,2*Math.PI);
         ctx.fill();
-        for(var i=0; i<n; i++) {
-            ctx.moveTo(x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n));
-            ctx.lineTo(x+2*r/3*Math.sin(2*Math.PI*i/n),y-2*r/3*Math.cos(2*Math.PI*i/n));
+        for(var i=0; i<nd; i++) {
+            ctx.moveTo(xd+rd*Math.sin(2*Math.PI*i/nd),yd-rd*Math.cos(2*Math.PI*i/nd));
+            ctx.lineTo(xd+2*rd/3*Math.sin(2*Math.PI*i/nd),yd-2*rd/3*Math.cos(2*Math.PI*i/nd));
         }
         ctx.stroke();
         ctx.beginPath();
         ctx.lineWidth=2;
         ctx.strokeStyle=this.pointercolor;
-        ctx.moveTo(x+r*Math.sin(2*Math.PI*k/n),y-r*Math.cos(2*Math.PI*k/n));
-        ctx.lineTo(x+3*r/5*Math.sin(2*Math.PI*k/n),y-3*r/5*Math.cos(2*Math.PI*k/n));
+        ctx.moveTo(xd+rd*Math.sin(2*Math.PI*kd/nd),yd-rd*Math.cos(2*Math.PI*kd/nd));
+        ctx.lineTo(xd+3*rd/5*Math.sin(2*Math.PI*kd/nd),yd-3*rd/5*Math.cos(2*Math.PI*kd/nd));
         ctx.stroke();
         ctx.lineWidth=1;
         super.draw(ctx);
@@ -59,11 +92,12 @@ class Knob extends pObject {
 
 class DoubleKnob extends pObject {
     constructor(pX,pY,pTicks,pTicks_,pLabel,lpos,pR,pR_) {
-        var ret=super(pX-pR,pY-pR,2*pR,2*pR);
+        super(pX-pR,pY-pR,2*pR,2*pR);
         this.k=new Knob(-1,pX,pY,pR,pTicks,0,pLabel,lpos);
         this.k_=new Knob(-1,pX,pY,pR_,pTicks_,0,"",0);
         this.k_.hitPad=2; // so that hit rect is smaller for inner knob
-        return ret;
+        this.k.limit=Math.floor(this.k.ticks/2);
+        this.k_.limit=Math.floor(this.k_.ticks/2);
     }
     setSwitchBufferNeeded() {
         super.setSwitchBufferNeeded();
@@ -79,14 +113,13 @@ class DoubleKnob extends pObject {
 
 class DekorKnob extends DoubleKnob {
     constructor(pX,pY,vals,vals_,pLabel,posLabel,r,r_,rDekor) {
-        var ret=super(pX,pY,vals.length,vals_.length,pLabel,posLabel,r,r_);
+        super(pX,pY,vals.length,vals_.length,pLabel,posLabel,r,r_);
         this.rDekor=rDekor;
         this.k_.color="rgb(200,20,20)";
         this.k_.haircolor=this.k_.color;
         this.k_.pointercolor="#EEEEEE";
         this.iconCircle(ui,pX,pY+2,this.rDekor,vals);
         this.captionCircle(ui,pX,pY+3,this.rDekor);
-        return ret;
     }
     iconCircle(ui,x,y,r,tb) {
     }
@@ -96,19 +129,18 @@ class DekorKnob extends DoubleKnob {
 
 class TimeDekorKnob extends DekorKnob {
     constructor(pX,pY,pLabel,pPosType,pR,pR_,rDekor) {
-        var ret=super(pX,pY,tb,tb_,pLabel,pPosType,pR,pR_,rDekor);
+        super(pX,pY,tb,tb_,pLabel,pPosType,pR,pR_,rDekor);
         new UiTimeDekor(pX,pY,this.rDekor);
-        return ret;
     }
     iconCircle(ui,x,y,r,tb) {
-        var n=tb.length;
-        for (var i=0; i<n; i++) {
-            var kt=i; if (kt>this.k.ticks/2) kt-=this.k.ticks;
-            var sv=tb[kt+8]; var su="ms"; // value and unit
+        nd=tb.length;
+        for (var i=0; i<nd; i++) {
+            kd=i; if (kd>this.k.ticks/2) kd-=this.k.ticks;
+            var sv=tb[kd+8]; var su="ms"; // value and unit
             if (sv>=100) { sv/=1000; su="s"; }
             else if (sv<=0.05) { sv*=1000; su="us"; }
             var sl=""+sv; sl=sl.replace("0.",".");
-            new Label(x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),sl,12);
+            new Label(x+r*Math.sin(2*Math.PI*i/nd),y-r*Math.cos(2*Math.PI*i/nd),sl,12);
         }
     }
     captionCircle(ui,x,y,r) {
@@ -120,24 +152,21 @@ class TimeDekorKnob extends DekorKnob {
 
 class TimeKnob extends TimeDekorKnob {
     constructor(pX,pY) {
-        var ret=super(pX,pY,"Sweep Timebase","sweep",50,25,62);
-        return ret;
+        super(pX,pY,"Sweep Timebase","sweep",50,25,62);
     }
 }
 
 class DelaybaseKnob extends TimeDekorKnob {
     constructor(pX,pY) {
-        var ret=super(pX,pY,"Delay Timebase","delay",40,20,52);
-        return ret;
+        super(pX,pY,"Delay Timebase","delay",40,20,52);
     }
 }
 
 class VoltsKnob extends DekorKnob {
     constructor(pX,pY) {
-        var ret=super(pX,pY,vpd,vpd_,"Volts/Div","volts",30,15,40);
+        super(pX,pY,vpd,vpd_,"Volts/Div","volts",30,15,40);
         this.k.limit=9;
         new UiVoltDekor(pX,pY,this.rDekor);
-        return ret;
     }
     iconCircle(ui,x,y,r,vpd) {
         var n=vpd.length;
@@ -158,10 +187,9 @@ class VoltsKnob extends DekorKnob {
 
 class UiTimeDekor extends pObject {
     constructor(pX,pY,pR) {
-        var ret=super(pX,pY,0,0);
+        super(pX,pY,0,0);
         this.r=pR;
         ui.push(this);
-        return ret;
     }
     draw(ctx) {
         ctx.beginPath();
@@ -179,10 +207,9 @@ class UiTimeDekor extends pObject {
 
 class UiVoltDekor extends pObject {
     constructor(pX,pY,pR) {
-        var ret=super(pX,pY,0,0);
+        super(pX,pY,0,0);
         this.r=pR;
         ui.push(this);
-        return ret;
     }
     draw(ctx) {
         super.draw(ctx);
@@ -197,14 +224,15 @@ class UiVoltDekor extends pObject {
 
 class FuncKnob extends DoubleKnob {
     constructor(pX,pY) {
-        var ret=super(pX,pY,bufgen.length,33,"Func                         ","func",35,19);
+        super(pX,pY,bufgen.length,33,"Func                         ","func",35,19);
         this.dutyLabel=new Label(pX+40,pY-55,"Duty",12);
         this.dutyLabel.bgcolor=hl_gray;
         this.k.value=0;
         this.k_.color="gray";
         this.k_.haircolor="#EEEEEE";
+        this.k.limit=-1;
+        this.k_.limit=-1;
         this.iconCircle(pX-8,pY,50,bufgen);
-        return ret;
     }
     iconCircle(x,y,r,bufgen) {
         var n=bufgen.length;
@@ -218,10 +246,9 @@ class FuncKnob extends DoubleKnob {
 
 class ScaleKnob extends Knob {
     constructor(pX,pY) {
-        var ret=super(-1,pX,pY,25,scale.length,0,"Range","range");
+        super(-1,pX,pY,25,scale.length,0,"Range","range");
         this.iconCircle(pX,pY+4,40,scale);
         ui.push(this);
-        return ret;
     }
     iconCircle(x,y,r,scale) {
         var n=scale.length;
@@ -240,10 +267,9 @@ class ScaleKnob extends Knob {
 
 class MonitorKnob extends Knob {
     constructor(pX,pY) {
-        var ret=super(-1,pX,pY,18,a_monitor.length,4,"none","none");
+        super(-1,pX,pY,18,a_monitor.length,4,"none","none");
         this.iconCircle(pX,pY+2,30,a_monitor);
         ui.push(this);
-        return ret;
     }
     iconCircle(x,y,r,a_monitor) {
         var n=a_monitor.length;

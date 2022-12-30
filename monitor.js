@@ -3,11 +3,14 @@ var astarted,
     audioCtx=new Array(N).fill(null),
     source=new Array(N).fill(null),
     myArrayBuffer=new Array(N).fill(null),
-    gainNode=new Array(N).fill(null);
-var aptr=0;
+    gainNode=new Array(N).fill(null),
+    nowBuffering;
+var aptr=0, prevAptr=0;
+var q, qi; // for frequency calculations
+var sel; // for array_monitor string selection (Off, Ch1, Ch2, Stereo, Disp)
 function switchBuffer() {
     if (b_debug.state==1) console.log("switchBuffer aptr:"+aptr)
-    var prevAptr=aptr; aptr=(aptr+1)%N;
+    prevAptr=aptr; aptr=(aptr+1)%N;
     if (audioCtx[aptr]==null) {
         audioCtx[aptr]=new window.AudioContext({sampleRate: 40960});
         astarted=false;
@@ -32,15 +35,14 @@ function switchBuffer() {
     // Fill the buffer with values between -1.0 and 1.0
     for (let c=0; c<myArrayBuffer[aptr].numberOfChannels; c++) {
     // This gives us the actual array that contains the data
-        var nowBuffering = myArrayBuffer[aptr].getChannelData(c);
-        var q=freqs[c]*100;
-        var v=k_vol.value; if (v>Math.floor(k_vol.ticks/2)) v-=k_vol.ticks;
+        nowBuffering = myArrayBuffer[aptr].getChannelData(c);
+        q=freqs[c]*100*L/4096;
         for (let i = 0; i < nowBuffering.length; i++) {
             nowBuffering[i] = 0;
-            var sel=a_monitor[k_monitor.value];
-            var qi=Math.round(q*i)%L; if (qi<0) qi+=L;
-            if (sel=="Beam") {
-                if (siggen[c].b_ch.state==1) 
+            sel=a_monitor[k_monitor.value];
+            qi=Math.round(q*i)%L; if (qi<0) qi+=L;
+            if (sel=="Disp") {
+                if (siggen[c].b_ch.state==1)
                     nowBuffering[i] = scope.calcModeY(c,sch[0][qi],sch[1][qi]) / 290;
             }
             else if (sel!="Off") {
@@ -55,7 +57,7 @@ function switchBuffer() {
     // destination so we can hear the sound
 //    source.connect(audioCtx.destination);
     // start the source playing
-    gainNode[aptr].gain.linearRampToValueAtTime(0.5*Math.pow(1.1,v),audioCtx[aptr].currentTime+0.30);
+    gainNode[aptr].gain.linearRampToValueAtTime(Math.pow(1.2,k_vol.value0)/4.3,audioCtx[aptr].currentTime+0.30);
     source[aptr].start();
     astarted=true;
     draw(ctx);
