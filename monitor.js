@@ -1,18 +1,17 @@
-const N=1;
+const nBuf=1; // number of buffers for clickless buffer switching
 var astarted, 
-    audioCtx=new Array(N).fill(null),
-    source=new Array(N).fill(null),
-    myArrayBuffer=new Array(N).fill(null),
-    gainNode=new Array(N).fill(null),
+    audioCtx=new Array(nBuf).fill(null),
+    source=new Array(nBuf).fill(null),
+    myArrayBuffer=new Array(nBuf).fill(null),
+    gainNode=new Array(nBuf).fill(null),
     nowBuffering;
 var aptr=0, prevAptr=0;
 var q, qi; // for frequency calculations
 var sel; // for array_monitor string selection (Off, Ch1, Ch2, Stereo, Disp)
 function switchBuffer() {
-    if (b_debug.state==1) console.log("switchBuffer aptr:"+aptr)
-    prevAptr=aptr; aptr=(aptr+1)%N;
+    prevAptr=aptr; aptr=(aptr+1)%nBuf;
     if (audioCtx[aptr]==null) {
-        audioCtx[aptr]=new window.AudioContext({sampleRate: 40960});
+        audioCtx[aptr]=new window.AudioContext({sampleRate: 44000});
         astarted=false;
         gainNode[aptr]=audioCtx[aptr].createGain();
     }

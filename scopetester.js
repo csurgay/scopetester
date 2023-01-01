@@ -3,22 +3,17 @@ function init() {
     canvas = document.getElementById("myCanvas");
     ctx = canvas.getContext("2d");
     mouseInit(canvas);
-    initBufgen();
-    siggen=[new Siggen(75,530,"1"),new Siggen(445,530,"2")];
-    scope=new Scope(70,10,51,17);
-    initChannels();
     timebase=1000000; // microseconds
     new DebugLabel(300,800,"free memory",15,()=>{return ""+
         "heap:"+window.performance.memory.totalJSHeapSize+
         " used:"+window.performance.memory.usedJSHeapSize+
         " limit:"+window.performance.memory.jsHeapSizeLimit;});
-    b_power=new PowerButton(15,30,30,30,"POWER","power");
-    // b_power.click(null); // need to switch on beacuse of media policy: on click needed before sound can be played
-    no_images_to_load=4;
+    no_images_to_load=5;
     vfd=new Image(); vfd.src='./images/vfd.jpg'; vfd.onload=()=>wait();
     vfd_=new Image(); vfd_.src='./images/vfd-.jpg'; vfd_.onload=()=>wait();
     led_on=new Image(); led_on.src='./images/led_on.jpg'; led_on.onload=()=>wait();
     led_off=new Image(); led_off.src='./images/led_off.jpg'; led_off.onload=()=>wait();
+    led_red=new Image(); led_red.src='./images/led_red.jpg'; led_red.onload=()=>wait();
 }
 
 function wait() {
@@ -35,6 +30,11 @@ function draw() {
 }
 
 function start() {
+    initBufgen();
+    siggen=[new Siggen(75,530,"1"),new Siggen(445,530,"2")];
+    scope=new Scope(70,10,DL/10,17);
+    initChannels();
+    b_power=new PowerButton(15,30,30,30,"POWER","power");
     draw();
 //    setTimeout(run,10);
 }

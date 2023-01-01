@@ -21,7 +21,7 @@ class Siggen extends pObject {
         this.k_phase.k_.limit=-1;
         this.k_dc=new DoubleKnob(pX2,pY4,201,101,"Offset (V DC) ","sigdouble",30,15);
         this.k_dc.setSwitchBufferNeeded();
-        new Vfd(pX3,pY1,6,()=>{return freqs[0+pNo-1];},()=>{return this.b_ch.state==0;});
+        new Vfd(pX3,pY1,6,()=>{return Math.round(1000*freqs[0+pNo-1])/1000;},()=>{return this.b_ch.state==0;});
         new Vfd(pX3,pY2,6,()=>{return ampls[0+pNo-1]/100;},()=>{return this.b_ch.state==0;});
         new Vfd(pX3,pY3,6,()=>{return Math.round(360*phases[0+pNo-1]/L);},()=>{return this.b_ch.state==0;});
         new Vfd(pX3,pY4,6,()=>{return dcs[0+pNo-1];},()=>{return this.b_ch.state==0;});

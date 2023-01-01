@@ -150,5 +150,6 @@ class Frame extends pObject {
         ctx.roundRect(this.x, this.y, this.w, this.h, 20);
         ctx.stroke();
         ctx.restore();
+        super.draw(ctx);
     }
 }

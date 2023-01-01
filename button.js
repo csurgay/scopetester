@@ -1,13 +1,14 @@
 // Button Label position per pType
-var xpos={"power":0,"on":-30, "small":0};
+var xpos={"power":0,"on":-33, "small":0};
 var ypos={"power":-27,"on":0,"small":-15};
 
 var grd; // for grad on Canvas
-var img; // for LEDon/LEDoff images
+var img; // for LEDon/LEDoff/LEDred images
 
 class Button extends pObject {
     constructor(pX,pY,pW,pH,pLabel,pType) {
         super(pX,pY,pW,pH);
+        this.img=led_on;
         this.live=true;
         this.cX=pX+pW/2;
         this.cY=pY+pH/2;
@@ -42,7 +43,7 @@ class Button extends pObject {
         else if (this.type=="on-nem") 
             ctx.fillRect(this.x-dVfd,this.y-dVfd/4,this.w+2*dVfd,this.h+dVfd/2);
         ctx.fill();
-        img=led_off; if (this.state==1) img=led_on;
+        img=led_off; if (this.state==1) img=this.img;
         ctx.drawImage(img,0,0,225,216,this.x,this.y,this.w,this.h);
         super.draw(ctx);
     }
@@ -73,6 +74,15 @@ class PowerButton extends Button {
     }
 }
 class ChOnButton extends Button {
+    click(event) {
+        if (b_power.state==1) super.click(event);
+    }
+}
+class IndicatorLed extends Button {
+    constructor(pX,pY,pW,pH,pLabel,pType) {
+        super(pX,pY,pW,pH,pLabel,pType);
+        this.img=led_red;
+    }
     click(event) {
         if (b_power.state==1) super.click(event);
     }

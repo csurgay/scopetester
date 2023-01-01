@@ -1,6 +1,8 @@
 var canvas, ctx, now, scope, siggen; // main ui objects
-var no_images_to_load, vfd, vfd_, led_on, led_off; // canvas images
-const L = 2048, L2=L/2, L4=L/4, L8=L/8; // buffer length
+var no_images_to_load, vfd, vfd_, led_on, led_off, led_red; // canvas images
+const L=2000, L2=L/2, L4=L/4, L8=L/8; // buffer length
+const N=4; // sample channel buffers (sch) length = N*L
+const DL=500; // Display length
 const A = 127; // default amplitude (on integer scale, A -> 1.0)
 var timebase, q, delay; // not sure yet, q=timebase*L/512
 const sqrt=1.0293022366; // ^24=2 (sqrt=1.07177347; // ^10=2)
@@ -11,7 +13,7 @@ var k_intensity, k_focus, k_illum, k_xpos, k_vol, k_monitor;
 var b_power;
 var bufgen=[];
 var ch=[new Array(L),new Array(L)]; // original channel buffer, will get rid of
-var y=[new Array(L), new Array(L)]; // two y buffers for scope
+var y=[new Array(N*L), new Array(N*L)]; // two y buffers for scope
 var sch=[new Array(L),new Array(L)]; // signal channel buffer, no freq
 var micch=[new Array(L),new Array(L)]; // mic channel buffer
 var order, ampl, freq, ampls=[0,0], ampls_=[0,0], avgs=[0,0];
@@ -20,7 +22,7 @@ var ui=[]; // for hit, click, turn
 var buttons=[]; // for switch off at power off
 var b_chon, k_time, k_delay, k_delaybase, k_trig, k_hold, k_slope;
 var radio_mode, b_ch1, b_ch2, b_dual, b_add, b_mod, b_xy;
-var radio_trig, b_auto, b_ch1tr, b_ch2tr;
+var radio_trig, b_limit, b_auto, b_ch1tr, b_ch2tr, b_mode, b_chtr;
 var b_find, b_resv, b_mic, b_debug;
 const dVfd=16, dButton=20;
 const tb=[ 500,200,100,50,20,10,5,2, 1, .5,.2,.1,.05,.02,.01,.005,.002,.001];

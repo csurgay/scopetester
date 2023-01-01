@@ -1,28 +1,31 @@
 class BufferGenerator {
-    constructor(pName,pFunction,pHalfIcon) {
+    constructor(pName,pFunction,pHalfBufferIcon) {
         this.name=pName;
         this.f=pFunction;
-        this.halfIcon=pHalfIcon;
+        this.halfIcon=pHalfBufferIcon;
     }
 }
+
 function initBufgen() {
-//    bufgen.push(new BufferGenerator("GND",f_gnd));
-    bufgen.push(new BufferGenerator("Sine",f_sine));
-    bufgen.push(new BufferGenerator("Ramp",f_ramp));
-//    bufgen.push(new BufferGenerator("PWM",f_pwm));
-    bufgen.push(new BufferGenerator("Square",f_square_ideal));
-    bufgen.push(new BufferGenerator("Square7",f_square_harmonic));
-    bufgen.push(new BufferGenerator("Triangle",f_triangle_ideal));
-    bufgen.push(new BufferGenerator("Trapezoid",f_trapezoid));
-    bufgen.push(new BufferGenerator("Sinc",f_sinc));
-    bufgen.push(new BufferGenerator("Beats",f_beats));
-    bufgen.push(new BufferGenerator("ECG",f_ecg));
+//    bufgen.push(new BufferGenerator("GND",f_gnd,'fullIcon'));
+    bufgen.push(new BufferGenerator("Sine",f_sine,'fullIcon'));
+    bufgen.push(new BufferGenerator("Ramp",f_ramp,'fullIcon'));
+//    bufgen.push(new BufferGenerator("PWM",f_pwm,'fullIcon'));
+    bufgen.push(new BufferGenerator("Square",f_square_ideal,'fullIcon'));
+    bufgen.push(new BufferGenerator("Square7",f_square_harmonic,'fullIcon'));
+    bufgen.push(new BufferGenerator("Triangle",f_triangle_ideal,'fullIcon'));
+    bufgen.push(new BufferGenerator("Trapezoid",f_trapezoid,'fullIcon'));
+    bufgen.push(new BufferGenerator("Sinc",f_sinc,'fullIcon'));
+    bufgen.push(new BufferGenerator("Exp",f_exp,'fullIcon'));
+    bufgen.push(new BufferGenerator("Log",f_log,'fullIcon'));
+    bufgen.push(new BufferGenerator("Beats",f_beats,'fullIcon'));
+    bufgen.push(new BufferGenerator("ECG",f_ecg,'fullIcon'));
     // Menomano (LaLinea) eredeti plotter rajz -> buffer function
     initMenomano();
     bufgen.push(new BufferGenerator("MenoX",f_menomanoX,"halficon"));
     bufgen.push(new BufferGenerator("MenoY",f_menomanoY,"halficon"));
-//    bufgen.push(new BufferGenerator("Sawtooth",f_sawtooth));
-//    bufgen.push(new BufferGenerator("Triangle7",f_triangle_harmonic));
+//    bufgen.push(new BufferGenerator("Sawtooth",f_sawtooth,'fullIcon'));
+//    bufgen.push(new BufferGenerator("Triangle7",f_triangle_harmonic,'fullIcon'));
 }
 
 function initMenomano() {
@@ -54,7 +57,6 @@ function initChannels() {
         freqs[i]/=10.0; if (freqs[i]<0) freqs[i]=freqs[i]/10;
         freqs_[i]/=1000.0;
         freqs[i]=scales[i]*(freqs[i]+1)+freqs_[i];
-        freqs[i]=Math.round(freqs[i]*1000)/1000;
         if (freqs[i]<0.001) freqs[i]=0.001;
         // phase
         phases[i]=15*siggen[i].k_phase.k.value+siggen[i].k_phase.k_.value0/2; 
@@ -69,7 +71,7 @@ function initChannels() {
         ampl=ampls[i];
         freq=freqs[i];
         order=siggen[i].k_func.k_.value;
-        for (var x=0; x<L; x++) {
+        for (var x=0; x<N*L; x++) {
             if (b_mic.state==1) {
                 sch[i][x]=(1-2*siggen[i].b_inv.state)*micch[i][(freq*x+phases[i])];
             }
@@ -118,6 +120,29 @@ function f_sinc(x,o) {
     if (o>16) o-=33;
     angle_rad = 1.0 * x * Math.PI / L2;
     return ampl*Math.sin((2+o/8)*Math.PI*angle_rad)/(Math.PI*angle_rad);
+}
+function f_exp(x,o) {
+    angle_rad=x*Math.PI/L2;
+    if (o>16) o-=33;
+        yy=Math.E*Math.pow(2,o);
+        yResult=2*ampl*Math.pow(yy,angle_rad)/Math.pow(yy,2*Math.PI)-ampl;
+    if (o<0) {
+        yResult=2*ampl*( (16+o)*(Math.pow(Math.E,angle_rad)/Math.pow(Math.E,2*Math.PI)) 
+        + (-o)*((o*x)/(o*L)) ) / 16 -ampl;
+    }
+    return yResult;
+}
+function f_log(x,o) {
+    if (x==L) return ampl;
+    angle_rad=1.0*(L-x)*Math.PI/L2;
+    if (o>16) o-=33;
+        yy=Math.E*Math.pow(2,o);
+        yResult=-2*ampl*Math.pow(yy,angle_rad)/Math.pow(yy,2*Math.PI)+ampl;
+    if (o<0) {
+        yResult=-2*ampl*( (16+o)*(Math.pow(Math.E,angle_rad)/Math.pow(Math.E,2*Math.PI)) 
+        + (-o)*((o*(L-x))/(o*L)) ) / 16 +ampl;
+    }
+    return yResult;
 }
 function f_pwm(x,o) {
     if (o>16) o-=33;
@@ -179,7 +204,7 @@ function f_ecg(x,o) {
     if (o>16) o-=33; o=-o;
     x = x % L;
     var H=140.0*ampl/127;
-    var h=L/512;
+    var h=L/DL;
     var P0=-60, P1=h*(30-o), P2=h*(80+2*o), P3=h*20, P=H/(8.0+o/4);
     var Q1=h*(10+o/2), Q=H/(4.0)-o;
     var R1=h*(30+o), R=3*H/(2.0)-2*o;

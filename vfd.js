@@ -8,17 +8,16 @@ class Vfd extends pObject {
     }
     draw(ctx) {
         var dx=0;
-        var v=this.getValue();
-        var s=""+Math.abs(v);
+        var s=""+Math.abs(this.getValue());
         if (s.indexOf('.')<0) s+='.'; var ss=s.split('.');
         if (ss[0].length<this.digits/2) ss[0]=("000000"+ss[0]).slice(-this.digits/2);
         ss[1]=(ss[1]+"000000").substring(0,this.digits/2);
         s=(ss[0]+"."+ss[1]).substring(0,this.digits+1);
         var l=s.length; if (s.indexOf('.')>=0) l++;
-        if (v<0) s='-'+s.slice(1);
+        if (this.getValue()<0) s='-'+s.slice(1);
         ctx.save();
         ctx.beginPath();
-        var grd = ctx.createRadialGradient(this.x+this.w/2,this.y+this.h/2,
+        grd = ctx.createRadialGradient(this.x+this.w/2,this.y+this.h/2,
             2*this.w/5, this.x+this.w/2,this.y+this.h/2,
             2*this.w/3);
         grd.addColorStop(0, "rgb(10,30,30)");
@@ -45,6 +44,7 @@ class Vfd extends pObject {
         ctx.rect(this.x-d,this.y-d,this.w+2*d,this.h+2*d);
         ctx.stroke();
         ctx.restore();
+        super.draw(ctx);
     }
 }
 

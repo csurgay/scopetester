@@ -16,6 +16,7 @@ class Knob extends pObject {
         super(pX-pR,pY-pR,2*pR,2*pR);
         this.lastTurn=lastDigits(Date.now());
         this.turnCount=0;
+        this.defaultFastRate=10;
         this.fastRate=1;
         this.live=true;
         this.limit=pLimit; // ticks/2: végállásos, -1: körbeforog
@@ -47,10 +48,10 @@ class Knob extends pObject {
         now=lastDigits(Date.now());
         if (now-this.lastTurn>50) { this.turnCount=0; }
         this.turnCount++;
-        this.fastRate=this.turnCount<3?1:10;
+        this.fastRate=this.turnCount<3?1:this.defaultFastRate;
         this.lastTurn=now;
         // no fastRate turn below 50 tick knobs
-        if (this.ticks<50) this.fastRate=1;
+        if (this.ticks<20) this.fastRate=1;
         // set new value within limit
         for (var i=0; i<this.fastRate; i++) {
             if (this.limit==-1 ||
