@@ -47,7 +47,9 @@ class Scope extends pObject {
         k_delay.k.limit=k_delay.k.ticks-1;
         k_delay.k_.limit=k_delay.k_.ticks-1;
         k_delaybase=new DelaybaseKnob(695,180);
-        k_xpos=new Knob(24,850,75,20,49,0,"Pos X","knob");
+        k_xpos=new Knob(24,820,75,20,49,0,"Pos X","knob");
+        b_xcal=new IndicatorLed(895,90,24,16,"Cal","on");
+        b_ycal=new IndicatorLed(660,430,24,16,"Cal","on");
         k_trig=new DoubleKnob(800,520,50,50,"Level","double_s",30,15);
         k_trig.k.defaultFastRate=1;
 //        k_hold=new DoubleKnob(880,520,50,50,"HoldOff","double_s",30,15);
@@ -119,12 +121,11 @@ class Scope extends pObject {
         ctx.save();
         ctx.roundRect(this.x+3, this.y+3, this.w-6, this.h-6, 20);
         ctx.clip();
-        ctx.beginPath();
-        ctx.strokeStyle="rgb(0,"+(255-5*k_intensity.ticks/2+5*int)+",0)";
-        ctx.lineWidth=3+int/3+Math.abs(blur/2);
-        ctx.filter="blur("+Math.abs(blur/2)+"px)";
+        // ctx.strokeStyle="rgb(0,"+(255-5*k_intensity.ticks/2+5*int)+",0)";
+        // ctx.lineWidth=3+int/3+Math.abs(blur/2);
+        // ctx.filter="blur("+Math.abs(blur/2)+"px)";
         var px,py0,py=[0,0];
-        var minY=1000000, maxY=-1000000;
+        var minY=1000000, maxY=-1000000; // for find
         // timebase
         var kt=k_time.k.value0;
         var kt_=k_time.k_.value0;
@@ -136,6 +137,8 @@ class Scope extends pObject {
         delay=tb[kdb+Math.floor(k_delaybase.k.ticks/2-1)]*tb_[kdb_+Math.floor(k_delaybase.k_.ticks/2)];
         delay=(10*k_delay.k.value+k_delay.k_.value)*delay;
         delay=delay*L;
+        // for beam intensity
+        sumdelta[0]=0;
         // loop of channels
         for (var c=1; c>=0; c--) {
             // level (Volts/Div)
@@ -166,9 +169,14 @@ class Scope extends pObject {
                 // if CH is switched on
                 if (scope.ch[c].b_gnd.state==0 && siggen[c].b_ch.state==1) {
                     // main y calculation
-                    QI=Math.round(freqs[c]*(10.0*Q*i+delay)%L); if (QI<0) QI+=L;
-                    y[c][i]=(sch[c][QI]-avgs[c])/level/2;
-                    // find
+                    QI=Math.round(freqs[c]*(10.0*Q*i+delay)%(L));
+                    if (freqs[c]*10*Q>=L/2) { 
+                        y[c][i]=i%2==0?(Math.min(...sch[c])-avgs[c])/level/2:(Math.max(...sch[c])-avgs[c])/level/2;
+                    }
+                    else {
+                        y[c][i]=(sch[c][QI]-avgs[c])/level/2;
+                    }
+                    // find values calc
                     if (findState!="off") y[c][i]/=findValue;
                     if (y[c][i]<minY) minY=y[c][i];
                     if (y[c][i]>maxY) maxY=y[c][i];
@@ -176,8 +184,15 @@ class Scope extends pObject {
                 else {
                     y[c][i]=0;
                 }
+                if (i>0) sumdelta[0]+=Math.abs(y[c][i]-y[c][i-1]);
             }
         }
+        sumdelta[0]/=N*L;
+        console.log(sumdelta[0]);
+        ctx.beginPath();
+        ctx.strokeStyle="rgb(0,"+(255-5*k_intensity.ticks/2+5*int-sumdelta[0]/10)+",0)";
+        ctx.lineWidth=3+int/3+Math.abs(blur/2);
+        ctx.filter="blur("+(Math.abs(blur/2)+sumdelta[0]/100)+"px)";
         if (findState=="search" && minY>-4*dd && maxY<4*dd) {
             findState="found";
         }
@@ -204,7 +219,7 @@ class Scope extends pObject {
                     b_limit.state=1;
                 }
             }
-            lastTptr[c]=tptr[c];
+            lastTptr[c]=tptr[c]>0?tptr[c]-1:tptr[c];
         }
         if (b_auto.state==1) tptr[0]=0;
         else if (b_ch2tr.state==1) tptr[0]=tptr[1];

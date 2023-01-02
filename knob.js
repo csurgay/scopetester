@@ -16,7 +16,8 @@ class Knob extends pObject {
         super(pX-pR,pY-pR,2*pR,2*pR);
         this.lastTurn=lastDigits(Date.now());
         this.turnCount=0;
-        this.defaultFastRate=10;
+//        this.defaultFastRate=10;
+        this.defaultFastRate=1;
         this.fastRate=1;
         this.live=true;
         this.limit=pLimit; // ticks/2: végállásos, -1: körbeforog
@@ -42,17 +43,17 @@ class Knob extends pObject {
         this.setValue0();
         super.click();
     }
-    turn(event) {
-        pDelta=-event.deltaY;
+    turn(event,pDelta) {
         // accelerated turn if fastRate>limit within duration milliseconds
         now=lastDigits(Date.now());
-        if (now-this.lastTurn>50) { this.turnCount=0; }
+        if (now-this.lastTurn>20) { this.turnCount=0; }
         this.turnCount++;
         this.fastRate=this.turnCount<3?1:this.defaultFastRate;
         this.lastTurn=now;
         // no fastRate turn below 50 tick knobs
-        if (this.ticks<20) this.fastRate=1;
+        if (this.ticks<50) this.fastRate=1;
         // set new value within limit
+        if (this.ticks>50) this.fastRate=Math.abs(pDelta);
         for (var i=0; i<this.fastRate; i++) {
             if (this.limit==-1 ||
                 ((this.value!=this.limit || pDelta<0) &&
@@ -63,7 +64,7 @@ class Knob extends pObject {
             }
         }
         this.setValue0();
-        super.turn();
+        super.turn(event,pDelta);
     }
     draw(ctx) {
         xd=this.x+this.r;
@@ -105,10 +106,10 @@ class DoubleKnob extends pObject {
         this.k.setSwitchBufferNeeded();
         this.k_.setSwitchBufferNeeded();
     }
-    turn(event) {
-        if (this.k_.hit(event)) this.k_.turn(event);
-        else if (this.k.hit(event)) this.k.turn(event);
-        super.turn();
+    turn(event,pDelta) {
+        if (this.k_.hit(event)) this.k_.turn(event,pDelta);
+        else if (this.k.hit(event)) this.k.turn(event,pDelta);
+        super.turn(event,pDelta);
     }
 }
 
@@ -121,10 +122,6 @@ class DekorKnob extends DoubleKnob {
         this.k_.pointercolor="#EEEEEE";
         this.iconCircle(ui,pX,pY+2,this.rDekor,vals);
         this.captionCircle(ui,pX,pY+3,this.rDekor);
-    }
-    iconCircle(ui,x,y,r,tb) {
-    }
-    captionCircle(ui,x,y,r) {
     }
 }
 
@@ -213,7 +210,7 @@ class UiVoltDekor extends pObject {
         ui.push(this);
     }
     draw(ctx) {
-        super.draw(ctx);
+//        super.draw(ctx);
         ctx.beginPath();
         ctx.lineWidth=16;
         ctx.strokeStyle="rgba(100,100,100,0.35)";
@@ -247,7 +244,7 @@ class FuncKnob extends DoubleKnob {
 
 class ScaleKnob extends Knob {
     constructor(pX,pY) {
-        super(-1,pX,pY,25,scale.length,0,"Range","range");
+        super(3,pX,pY,25,scale.length,0,"Range","range");
         this.iconCircle(pX,pY+4,40,scale);
         ui.push(this);
     }
@@ -281,8 +278,8 @@ class MonitorKnob extends Knob {
     on() {
         return a_monitor[this.value]!="Off";
     }
-    turn(event) {
-        super.turn(event);
+    turn(event,pDelta) {
+        super.turn(event,pDelta);
         if (this.on()) switchBuffer();
         else this.switchOff();
     }

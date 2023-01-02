@@ -9,12 +9,12 @@ class BufferGenerator {
 function initBufgen() {
 //    bufgen.push(new BufferGenerator("GND",f_gnd,'fullIcon'));
     bufgen.push(new BufferGenerator("Sine",f_sine,'fullIcon'));
-    bufgen.push(new BufferGenerator("Ramp",f_ramp,'fullIcon'));
+    bufgen.push(new BufferGenerator("Triangle",f_triangle_ideal,'fullIcon'));
 //    bufgen.push(new BufferGenerator("PWM",f_pwm,'fullIcon'));
     bufgen.push(new BufferGenerator("Square",f_square_ideal,'fullIcon'));
     bufgen.push(new BufferGenerator("Square7",f_square_harmonic,'fullIcon'));
-    bufgen.push(new BufferGenerator("Triangle",f_triangle_ideal,'fullIcon'));
     bufgen.push(new BufferGenerator("Trapezoid",f_trapezoid,'fullIcon'));
+    bufgen.push(new BufferGenerator("Ramp",f_ramp,'fullIcon'));
     bufgen.push(new BufferGenerator("Sinc",f_sinc,'fullIcon'));
     bufgen.push(new BufferGenerator("Exp",f_exp,'fullIcon'));
     bufgen.push(new BufferGenerator("Log",f_log,'fullIcon'));

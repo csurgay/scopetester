@@ -13,7 +13,7 @@ class pObject {
     setSwitchBufferNeeded() {
         this.switchBufferNeeded=true;
     }
-    turn(event) {
+    turn(event,pDelta) {
         if (this.live && k_monitor.on() && this.switchBufferNeeded) setTimeout(switchBuffer,1);
     }
     click(event) {

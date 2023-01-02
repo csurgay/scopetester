@@ -21,12 +21,23 @@ function wait() {
     if (no_images_to_load==0) setTimeout(start,100);
 }
 
-function draw() {
+function draw(ctx) {
+    drawing=true;
+    // Cal LEDs
+    b_xcal.state=0;
+    if (k_time.k_.value!=0) b_xcal.state=1;
+    if (k_delaybase.k_.value!=0 && k_delay.k.value!=0) b_xcal.state=1;
+    if (k_delaybase.k_.value!=0 && k_delay.k_.value!=0) b_xcal.state=1;
+    b_ycal.state=0;
+    if (scope.ch[0].k_volts.k_.value!=0) b_ycal.state=1;
+    if (scope.ch[1].k_volts.k_.value!=0) b_ycal.state=1;
+    // draw
     ctx.save();
     ctx.fillStyle=bgcolor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.restore();
     for (var i=0; i<ui.length; i++) ui[i].draw(ctx);
+    drawing=false;
 }
 
 function start() {
@@ -35,12 +46,12 @@ function start() {
     scope=new Scope(70,10,DL/10,17);
     initChannels();
     b_power=new PowerButton(15,30,30,30,"POWER","power");
-    draw();
+    draw(ctx);
 //    setTimeout(run,10);
 }
 
 function run() {
-    draw();
+    draw(ctx);
     if (b_power.state==1) setTimeout(run,1000);
 }
 
