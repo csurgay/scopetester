@@ -20,7 +20,7 @@ function initBufgen() {
     bufgen.push(new BufferGenerator("Log",f_log,'fullIcon'));
     bufgen.push(new BufferGenerator("Beats",f_beats,'fullIcon'));
     bufgen.push(new BufferGenerator("ECG",f_ecg,'fullIcon'));
-    // Menomano (LaLinea) eredeti plotter rajz -> buffer function
+    // Menomano (LaLinea) eredeti plotter rajz -> buffer function buffer
     initMenomano();
     bufgen.push(new BufferGenerator("MenoX",f_menomanoX,"halficon"));
     bufgen.push(new BufferGenerator("MenoY",f_menomanoY,"halficon"));

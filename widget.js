@@ -1,3 +1,5 @@
+var hitX, hitY;
+
 class pObject {
     constructor(pX,pY,pW,pH) {
         this.x=pX;
@@ -7,24 +9,27 @@ class pObject {
         this.switchBufferNeeded=false;
         this.live=false; // live pObjects: Button, Knob, Radio
         this.bgcolor=null;
+        this.fgcolor=null;
         this.hitPad=0;
+        this.debugFrame=true;
+        this.value=0; // for save/load presets
         return this;
     }
     setSwitchBufferNeeded() {
         this.switchBufferNeeded=true;
     }
-    turn(event,pDelta) {
-        if (this.live && k_monitor.on() && this.switchBufferNeeded) setTimeout(switchBuffer,1);
+    turnY(pDelta) {
+        if (this.live && k_monitor.on() && this.switchBufferNeeded) setTimeout(switchBuffer,10);
     }
-    click(event) {
-        if (this.live && k_monitor.on() && this.switchBufferNeeded) setTimeout(switchBuffer,1);
+    clickXY(x,y) {
+        if (this.live && k_monitor.on() && this.switchBufferNeeded) setTimeout(switchBuffer,10);
     }
-    hit(event) {
+    hitXY(x,y) {
         if (this.live) {
-            var pX=event.clientX-canvas.getBoundingClientRect().left;
-            var pY=event.clientY-canvas.getBoundingClientRect().top
-            if (pX>this.x+this.hitPad && pX<this.x+this.w-this.hitPad && 
-                pY>this.y+this.hitPad && pY<this.y+this.h-this.hitPad) return true; 
+            hitX=x-canvas.getBoundingClientRect().left;
+            hitY=y-canvas.getBoundingClientRect().top
+            if (hitX>this.x+this.hitPad && hitX<this.x+this.w-this.hitPad && 
+                hitY>this.y+this.hitPad && hitY<this.y+this.h-this.hitPad) return true; 
             else return false;
         }
     }
@@ -38,14 +43,14 @@ class pObject {
         ctx.rect(this.x-1,this.y-1,this.w+2,this.h+2);
         ctx.stroke();
     }
-    fillRect(ctx) {
-        if (this.bgcolor!=null) {
-            ctx.fillStyle=this.bgcolor;
-            ctx.fillRect(this.x-1,this.y-1,this.w+2,this.h+2);            
-        }
-    }
+    // fillRect(ctx) {
+    //     if (this.bgcolor!=null) {
+    //         ctx.fillStyle=this.bgcolor;
+    //         ctx.fillRect(this.x-1,this.y-1,this.w+2,this.h+2);            
+    //     }
+    // }
     draw(ctx) {
-        if (b_debug.state==1) this.drawRect(ctx);
+        if (b_debug.state==1 && this.debugFrame) this.drawRect(ctx);
     }
 }
 
@@ -86,6 +91,8 @@ class Label extends pObject {
     constructor(pX,pY,pS,pSize) {        
         var ret=super(pX,pY,getTextWidth(ctx,pS,pSize),pSize+1);
         this.tX=pX; this.tY=pY;
+        this.bgcolor=bgcolor;
+        this.fgcolor="black";
         this.adjustRect(this.tX-this.w/2-2,this.tY-this.h/2,this.w+4,this.h-3);
         this.s=pS;
         this.size=pSize;
@@ -101,14 +108,13 @@ class Label extends pObject {
     draw(ctx) {
         ctx.beginPath();
         ctx.font = this.size+'px Arial';
-        ctx.fillStyle=bgcolor;
-        ctx.fillRect(this.x,this.y,this.w,this.h);
-        if (b_debug.state==1) this.drawRect(ctx);
-        this.fillRect(ctx);
+        ctx.fillStyle=this.bgcolor;
+        ctx.fillRect(this.x,this.y-1,this.w,this.h+3);
         ctx.fill();
         ctx.stroke();
         ctx.beginPath();
         ctx.fillStyle="black";
+        ctx.fillStyle=this.fgcolor;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(this.s,this.tX,this.tY)
@@ -120,6 +126,7 @@ class Label extends pObject {
 class DebugLabel extends Label {
     constructor(pX,pY,pS,pSize,pCalcFunc) {
         super(pX,pY,pS,pSize);
+        this.debugFrame=false;
         this.calcFunc=pCalcFunc;
     }
     draw(ctx) {

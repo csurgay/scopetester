@@ -6,6 +6,7 @@ var context = null;
 var bufferSize;
 var numberOfInputChannels;
 var numberOfOutputChannels;
+var micTimeout;
 
 function recordAudio() {
     // Initialize recorder
@@ -43,6 +44,8 @@ function recordAudio() {
         recorder.connect(context.destination);
     },
     function (e) {
+        clearTimeout(micTimeout);
+        b_mic.callSwitchOff();
         console.error(e);
     });
 }

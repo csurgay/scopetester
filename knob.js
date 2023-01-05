@@ -38,12 +38,12 @@ class Knob extends pObject {
         this.value0=this.value;
         if (this.value0>this.ticks/2) this.value0-=this.ticks;
     }
-    click(event) {
+    clickXY(x,y) {
         this.value=this.defaultValue;
         this.setValue0();
-        super.click();
+        super.clickXY(x,y);
     }
-    turn(event,pDelta) {
+    turnY(pDelta) {
         // accelerated turn if fastRate>limit within duration milliseconds
         now=lastDigits(Date.now());
         if (now-this.lastTurn>20) { this.turnCount=0; }
@@ -64,7 +64,7 @@ class Knob extends pObject {
             }
         }
         this.setValue0();
-        super.turn(event,pDelta);
+        super.turnY(pDelta);
     }
     draw(ctx) {
         xd=this.x+this.r;
@@ -106,11 +106,6 @@ class DoubleKnob extends pObject {
         this.k.setSwitchBufferNeeded();
         this.k_.setSwitchBufferNeeded();
     }
-    turn(event,pDelta) {
-        if (this.k_.hit(event)) this.k_.turn(event,pDelta);
-        else if (this.k.hit(event)) this.k.turn(event,pDelta);
-        super.turn(event,pDelta);
-    }
 }
 
 class DekorKnob extends DoubleKnob {
@@ -120,6 +115,9 @@ class DekorKnob extends DoubleKnob {
         this.k_.color="rgb(200,20,20)";
         this.k_.haircolor=this.k_.color;
         this.k_.pointercolor="#EEEEEE";
+        this.varLabel=new Label(pX-rDekor,pY-rDekor,"Var",11);
+        this.varLabel.bgcolor="rgba(200,20,20,0.75)";
+        this.varLabel.fgcolor="rgba(220,220,220,1)";
         this.iconCircle(ui,pX,pY+2,this.rDekor,vals);
         this.captionCircle(ui,pX,pY+3,this.rDekor);
     }
@@ -223,7 +221,7 @@ class UiVoltDekor extends pObject {
 class FuncKnob extends DoubleKnob {
     constructor(pX,pY) {
         super(pX,pY,bufgen.length,33,"Func                         ","func",35,19);
-        this.dutyLabel=new Label(pX+40,pY-55,"Duty",12);
+        this.dutyLabel=new Label(pX+40,pY-55,"Param",12);
         this.dutyLabel.bgcolor=hl_gray;
         this.k.value=0;
         this.k_.color="gray";
@@ -235,7 +233,7 @@ class FuncKnob extends DoubleKnob {
     iconCircle(x,y,r,bufgen) {
         var n=bufgen.length;
         for (var i=0; i<n; i++) {
-            new Icon(x+r*Math.sin(2*Math.PI*i/n),
+            new Icon(x+r*Math.sin(2*Math.PI*i/n)-2,
             y-r*Math.cos(2*Math.PI*i/n),20,6,bufgen[i].f,
             bufgen[i].halfIcon);
         }
@@ -278,12 +276,12 @@ class MonitorKnob extends Knob {
     on() {
         return a_monitor[this.value]!="Off";
     }
-    turn(event,pDelta) {
-        super.turn(event,pDelta);
+    turnY(pDelta) {
+        super.turnY(pDelta);
         if (this.on()) switchBuffer();
         else this.switchOff();
     }
-    callSwitchOff(event) {
+    callSwitchOff() {
         this.value=this.defaultValue; // this have to be "Off"
         this.switchOff();
     }

@@ -24,23 +24,25 @@ class Scope extends pObject {
         b_chon=[b_ch1,b_ch2];
         b_dual=new ChOnButton(795,650,24,16,"Dual","on");
         b_add=new ChOnButton(795,650,24,16,"Add","on");
-        b_mod=new ChOnButton(795,650,24,16,"Mod","on");
+        b_mod=new ChOnButton(795,650,24,16,"AM","on");
         b_xy=new ChOnButton(795,650,24,16,"X-Y","on");
         radio_mode=new Radio(795,650,[b_ch1,b_ch2,b_dual,b_add,b_mod,b_xy]);
-        b_auto=new ChOnButton(880,534,24,16,"Auto","on");
-        b_ch1tr=new ChOnButton(880,534,24,16,"Ch1","on");
-        b_ch2tr=new ChOnButton(880,534,24,16,"Ch2","on");
-        b_mode=new ChOnButton(880,534,24,16,"Mode","on");
+        b_auto=new ChOnButton(895,530,24,16,"Auto","on");
+        b_ch1tr=new ChOnButton(895,530,24,16,"CH1","on");
+        b_ch2tr=new ChOnButton(895,530,24,16,"CH2","on");
+        b_mode=new ChOnButton(895,530,24,16,"Mode","on");
         b_chtr=[b_ch1tr,b_ch2tr];
-        radio_trig=new Radio(880,534,[b_auto,b_ch1tr,b_ch2tr,b_mode]);
-        b_limit=new IndicatorLed(880,500,24,16,"Limit","on");
-        b_find=new FindButton(20,300,24,16,"Find","small");
+        radio_trig=new Radio(895,530,[b_auto,b_ch1tr,b_ch2tr,b_mode]);
+        b_limit=new IndicatorLed(895,480,24,16,"Limit","on");
+        b_find=new FindButton(20,310,24,16,"Find","small");
+        b_resv=new ResvButton(20,345,24,16,"Preset","small");
         b_mic=new MicButton(20,380,24,16,"Mic","small");
-        b_debug=new ChOnButton(20,420,24,16,"Debug","small");
+        b_debug=new ChOnButton(20,415,24,16,"Debug","small");
         this.ch=[new ScopeChannel(685,80), new ScopeChannel(825,80)];
-        k_intensity=new Knob(8,30,120,15,17,0,"Intensity","knob");
-        k_focus=new Knob(8,30,180,15,17,0,"Focus","knob");
-        k_illum=new Knob(16,30,240,15,17,0,"Illum","knob");
+        k_intensity=new Knob(8,30,105,15,17,0,"Intensity","knob");
+        k_focus=new Knob(8,30,160,15,17,0,"Focus","knob");
+        k_illum=new Knob(16,30,215,15,17,0,"Illum","knob");
+        k_rot=new Knob(90,30,270,15,181,0,"Rotation","knob");
         k_time=new TimeKnob(850,180);
         new Vfd(710,75,4,()=>{return 10*k_delay.k.value+k_delay.k_.value;},()=>{return b_power.state==0 || 10*k_delay.k.value+k_delay.k_.value==0;});
         k_delay=new DoubleKnob(665,75,100,100,"Delay","double",35,20);
@@ -54,7 +56,6 @@ class Scope extends pObject {
         k_trig.k.defaultFastRate=1;
 //        k_hold=new DoubleKnob(880,520,50,50,"HoldOff","double_s",30,15);
         k_slope=new Knob(-1,800,590,17,2,0,"Slope","knob");
-        b_resv=new ResvButton(20,340,24,16,"Resv","small");
         b_resv.label.size=12;
     }
     drawScreen(ctx) {
@@ -184,13 +185,13 @@ class Scope extends pObject {
                 else {
                     y[c][i]=0;
                 }
-                if (i>0) sumdelta[0]+=Math.abs(y[c][i]-y[c][i-1]);
+                if (i>0) if (!isNaN(y[c][i]) && !isNaN(y[c][i-1])) 
+                    sumdelta[0]+=Math.abs(y[c][i]-y[c][i-1]);
             }
         }
         sumdelta[0]/=N*L;
-        console.log(sumdelta[0]);
         ctx.beginPath();
-        ctx.strokeStyle="rgb(0,"+(255-5*k_intensity.ticks/2+5*int-sumdelta[0]/10)+",0)";
+        ctx.strokeStyle="rgba(0,"+(255-5*k_intensity.ticks/2+5*int-sumdelta[0]/10)+",0,"+100/sumdelta[0]+")";
         ctx.lineWidth=3+int/3+Math.abs(blur/2);
         ctx.filter="blur("+(Math.abs(blur/2)+sumdelta[0]/100)+"px)";
         if (findState=="search" && minY>-4*dd && maxY<4*dd) {
@@ -226,24 +227,34 @@ class Scope extends pObject {
         // actual beam drawing
         if (b_dual.state==1) {
             for (var c=0; c<2; c++) {
-                ctx.moveTo(px,py[c]-y[c][0+tptr[0]]);
+                ctx.moveTo(px,py[c]-y[c][0+tptr[0]]-k_rot.value0*DL/200);
                 for (var i=0; i<DL; i++) {
-                    ctx.lineTo(px+i,py[c]-y[c][i+tptr[0]]);
+                    ctx.lineTo(px+i,py[c]-y[c][i+tptr[0]]-k_rot.value0*(DL/2-i)/100);
                 }
             }
         }
         else if (b_xy.state==1) {
+            // rotation
+            var fi=k_rot.value0*1*Math.PI/180;
+            for (var i=0; i<DL; i++) {
+                var x1=y[0][i], y1=y[1][i];
+                y[0][i]=x1*Math.cos(fi)+y1*Math.sin(fi);
+                y[1][i]=-x1*Math.sin(fi)+y1*Math.cos(fi);
+            }
+            // screen center
             px+=5*d;
             var py=(py[0]+py[1])/2;
-            ctx.moveTo(px+y[0][0],py-y[1][0]);    
-            for (var i=1; i<DL; i++)
-                ctx.lineTo(px+y[0][i],py-y[1][i]);    
-            ctx.lineTo(px+y[0][0],py-y[1][0]);    
+            // actual beem drawing
+            ctx.moveTo(px+y[0][0],py-y[1][0]);
+            for (var i=1; i<DL; i++) {
+                ctx.lineTo(px+y[0][i],py-y[1][i]);
+            }
+            ctx.lineTo(px+y[0][0],py-y[1][0]);
         }
         else {
-            ctx.moveTo(px,py0-this.calcModeY(-1,y[0][0+tptr[0]],y[1][0+tptr[0]]));
+            ctx.moveTo(px,py0-this.calcModeY(-1,y[0][0+tptr[0]],y[1][0+tptr[0]])-k_rot.value0*DL/200);
             for (var i=1; i<DL; i++) {
-                ctx.lineTo(px+i,py0-this.calcModeY(-1,y[0][i+tptr[0]],y[1][i+tptr[0]]));
+                ctx.lineTo(px+i,py0-this.calcModeY(-1,y[0][i+tptr[0]],y[1][i+tptr[0]])-k_rot.value0*(DL/2-i)/100);
             }
         }
         ctx.stroke();

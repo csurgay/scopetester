@@ -5,7 +5,7 @@ class Siggen extends pObject {
         super(pX,pY,pW,300);
         this.myChannel=pNo;
         new Frame(pX-65,pY-65,pW-10,pH,"CH"+pNo+" Signal                ","rightish");
-        this.b_ch=new ChOnButton(pX+pW-120,pY-71,24,16,"ON","on");
+        this.b_ch=new ChOnButton(pX+pW-120,pY-71,24,16,"ON","siggen");
         this.b_ch.setSwitchBufferNeeded();
         this.k_scale=new ScaleKnob(pX,pY+5);
         this.k_scale.setSwitchBufferNeeded();

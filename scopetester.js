@@ -4,7 +4,8 @@ function init() {
     ctx = canvas.getContext("2d");
     mouseInit(canvas);
     timebase=1000000; // microseconds
-    new DebugLabel(300,800,"free memory",15,()=>{return ""+
+    new DebugLabel(300,800,"",15,()=>{return credit;});
+    new DebugLabel(300,820,"",15,()=>{return ""+
         "heap:"+window.performance.memory.totalJSHeapSize+
         " used:"+window.performance.memory.usedJSHeapSize+
         " limit:"+window.performance.memory.jsHeapSizeLimit;});
@@ -22,12 +23,9 @@ function wait() {
 }
 
 function draw(ctx) {
-    drawing=true;
     // Cal LEDs
     b_xcal.state=0;
     if (k_time.k_.value!=0) b_xcal.state=1;
-    if (k_delaybase.k_.value!=0 && k_delay.k.value!=0) b_xcal.state=1;
-    if (k_delaybase.k_.value!=0 && k_delay.k_.value!=0) b_xcal.state=1;
     b_ycal.state=0;
     if (scope.ch[0].k_volts.k_.value!=0) b_ycal.state=1;
     if (scope.ch[1].k_volts.k_.value!=0) b_ycal.state=1;
@@ -37,7 +35,6 @@ function draw(ctx) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.restore();
     for (var i=0; i<ui.length; i++) ui[i].draw(ctx);
-    drawing=false;
 }
 
 function start() {
@@ -47,7 +44,7 @@ function start() {
     initChannels();
     b_power=new PowerButton(15,30,30,30,"POWER","power");
     draw(ctx);
-//    setTimeout(run,10);
+    setTimeout(processEvent,100);
 }
 
 function run() {

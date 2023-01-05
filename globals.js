@@ -1,4 +1,5 @@
-var canvas, ctx, now, drawing=false, scope, siggen; // main ui objects
+const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.11";
+var canvas, ctx, now, scope, siggen; // main ui objects
 var no_images_to_load, vfd, vfd_, led_on, led_off, led_red; // canvas images
 const L=2000, L2=L/2, L4=L/4, L8=L/8; // buffer length
 const N=1; // sample channel buffers (sch) length = N*L
@@ -9,7 +10,7 @@ const sqrt=1.0293022366; // ^24=2 (sqrt=1.07177347; // ^10=2)
 const bgcolor="#bbbbbb";
 const hl_green="rgba(80,160,80,0.35)"; // knob and label highlight
 const hl_gray="rgba(100,100,100,0.35)";
-var k_intensity, k_focus, k_illum, k_xpos, b_xcal, b_ycal, k_vol, k_monitor;
+var k_intensity, k_focus, k_illum, k_rot, k_xpos, b_xcal, b_ycal, k_vol, k_monitor;
 var b_power;
 var bufgen=[];
 var ch=[new Array(L),new Array(L)]; // original channel buffer, will get rid of
