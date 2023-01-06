@@ -9,6 +9,7 @@ class Siggen extends pObject {
         this.b_ch.setSwitchBufferNeeded();
         this.k_scale=new ScaleKnob(pX,pY+5);
         this.k_scale.setSwitchBufferNeeded();
+        this.k_scale.value0=false;
         this.k_func=new FuncKnob(pX,pY+130);
         this.k_func.setSwitchBufferNeeded();
         this.k_freq=new DoubleKnob(pX2,pY1,201,101,"Freq (kHz)       ","sigdouble",30,15);
@@ -17,6 +18,7 @@ class Siggen extends pObject {
         this.k_ampl.setSwitchBufferNeeded();
         this.k_phase=new DoubleKnob(pX2,pY3,24,720,"Phase (0-360)","sigdouble",30,15);
         this.k_phase.setSwitchBufferNeeded();
+        this.k_phase.k.value0=false;
         this.k_phase.k.limit=-1;
         this.k_phase.k_.limit=-1;
         this.k_dc=new DoubleKnob(pX2,pY4,201,101,"Offset (V DC) ","sigdouble",30,15);

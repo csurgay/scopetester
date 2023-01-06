@@ -2,6 +2,7 @@ var hitX, hitY;
 
 class pObject {
     constructor(pX,pY,pW,pH) {
+        this.name="dummy";
         this.x=pX;
         this.y=pY;
         this.w=pW;

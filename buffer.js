@@ -20,12 +20,62 @@ function initBufgen() {
     bufgen.push(new BufferGenerator("Log",f_log,'fullIcon'));
     bufgen.push(new BufferGenerator("Beats",f_beats,'fullIcon'));
     bufgen.push(new BufferGenerator("ECG",f_ecg,'fullIcon'));
+    initMorse();
+    bufgen.push(new BufferGenerator("Morse",f_morse,'fullIcon'));
     // Menomano (LaLinea) eredeti plotter rajz -> buffer function buffer
     initMenomano();
     bufgen.push(new BufferGenerator("MenoX",f_menomanoX,"halficon"));
     bufgen.push(new BufferGenerator("MenoY",f_menomanoY,"halficon"));
 //    bufgen.push(new BufferGenerator("Sawtooth",f_sawtooth,'fullIcon'));
 //    bufgen.push(new BufferGenerator("Triangle7",f_triangle_harmonic,'fullIcon'));
+}
+
+var yy; // for vertical calculation;
+var angle_rad; // for 2*PI calcultions
+
+function initChannels() {
+    for (var i=0; i<2; i++) {
+        // amplitude
+        ampls[i]=siggen[i].k_ampl.k.getValue();
+        ampls_[i]=siggen[i].k_ampl.k_.getValue();
+        ampls[i]=100*Math.pow(1.005,10*ampls[i])+ampls_[i]/10;
+        if (ampls[i]<0.1) ampls[i]=0.1;
+        // frequency
+        scales[i]=parseFloat(scale[siggen[i].k_scale.getValue()]);
+        freqs[i]=siggen[i].k_freq.k.getValue();
+        freqs_[i]=siggen[i].k_freq.k_.getValue();
+        freqs[i]/=10.0; if (freqs[i]<0) freqs[i]=freqs[i]/10;
+        freqs_[i]/=1000.0;
+        freqs[i]=scales[i]*(freqs[i]+1)+freqs_[i];
+        if (freqs[i]<0.001) freqs[i]=0.001;
+        // phase
+        phases[i]=15*siggen[i].k_phase.k.getValue()+siggen[i].k_phase.k_.getValue()/2; 
+        if (phases[i]<0) phases[i]+=360;
+        phases[i]=L*phases[i]/360;
+        // dc offset
+        dcs[i]=siggen[i].k_dc.k.getValue();
+        dcs_[i]=siggen[i].k_dc.k_.getValue();
+        dcs[i]=dcs[i]/10+dcs_[i]/1000;
+    }
+    for (var i=0; i<2; i++) {
+        ampl=ampls[i];
+        freq=freqs[i];
+        order=siggen[i].k_func.k_.getValue();
+        for (var x=0; x<N*L; x++) {
+            if (b_mic.state==1) {
+                sch[i][x]=(1-2*siggen[i].b_inv.state)*micch[i][(freq*x+phases[i])];
+            }
+            else {
+                yy=bufgen[siggen[i].k_func.k.getValue()].f(x+phases[i],order);
+                yy+=100*dcs[i];
+                if (siggen[i].b_inv.state==1) yy=-yy;
+                if (siggen[i].b_abs.state==1 && yy<0) yy=-yy;
+                if (siggen[i].b_phalf.state==1 && yy<0) yy=0;
+                if (siggen[i].b_nhalf.state==1 && yy>0) yy=0;
+                sch[i][x]=yy;
+            }
+        }
+    }
 }
 
 function initMenomano() {
@@ -39,55 +89,6 @@ function initMenomano() {
         mmy.push(-2*menomano[2*l-i*2+1]+100);
     }
 }
-
-var yy; // for vertical calculation;
-var angle_rad; // for 2*PI calcultions
-
-function initChannels() {
-    for (var i=0; i<2; i++) {
-        // amplitude
-        ampls[i]=siggen[i].k_ampl.k.value0;
-        ampls_[i]=siggen[i].k_ampl.k_.value0;
-        ampls[i]=100*Math.pow(1.005,10*ampls[i])+ampls_[i]/10;
-        if (ampls[i]<0.1) ampls[i]=0.1;
-        // frequency
-        scales[i]=parseFloat(scale[siggen[i].k_scale.value]);
-        freqs[i]=siggen[i].k_freq.k.value0;
-        freqs_[i]=siggen[i].k_freq.k_.value0;
-        freqs[i]/=10.0; if (freqs[i]<0) freqs[i]=freqs[i]/10;
-        freqs_[i]/=1000.0;
-        freqs[i]=scales[i]*(freqs[i]+1)+freqs_[i];
-        if (freqs[i]<0.001) freqs[i]=0.001;
-        // phase
-        phases[i]=15*siggen[i].k_phase.k.value+siggen[i].k_phase.k_.value0/2; 
-        if (phases[i]<0) phases[i]+=360;
-        phases[i]=L*phases[i]/360;
-        // dc offset
-        dcs[i]=siggen[i].k_dc.k.value0;
-        dcs_[i]=siggen[i].k_dc.k_.value0;
-        dcs[i]=dcs[i]/10+dcs_[i]/1000;
-    }
-    for (var i=0; i<2; i++) {
-        ampl=ampls[i];
-        freq=freqs[i];
-        order=siggen[i].k_func.k_.value;
-        for (var x=0; x<N*L; x++) {
-            if (b_mic.state==1) {
-                sch[i][x]=(1-2*siggen[i].b_inv.state)*micch[i][(freq*x+phases[i])];
-            }
-            else {
-                yy=bufgen[siggen[i].k_func.k.value].f(x+phases[i],order);
-                yy+=100*dcs[i];
-                if (siggen[i].b_inv.state==1) yy=-yy;
-                if (siggen[i].b_abs.state==1 && yy<0) yy=-yy;
-                if (siggen[i].b_phalf.state==1 && yy<0) yy=0;
-                if (siggen[i].b_nhalf.state==1 && yy>0) yy=0;
-                sch[i][x]=yy;
-            }
-        }
-    }
-}
-
 function f_menomanoX(x) {
     x=Math.round((x)%L*mmx.length/L);
     return ampl*mmx[x]/200;
@@ -95,6 +96,35 @@ function f_menomanoX(x) {
 function f_menomanoY(x) {
     x=Math.round((x)%L*mmy.length/L);
     return ampl*mmy[x]/200;
+}
+
+const morseAbc={"a":".-","b":"-...","c":"-.-.","d":"-..","e":".","f":"..-.",
+    "g":"--.","h":"....","i":"..","j":".---","k":"-.-","l":".-..","m":"--",
+    "n":"-.","o":"---","p":".--.","q":"--.-","r":".-.","s":"...","t":"-",
+    "u":"..-","v":"...-","w":".--","x":"-..-","y":"-.--","z":"--.."};
+function initMorse() {
+    var n=0;
+    for (var i=0; i<morseText.length; i++) {
+        var letter=morseText.charAt(i);
+        if (letter==" ") for (var k=0; k<morseTime; k++) for (var l=0; l<7; l++) morse[n++]=-1;
+        else {
+            var code=morseAbc[letter];
+            for (var j=0; j<code.length; j++) {
+                var symbol=code.charAt(j);
+                for (var k=0; k<morseTime; k++) {
+                    if (symbol==".") morse[n++]=1;
+                    else if (symbol=="-") for (var l=0; l<3; l++) morse[n++]=1;
+                }
+                for (var k=0; k<morseTime; k++) morse[n++]=-1;
+            }
+            for (var k=0; k<morseTime; k++) { morse[n++]=-1; morse[n++]=-1; }
+        }
+    }
+    for (var i=n; n<L; n++) morse[n]=0;
+}
+function f_morse(x) {
+    x=x%L;
+    return ampl*morse[x];
 }
 function f_gnd(x) {
     return 0;
@@ -122,6 +152,7 @@ function f_sinc(x,o) {
     return ampl*Math.sin((2+o/8)*Math.PI*angle_rad)/(Math.PI*angle_rad);
 }
 function f_exp(x,o) {
+    x=x%L;
     angle_rad=x*Math.PI/L2;
     if (o>16) o-=33;
         yy=Math.E*Math.pow(2,o);
@@ -133,6 +164,7 @@ function f_exp(x,o) {
     return yResult;
 }
 function f_log(x,o) {
+    x=x%L;
     if (x==L) return ampl;
     angle_rad=1.0*(L-x)*Math.PI/L2;
     if (o>16) o-=33;

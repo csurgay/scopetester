@@ -8,6 +8,7 @@ var img; // for LEDon/LEDoff/LEDred images
 class Button extends pObject {
     constructor(pX,pY,pW,pH,pLabel,pType) {
         super(pX,pY,pW,pH);
+        this.name=pLabel;
         this.img=led_on;
         this.live=true;
         this.cX=pX+pW/2;
@@ -18,6 +19,9 @@ class Button extends pObject {
         this.label=new Label(this.cX,this.cY,pLabel,pType=="small"?12:(pType=="on"?12:(pType=="siggen"?15:15)));
         this.setLabelXY(pType);
         buttons.push(this);
+    }
+    getValue() {
+        return this.state;
     }
     callSwitchOff() {
         if (this.state==1) this.clickXY(0,0);
@@ -97,6 +101,17 @@ class FindButton extends ChOnButton {
         // findState: "search"/"found"/"off", y/findValue displayed
     }
 }
+class DebugButton extends ChOnButton {
+    constructor(pX,pY,pW,pH,pLabel,pType) {
+        super(pX,pY,pW,pH,pLabel,pType);
+    }
+    clickXY(x,y) {
+        super.clickXY(x,y);
+        if (this.state==1) { logWindow.removeAttribute("hidden"); }
+        else if (this.state==0) logWindow.setAttribute("hidden","hidden");
+        // findState: "search"/"found"/"off", y/findValue displayed
+    }
+}
 function setFind() {
     if (findState=="search") {
         findValue*=1.2;
@@ -130,12 +145,13 @@ class ResvButton extends ChOnButton {
     clickXY(x,y) {
         super.clickXY(x,y);
         if (this.state==1) {
-            ctx.rect(100,100,200,200);
-            ctx.sctoke();
-            for(var i=0; i<1000000; i++)
-                for(var j=0; j<3000; j++) ;
-            b_resv.draw(ctx);
-            scope.drawScreen(ctx);
+            for(var i=0; i<ui.length; i++) {
+                if (!isNaN(ui[i].ticks)) {
+                    ui[i].value=Math.floor(Math.random()*ui[i].ticks);
+                }
+            }
+            initChannels();
+            draw(ctx);
             setTimeout(()=>{b_resv.callSwitchOff();},500);
         }
         else if (this.state==0) this.switchOff();
@@ -153,6 +169,7 @@ class ResvButton extends ChOnButton {
 class Radio extends pObject {
     constructor(pX,pY,pListButtons) {
         super(pX,pY,25,pListButtons.length*dButton);
+        this.name="Radio";
         this.live=true;
         this.b=pListButtons;
         for (var i=0; i<pListButtons.length; i++) {
@@ -161,6 +178,11 @@ class Radio extends pObject {
             pListButtons[i].label.adjustXY(0,i*dButton);
         }
         ui.push(this);
+    }
+    getValue() {
+        for (var i=0; i<this.b.length; i++) {
+            if (this.b[i].state==1) return this.b[i].name;
+        }
     }
     clickXY(x,y) {
         for (var i=0; i<this.b.length; i++) {

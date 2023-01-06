@@ -38,7 +38,7 @@ function switchBuffer() {
         q=freqs[c]*100*L/4096;
         for (let i = 0; i < nowBuffering.length; i++) {
             nowBuffering[i] = 0;
-            sel=a_monitor[k_monitor.value];
+            sel=a_monitor[k_monitor.getValue()];
             qi=Math.round(q*i)%L; if (qi<0) qi+=L;
             if (sel=="Disp") {
                 if (siggen[c].b_ch.state==1)
@@ -56,7 +56,7 @@ function switchBuffer() {
     // destination so we can hear the sound
 //    source.connect(audioCtx.destination);
     // start the source playing
-    gainNode[aptr].gain.linearRampToValueAtTime(Math.pow(1.2,k_vol.value0)/4.3,audioCtx[aptr].currentTime+0.30);
+    gainNode[aptr].gain.linearRampToValueAtTime(Math.pow(1.2,k_vol.getValue())/4.3,audioCtx[aptr].currentTime+0.30);
     source[aptr].start();
     astarted=true;
     draw(ctx);

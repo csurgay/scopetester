@@ -1,6 +1,7 @@
 var leftchannel = [];
 var rightchannel = [];
 var recorder = null;
+var connected=false;
 var mediaStream = null;
 var context = null;
 var bufferSize;
@@ -42,17 +43,19 @@ function recordAudio() {
         }
         mediaStream.connect(recorder);
         recorder.connect(context.destination);
+        connected=true;
     },
     function (e) {
         clearTimeout(micTimeout);
         b_mic.callSwitchOff();
-        console.error(e);
+        log(e);
     });
 }
 
 function stopRecording() {
-    if (recorder!=null) {
+    if (recorder!=null && connected) {
         recorder.disconnect(context.destination);
         mediaStream.disconnect(recorder);
+        connected=false;
     }
 }

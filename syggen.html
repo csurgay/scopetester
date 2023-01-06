@@ -16,7 +16,9 @@
         <script src="scopetester.js"></script>
     </head>
     <body onload="init();">
-        <canvas id="myCanvas" width="940" height="900" style="border:0px solid #000000;">
-        </canvas>
+        <div id="grid" style="display: grid; grid-template-columns: 1fr 1fr;">
+        <canvas id="myCanvas" width="940" height="785" style="border:0px solid #000000; grid-gap: 10px;">
+        </canvas><pre hidden="hidden" id="log" style="border: 1px solid #ccc; width: 785px; height: 785px; overflow: scroll;"></pre>
+        </div>
     </body>
 </html>

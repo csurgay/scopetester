@@ -4,11 +4,10 @@ function init() {
     ctx = canvas.getContext("2d");
     mouseInit(canvas);
     timebase=1000000; // microseconds
-    new DebugLabel(300,800,"",15,()=>{return credit;});
-    new DebugLabel(300,820,"",15,()=>{return ""+
-        "heap:"+window.performance.memory.totalJSHeapSize+
-        " used:"+window.performance.memory.usedJSHeapSize+
-        " limit:"+window.performance.memory.jsHeapSizeLimit;});
+    new DebugLabel(460,455,"",15,()=>{return ""+
+        "heap:"+window.performance.memory.totalJSHeapSize/1000000+
+        " used:"+window.performance.memory.usedJSHeapSize/1000000+
+        " limit:"+window.performance.memory.jsHeapSizeLimit/1000000;});
     no_images_to_load=5;
     vfd=new Image(); vfd.src='./images/vfd.jpg'; vfd.onload=()=>wait();
     vfd_=new Image(); vfd_.src='./images/vfd-.jpg'; vfd_.onload=()=>wait();
@@ -25,10 +24,10 @@ function wait() {
 function draw(ctx) {
     // Cal LEDs
     b_xcal.state=0;
-    if (k_time.k_.value!=0) b_xcal.state=1;
+    if (k_time.k_.getValue()!=0) b_xcal.state=1;
     b_ycal.state=0;
-    if (scope.ch[0].k_volts.k_.value!=0) b_ycal.state=1;
-    if (scope.ch[1].k_volts.k_.value!=0) b_ycal.state=1;
+    if (scope.ch[0].k_volts.k_.getValue()!=0) b_ycal.state=1;
+    if (scope.ch[1].k_volts.k_.getValue()!=0) b_ycal.state=1;
     // draw
     ctx.save();
     ctx.fillStyle=bgcolor;
@@ -38,6 +37,8 @@ function draw(ctx) {
 }
 
 function start() {
+    logWindow=document.getElementById('log');
+    log(credit);
     initBufgen();
     siggen=[new Siggen(75,530,"1"),new Siggen(445,530,"2")];
     scope=new Scope(70,10,DL/10,17);
@@ -45,6 +46,10 @@ function start() {
     b_power=new PowerButton(15,30,30,30,"POWER","power");
     draw(ctx);
     setTimeout(processEvent,100);
+}
+
+function log(msg) {
+    logWindow.textContent = `${msg} \n${logWindow.textContent}`;
 }
 
 function run() {
@@ -66,8 +71,8 @@ function run1() {
     if (prevX!=70) ctx.lineTo(prevX,prevY);
     ctx.stroke();
     ctx.restore();
-    var kt=k_time.k.value0;
-    var kt_=k_time.k_.value0;
+    var kt=k_time.k.getValue();
+    var kt_=k_time.k_.getValue();
     timebase=tb[kt+9]*tb_[kt_+10];
     if (b_power.state==1) setTimeout(run,timebase);
 }

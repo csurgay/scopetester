@@ -14,6 +14,7 @@ class Knob extends pObject {
         "double_s":-40, "delay":78, "func":-57, "range":-55, 
         "volts":-55, "sigdouble":-30};
         super(pX-pR,pY-pR,2*pR,2*pR);
+        this.name=pLabel;
         this.lastTurn=lastDigits(Date.now());
         this.turnCount=0;
 //        this.defaultFastRate=10;
@@ -25,7 +26,7 @@ class Knob extends pObject {
         this.ticks=pTicks;
         this.defaultValue=pValue;
         this.value=pValue;
-        this.value0=pValue; this.setValue0(); // value0 is (- 0 +) not (0 + ++)
+        this.value0=true; // value0: getValue is (- 0 +) not (0 + ++)
         this.l=pLabel;
         this.color="#EEEEEE";
         this.haircolor="gray";
@@ -34,13 +35,15 @@ class Knob extends pObject {
         new Label(xLabel,pY+pos[lpos],pLabel,12);
         ui.push(this);
     }
-    setValue0() {
-        this.value0=this.value;
-        if (this.value0>this.ticks/2) this.value0-=this.ticks;
+    getValue() {
+        if (this.value0) {
+            if (this.value<=this.ticks/2) return this.value;
+            else return this.value-this.ticks;
+        }
+        else return this.value;
     }
     clickXY(x,y) {
         this.value=this.defaultValue;
-        this.setValue0();
         super.clickXY(x,y);
     }
     turnY(pDelta) {
@@ -63,7 +66,6 @@ class Knob extends pObject {
                 else if (this.value>this.ticks-1) this.value-=this.ticks;
             }
         }
-        this.setValue0();
         super.turnY(pDelta);
     }
     draw(ctx) {
@@ -226,6 +228,8 @@ class FuncKnob extends DoubleKnob {
         this.k.value=0;
         this.k_.color="gray";
         this.k_.haircolor="#EEEEEE";
+        this.k.value0=false;
+        this.k_.value0=false;
         this.k.limit=-1;
         this.k_.limit=-1;
         this.iconCircle(pX-8,pY,50,bufgen);
@@ -264,6 +268,7 @@ class ScaleKnob extends Knob {
 class MonitorKnob extends Knob {
     constructor(pX,pY) {
         super(-1,pX,pY,18,a_monitor.length,4,"none","none");
+        this.value0=false;
         this.iconCircle(pX,pY+2,30,a_monitor);
         ui.push(this);
     }
