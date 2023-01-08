@@ -3,13 +3,15 @@ var xpos={"power":0,"on":-29, "small":0,"siggen":-29};
 var ypos={"power":-27,"on":0,"small":-15,"siggen":0};
 
 var grd; // for grad on Canvas
-var img; // for LEDon/LEDoff/LEDred images
 
 class Button extends pObject {
     constructor(pX,pY,pW,pH,pLabel,pType) {
         super(pX,pY,pW,pH);
+        this.class="Button";
         this.name=pLabel;
-        this.img=led_on;
+        this.radio=null;
+        this.img_on=led_on;
+        this.img_off=led_off;
         this.live=true;
         this.cX=pX+pW/2;
         this.cY=pY+pH/2;
@@ -31,6 +33,7 @@ class Button extends pObject {
     }
     clickXY(x,y) {
         super.clickXY(x,y);
+        if (this.radio!=null) this.radio.reset();
         this.state=1-this.state;
     }
     draw(ctx) {
@@ -45,14 +48,15 @@ class Button extends pObject {
         if (this.type=="power") 
             ctx.fillRect(this.x-dVfd,this.y-dVfd/2,this.w+2*dVfd,this.h+dVfd);
         ctx.fill();
-        img=led_off; if (this.state==1) img=this.img;
-        ctx.drawImage(img,0,0,225,216,this.x,this.y,this.w,this.h);
+        ctx.drawImage(this.state==1?this.img_on:this.img_off,this.x,this.y,this.w,this.h);
         super.draw(ctx);
     }
 }
 class PowerButton extends Button {
     constructor(pX,pY,pW,pH,pLabel,pType) {
         super(pX,pY,pW,pH,pLabel,pType);
+        this.img_on=led_on_power;
+        this.img_off=led_off_power;
         buttons.splice(-1); // remove this last power button from buttons
     }
     clickXY(x,y) {
@@ -64,6 +68,7 @@ class PowerButton extends Button {
                 siggen[i].b_ch.state=1;
                 scope.ch[i].b_dc.state=1;
             }
+            k_monitor.callSwitchOff();
         }
         // power switch-off event
         if (this.state==1) {
@@ -83,10 +88,15 @@ class ChOnButton extends Button {
 class IndicatorLed extends Button {
     constructor(pX,pY,pW,pH,pLabel,pType) {
         super(pX,pY,pW,pH,pLabel,pType);
-        this.img=led_red;
+        this.img_on=led_red;
+        this.img_off=led_off;
+        this.live=false;
     }
     clickXY(x,y) {
         if (b_power.state==1) super.clickXY(x,y);
+    }
+    showRed() {
+        if (b_power.state==1) this.state=1;
     }
 }
 class FindButton extends ChOnButton {
@@ -113,6 +123,7 @@ class DebugButton extends ChOnButton {
     }
 }
 function setFind() {
+    trace("setFind");
     if (findState=="search") {
         findValue*=1.2;
         scope.draw(ctx);
@@ -170,27 +181,19 @@ class Radio extends pObject {
     constructor(pX,pY,pListButtons) {
         super(pX,pY,25,pListButtons.length*dButton);
         this.name="Radio";
-        this.live=true;
+        this.live=false;
         this.b=pListButtons;
         for (var i=0; i<pListButtons.length; i++) {
+            pListButtons[i].radio=this;
             pListButtons[i].x=pX;
             pListButtons[i].y=pY+i*dButton;
             pListButtons[i].label.adjustXY(0,i*dButton);
         }
         ui.push(this);
     }
-    getValue() {
+    reset() {
         for (var i=0; i<this.b.length; i++) {
-            if (this.b[i].state==1) return this.b[i].name;
-        }
-    }
-    clickXY(x,y) {
-        for (var i=0; i<this.b.length; i++) {
-            if (this.b[i].hitXY(x,y)) if (this.b[i].state==0) {
-                for (var j=0; j<this.b.length; j++)
-                    this.b[j].state=0;
-                this.b[i].clickXY(x,y);
-            }
+            this.b[i].state=0;
         }
     }
 }

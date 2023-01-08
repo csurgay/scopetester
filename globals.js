@@ -1,6 +1,6 @@
-const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.11";
-var canvas, ctx, logWindow, now, scope, siggen; // main ui objects
-var no_images_to_load, vfd, vfd_, led_on, led_off, led_red; // canvas images
+const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.20";
+var canvas, ctx, logWindow, traceString="", now, scope, siggen; // main ui objects
+var no_images_to_load, vfd, vfd_, led_on_power, led_on, led_off_power, led_off, led_red; // canvas images
 const L=2000, L2=L/2, L4=L/4, L8=L/8; // buffer length
 const N=1; // sample channel buffers (sch) length = N*L
 const DL=500; // Display length
@@ -17,7 +17,8 @@ var ch=[new Array(L),new Array(L)]; // original channel buffer, will get rid of
 var y=[new Array(N*L), new Array(N*L)]; // two y buffers for scope
 var sch=[new Array(L),new Array(L)]; // signal channel buffer, no freq
 var micch=[new Array(L),new Array(L)]; // mic channel buffer
-var order, ampl, freq, ampls=[0,0], ampls_=[0,0], avgs=[0,0], sumdelta=[0,0];
+var order, ampl, freq, ampls=[0,0], ampls_=[0,0], avgs=[0,0];
+var sumdelta=[0,0,0]; // third for Mode(Add,AM) beam length
 var scales=[0,0], freqs=[0,0], freqs_=[0,0], phases=[0,0], dcs=[0,0], dcs_=[0,0];
 var ui=[]; // for hit, click, turn
 var buttons=[]; // for switch off at power off

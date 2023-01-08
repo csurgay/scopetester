@@ -1,10 +1,3 @@
-function lastDigits(x) {
-    x/=1000000;
-    x-=Math.floor(x);
-    x*=1000000;
-    return Math.floor(x);
-}
-
 var pDelta; // for holding -event.delta
 var xd, yd, rd, nd, kd; // for x,y for drawing
 
@@ -14,12 +7,8 @@ class Knob extends pObject {
         "double_s":-40, "delay":78, "func":-57, "range":-55, 
         "volts":-55, "sigdouble":-30};
         super(pX-pR,pY-pR,2*pR,2*pR);
+        this.class="Knob";
         this.name=pLabel;
-        this.lastTurn=lastDigits(Date.now());
-        this.turnCount=0;
-//        this.defaultFastRate=10;
-        this.defaultFastRate=1;
-        this.fastRate=1;
         this.live=true;
         this.limit=pLimit; // ticks/2: végállásos, -1: körbeforog
         this.r=pR;
@@ -47,17 +36,8 @@ class Knob extends pObject {
         super.clickXY(x,y);
     }
     turnY(pDelta) {
-        // accelerated turn if fastRate>limit within duration milliseconds
-        now=lastDigits(Date.now());
-        if (now-this.lastTurn>20) { this.turnCount=0; }
-        this.turnCount++;
-        this.fastRate=this.turnCount<3?1:this.defaultFastRate;
-        this.lastTurn=now;
-        // no fastRate turn below 50 tick knobs
-        if (this.ticks<50) this.fastRate=1;
         // set new value within limit
-        if (this.ticks>50) this.fastRate=Math.abs(pDelta);
-        for (var i=0; i<this.fastRate; i++) {
+        for (var i=0; i<1; i++) {
             if (this.limit==-1 ||
                 ((this.value!=this.limit || pDelta<0) &&
                 (this.value!=(this.limit+1)%this.ticks || pDelta>0))) {
@@ -107,6 +87,11 @@ class DoubleKnob extends pObject {
         super.setSwitchBufferNeeded();
         this.k.setSwitchBufferNeeded();
         this.k_.setSwitchBufferNeeded();
+    }
+    setInitChannelsNeeded() {
+        super.initChannelsNeeded=true;
+        this.k.initChannelsNeeded=true;
+        this.k_.initChannelsNeeded=true;
     }
 }
 
@@ -283,8 +268,14 @@ class MonitorKnob extends Knob {
     }
     turnY(pDelta) {
         super.turnY(pDelta);
-        if (this.on()) switchBuffer();
-        else this.switchOff();
+        if (b_power.state==1) {
+            if (this.on()) switchBuffer();
+            else this.switchOff();
+        }
+    }
+    clickXY(x,y) {
+        stopBuffer(aptr);
+        super.clickXY(x,y);
     }
     callSwitchOff() {
         this.value=this.defaultValue; // this have to be "Off"

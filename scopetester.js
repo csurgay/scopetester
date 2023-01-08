@@ -8,12 +8,14 @@ function init() {
         "heap:"+window.performance.memory.totalJSHeapSize/1000000+
         " used:"+window.performance.memory.usedJSHeapSize/1000000+
         " limit:"+window.performance.memory.jsHeapSizeLimit/1000000;});
-    no_images_to_load=5;
-    vfd=new Image(); vfd.src='./images/vfd.jpg'; vfd.onload=()=>wait();
-    vfd_=new Image(); vfd_.src='./images/vfd-.jpg'; vfd_.onload=()=>wait();
-    led_on=new Image(); led_on.src='./images/led_on.jpg'; led_on.onload=()=>wait();
-    led_off=new Image(); led_off.src='./images/led_off.jpg'; led_off.onload=()=>wait();
-    led_red=new Image(); led_red.src='./images/led_red.jpg'; led_red.onload=()=>wait();
+    no_images_to_load=7;
+    vfd=new Image(); vfd.src='./images/vfds.jpg'; vfd.onload=()=>wait();
+    vfd_=new Image(); vfd_.src='./images/vfd-s.jpg'; vfd_.onload=()=>wait();
+    led_on=new Image(); led_on.src='./images/led_on_2416.jpg'; led_on.onload=()=>wait();
+    led_on_power=new Image(); led_on_power.src='./images/led_on_3030.jpg'; led_on_power.onload=()=>wait();
+    led_off=new Image(); led_off.src='./images/led_off_2416.jpg'; led_off.onload=()=>wait();
+    led_off_power=new Image(); led_off_power.src='./images/led_off_3030.jpg'; led_off_power.onload=()=>wait();
+    led_red=new Image(); led_red.src='./images/led_red_2416.jpg'; led_red.onload=()=>wait();
 }
 
 function wait() {
@@ -24,15 +26,13 @@ function wait() {
 function draw(ctx) {
     // Cal LEDs
     b_xcal.state=0;
-    if (k_time.k_.getValue()!=0) b_xcal.state=1;
+    if (k_time.k_.getValue()!=0) b_xcal.showRed();
     b_ycal.state=0;
-    if (scope.ch[0].k_volts.k_.getValue()!=0) b_ycal.state=1;
-    if (scope.ch[1].k_volts.k_.getValue()!=0) b_ycal.state=1;
+    if (scope.ch[0].k_volts.k_.getValue()!=0) b_ycal.showRed();
+    if (scope.ch[1].k_volts.k_.getValue()!=0) b_ycal.showRed();
     // draw
-    ctx.save();
     ctx.fillStyle=bgcolor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.restore();
     for (var i=0; i<ui.length; i++) ui[i].draw(ctx);
 }
 
@@ -50,6 +50,14 @@ function start() {
 
 function log(msg) {
     logWindow.textContent = `${msg} \n${logWindow.textContent}`;
+}
+
+function trace(msg) {
+    traceString += " . "+msg;
+}
+
+function error(msg) {
+    console.error(new Date(Date.now()).toISOString()+": "+msg);
 }
 
 function run() {

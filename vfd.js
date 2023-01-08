@@ -50,14 +50,16 @@ class Vfd extends pObject {
 
 function drawVfdDigit(ctx,digit,dec,pX,pY,pD) {
     if (digit=='-') {
-        ctx.drawImage(vfd_, 30,40, 160,320, pX,pY, dVfd,dVfd*2);
+        ctx.drawImage(vfd_, 3,4, 16,32, pX,pY, dVfd,dVfd*2);
     }
     else {
         var num=parseInt(digit);
         if (dec=='.') {
-            ctx.drawImage(vfd, num*160+80,0, 80,160, pX,pY, dVfd,dVfd*2);
+//            ctx.drawImage(vfd, num*160+80,0, 80,160, pX,pY, dVfd,dVfd*2);
+            ctx.drawImage(vfd, num*32+16,0, 16,32, pX,pY, dVfd,dVfd*2);
         } else {
-            ctx.drawImage(vfd, num*160,0, 80,160, pX,pY, dVfd,dVfd*2);
+//            ctx.drawImage(vfd, num*160,0, 80,160, pX,pY, dVfd,dVfd*2);
+            ctx.drawImage(vfd, num*32,0, 16,32, pX,pY, dVfd,dVfd*2);
         }
     }
 }

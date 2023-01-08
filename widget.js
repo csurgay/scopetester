@@ -2,19 +2,24 @@ var hitX, hitY;
 
 class pObject {
     constructor(pX,pY,pW,pH) {
+        this.class="class";
         this.name="dummy";
         this.x=pX;
         this.y=pY;
         this.w=pW;
         this.h=pH;
         this.switchBufferNeeded=false;
-        this.live=false; // live pObjects: Button, Knob, Radio
+        this.live=false; // live (clickable) pObjects: Button, Knob, Radio
+        this.initChannelsNeeded=false; // siggen need rebuffer signal samples
         this.bgcolor=null;
         this.fgcolor=null;
         this.hitPad=0;
         this.debugFrame=true;
         this.value=0; // for save/load presets
         return this;
+    }
+    setInitChannelsNeeded() {
+        this.initChannelsNeeded=true;
     }
     setSwitchBufferNeeded() {
         this.switchBufferNeeded=true;
@@ -44,12 +49,6 @@ class pObject {
         ctx.rect(this.x-1,this.y-1,this.w+2,this.h+2);
         ctx.stroke();
     }
-    // fillRect(ctx) {
-    //     if (this.bgcolor!=null) {
-    //         ctx.fillStyle=this.bgcolor;
-    //         ctx.fillRect(this.x-1,this.y-1,this.w+2,this.h+2);            
-    //     }
-    // }
     draw(ctx) {
         if (b_debug.state==1 && this.debugFrame) this.drawRect(ctx);
     }

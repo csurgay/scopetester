@@ -7,6 +7,7 @@ class BufferGenerator {
 }
 
 function initBufgen() {
+    trace("initBufgen");
 //    bufgen.push(new BufferGenerator("GND",f_gnd,'fullIcon'));
     bufgen.push(new BufferGenerator("Sine",f_sine,'fullIcon'));
     bufgen.push(new BufferGenerator("Triangle",f_triangle_ideal,'fullIcon'));
@@ -34,6 +35,7 @@ var yy; // for vertical calculation;
 var angle_rad; // for 2*PI calcultions
 
 function initChannels() {
+    trace("initChannels");
     for (var i=0; i<2; i++) {
         // amplitude
         ampls[i]=siggen[i].k_ampl.k.getValue();
@@ -57,44 +59,49 @@ function initChannels() {
         dcs_[i]=siggen[i].k_dc.k_.getValue();
         dcs[i]=dcs[i]/10+dcs_[i]/1000;
     }
-    for (var i=0; i<2; i++) {
-        ampl=ampls[i];
-        freq=freqs[i];
-        order=siggen[i].k_func.k_.getValue();
+    for (var c=0; c<2; c++) {
+        ampl=ampls[c];
+        freq=freqs[c];
+        order=siggen[c].k_func.k_.getValue();
         for (var x=0; x<N*L; x++) {
             if (b_mic.state==1) {
-                sch[i][x]=(1-2*siggen[i].b_inv.state)*micch[i][(freq*x+phases[i])];
+                sch[c][x]=(1-2*siggen[c].b_inv.state)*micch[c][(freq*x+phases[c])];
             }
             else {
-                yy=bufgen[siggen[i].k_func.k.getValue()].f(x+phases[i],order);
-                yy+=100*dcs[i];
-                if (siggen[i].b_inv.state==1) yy=-yy;
-                if (siggen[i].b_abs.state==1 && yy<0) yy=-yy;
-                if (siggen[i].b_phalf.state==1 && yy<0) yy=0;
-                if (siggen[i].b_nhalf.state==1 && yy>0) yy=0;
-                sch[i][x]=yy;
+                yy=bufgen[siggen[c].k_func.k.getValue()].f(x+phases[c],order);
+                yy+=100*dcs[c];
+                if (siggen[c].b_inv.state==1) yy=-yy;
+                if (siggen[c].b_abs.state==1 && yy<0) yy=-yy;
+                if (siggen[c].b_phalf.state==1 && yy<0) yy=0;
+                if (siggen[c].b_nhalf.state==1 && yy>0) yy=0;
+                sch[c][x]=yy;
+                if (isNaN(sch[c][x])) {
+                    error("buffer NaN: sch["+c+"]["+x+"]");
+                }
             }
         }
     }
 }
 
 function initMenomano() {
-    var l=menomano.length/2;
-    for (var i=0;i<l;i++) {
-        mmx.push(2*menomano[i*2]-100);
-        mmy.push(-2*menomano[i*2+1]+100);
+    trace("initMenomano");
+    for (var i=0;i<menomano.length;i++) {
+        if (i%2==0) mmx.push(2*menomano[i]-100);
+        if (i%2==1) mmy.push(-2*menomano[i]+100);
     }
-    for (var i=0;i<l;i++) {
-        mmx.push(2*menomano[2*l-i*2-0]-100);
-        mmy.push(-2*menomano[2*l-i*2+1]+100);
+    for (var i=menomano.length-1;i>=0;i--) {
+        if (i%2==0) mmx.push(2*menomano[i]-100);
+        if (i%2==1) mmy.push(-2*menomano[i]+100);
     }
 }
 function f_menomanoX(x) {
-    x=Math.round((x)%L*mmx.length/L);
+    x=Math.floor((x)%L*mmx.length/L);
+    if (x>=mmx.length) x=mmx.length-1;
     return ampl*mmx[x]/200;
 }
 function f_menomanoY(x) {
-    x=Math.round((x)%L*mmy.length/L);
+    x=Math.floor((x)%L*mmy.length/L);
+    if (x>=mmy.length) x=mmy.length-1;
     return ampl*mmy[x]/200;
 }
 
@@ -103,6 +110,7 @@ const morseAbc={"a":".-","b":"-...","c":"-.-.","d":"-..","e":".","f":"..-.",
     "n":"-.","o":"---","p":".--.","q":"--.-","r":".-.","s":"...","t":"-",
     "u":"..-","v":"...-","w":".--","x":"-..-","y":"-.--","z":"--.."};
 function initMorse() {
+    trace("initMorse");
     var n=0;
     for (var i=0; i<morseText.length; i++) {
         var letter=morseText.charAt(i);
@@ -146,7 +154,7 @@ function f_beats(x,o) {
     return ampl*Math.sin(angle_rad*(o+2))*Math.sin(angle_rad);
 }
 function f_sinc(x,o) {
-    x-=L/2;
+    x-=L/2; if (x==0) x=0.001;
     if (o>16) o-=33;
     angle_rad = 1.0 * x * Math.PI / L2;
     return ampl*Math.sin((2+o/8)*Math.PI*angle_rad)/(Math.PI*angle_rad);
