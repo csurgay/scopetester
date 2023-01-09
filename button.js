@@ -26,18 +26,22 @@ class Button extends pObject {
         return this.state;
     }
     callSwitchOff() {
-        if (this.state==1) this.clickXY(0,0);
+        this.state=0;
     }
     setLabelXY(pType) {
         this.label.adjustXY(xpos[pType],ypos[pType]);
     }
     clickXY(x,y) {
+        if (this.radio!=null) {
+            this.radio.reset();
+            this.state=1;
+        }
+        else {
+            this.state=1-this.state;
+        }
         super.clickXY(x,y);
-        if (this.radio!=null) this.radio.reset();
-        this.state=1-this.state;
     }
     draw(ctx) {
-        ctx.save();
         ctx.beginPath();
         grd = ctx.createRadialGradient(this.x+this.w/2,this.y+this.h/2,
             2*this.w/5, this.x+this.w/2,this.y+this.h/2,
@@ -76,7 +80,7 @@ class PowerButton extends Button {
                 buttons[i].callSwitchOff();
             }
             k_monitor.callSwitchOff();
-       }
+        }
         super.clickXY(x,y);
     }
 }
@@ -193,7 +197,7 @@ class Radio extends pObject {
     }
     reset() {
         for (var i=0; i<this.b.length; i++) {
-            this.b[i].state=0;
+                this.b[i].state=0;
         }
     }
 }

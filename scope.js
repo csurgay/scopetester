@@ -1,5 +1,6 @@
 var d, dd; // for UI layout geometry calculations
-var illum, int1, int2, blur1, blur2, alpha1, ss; // for scale grid illumination, inensity and focus blur value
+var ast, asl, asx, asy; // astigm control value, line multiplication, x,y direction
+var illum, int1, int2, int3, blur1, blur2, alpha1, ss; // for scale grid illumination, inensity and focus blur value
 var Q,QI; // for frequency calculations
 var tptr=[0,0], lastTptr=[0,0], tcond; // trigger pointer, last valid tptr, trigger condition
 var currValue, prevValue; // curr and prev y value for trigger condition calc
@@ -35,16 +36,17 @@ class Scope extends pObject {
         b_chtr=[b_ch1tr,b_ch2tr];
         radio_trig=new Radio(895,530,[b_auto,b_ch1tr,b_ch2tr,b_mode]);
         b_limit=new IndicatorLed(895,480,24,16,"Limit","on");
-        b_find=new FindButton(20,310,24,16,"Find","small");
-        b_resv=new ResvButton(20,345,24,16,"Preset","small");
-        b_mic=new MicButton(20,380,24,16,"Mic","small");
-        b_debug=new DebugButton(20,415,24,16,"Debug","small");
+        b_find=new FindButton(20,360,24,16,"Find","small");
+        b_resv=new ResvButton(20,395,24,16,"Preset","small");
+        b_mic=new MicButton(20,1380,24,16,"Mic","small");
+        b_debug=new DebugButton(20,430,24,16,"Debug","small");
         this.ch=[new ScopeChannel(685,80), new ScopeChannel(825,80)];
         k_intensity=new Knob(8,30,105,15,17,0,"Intensity","knob");
         k_focus=new Knob(8,30,160,15,17,0,"Focus","knob");
-        k_illum=new Knob(16,30,215,15,17,0,"Illum","knob");
+        k_astigm=new Knob(8,30,215,15,17,0,"Astigm","knob");
+        k_illum=new Knob(16,30,270,15,17,0,"Illum","knob");
         k_illum.value0=false;
-        k_rot=new Knob(15,30,270,15,31,0,"Rotation","knob");
+        k_rot=new Knob(15,30,325,15,31,0,"Rotation","knob");
         k_time=new TimeKnob(850,180);
         new Vfd(710,75,4,()=>{return 10*k_delay.k.getValue()+k_delay.k_.getValue();},()=>{return b_power.state==0 || 10*k_delay.k.getValue()+k_delay.k_.getValue()==0;});
         k_delay=new DoubleKnob(665,75,100,100,"Delay","double",35,20);
@@ -61,7 +63,6 @@ class Scope extends pObject {
 //        k_hold=new DoubleKnob(880,520,50,50,"HoldOff","double_s",30,15);
         k_slope=new Knob(-1,800,590,17,2,0,"Slope","knob");
         k_slope.value0=false;
-        b_resv.label.size=12;
     }
     drawScreen(ctx) {
         // draw screen
@@ -69,7 +70,7 @@ class Scope extends pObject {
         ctx.strokeStyle = "rgb(0, 25, 0)";
         ctx.lineWidth=6;
         ctx.fillStyle = "rgba(50, 100, 50, 1)";
-        ctx.roundRect(this.x, this.y, this.w, this.h, 20);
+        roundRect(ctx, this.x, this.y, this.w, this.h, 20);
         ctx.stroke();
         ctx.fill();
         ctx.beginPath();
@@ -212,15 +213,23 @@ class Scope extends pObject {
         if (b_auto.state==1) tptr[0]=0;
         else if (b_ch2tr.state==1) tptr[0]=tptr[1];
     }
+    astigmCalc() {
+        ast=k_astigm.getValue(); asl=2*Math.abs(ast)+1;
+        asx=ast*Math.sin(Math.PI*ast/k_astigm.ticks/2)/k_astigm.ticks;
+        asy=ast*Math.cos(Math.PI*ast/k_astigm.ticks/2)/k_astigm.ticks;
+        if (ast==0) { asx=0; asy=0; }
+    }
     beamControl(beamLength) {
-        // beam intensity and blur
-        int2=Math.floor(155+150*(int1+8)/16-2*beamLength);
-        if (int2>255) int2=255;
-        alpha1=int2/255-beamLength/5000;
-        if (alpha1>1) alpha1=1; if (alpha1<0) alpha1=0;
-        ss="rgba(0,"+int2+",0,"+alpha1+")";
+        // beam intensity, focus blur and astigm
+        int2=Math.floor(180+170*(int1+8-ast*ast/20)/16); // 180..350
+        int3=Math.sqrt(Math.sqrt(timebase*beamLength));  // 1..3500
+        int2-=(10*int3); if (int2<1) int2=1;
+        alpha1=int2/255;
+        if (alpha1>1) alpha1=1; if (alpha1<0.05) alpha1=0.05;
+        ss="rgba("+int2/4+","+int2+","+int2/4+","+alpha1+")";
         ctx.strokeStyle=ss;
-        ctx.lineWidth=3+Math.abs(blur1/2)+(int2-220)/30;
+        ctx.lineWidth=1+Math.abs(blur1/2);
+        if (int2>230) ctx.lineWidth+=(int2-230)/20;
         if (findState!="off") ctx.lineWidth+=1;
         ctx.filter="blur("+(Math.abs(blur1/2))+"px)";
     }
@@ -235,8 +244,9 @@ class Scope extends pObject {
         blur1=k_focus.getValue();
         // draw beams
         ctx.save();
-        ctx.roundRect(this.x+3, this.y+3, this.w-6, this.h-6, 20);
+        roundRect(ctx, this.x+3, this.y+3, this.w-6, this.h-6, 20);
         ctx.clip();
+        this.astigmCalc();
         // Actual beam drawing for Dual, Ch1, Ch2
         if (b_dual.state==1 || b_ch1.state==1 || b_ch2.state==1) {
             for (var c=0; c<2; c++) {
@@ -245,10 +255,12 @@ class Scope extends pObject {
                     ctx.beginPath();
                     // beam length for beam intensity calcukation
                     sumdelta[c]=0;
-                        ctx.moveTo(px,py[c]-y[c][0+tptr[0]]-k_rot.getValue()*DL/500);
-                    for (var i=1; i<DL; i++) {
-                        ctx.lineTo(px+i,py[c]-y[c][i+tptr[0]]-k_rot.getValue()*(DL/2-i)/250);
-                        sumdelta[c]+=Math.abs(y[c][i+tptr[0]]-y[c][i-1+tptr[0]]);
+                    for (var k=0; k<asl; k++) {
+                        ctx.moveTo(px+k*asx,py[c]-y[c][0+tptr[0]]-k_rot.getValue()*DL/500+k*asy);
+                        for (var i=1; i<DL; i++) {
+                            ctx.lineTo(px+i+k*asx,py[c]-y[c][i+tptr[0]]-k_rot.getValue()*(DL/2-i)/250+k*asy);
+                            if (k==0) sumdelta[c]+=Math.abs(y[c][i+tptr[0]]-y[c][i-1+tptr[0]]);
+                        }
                     }
                     sumdelta[c]/=N*L; if (findState!="off") sumdelta[c]/=findValue*findValue;
                     this.beamControl(sumdelta[c]);
@@ -272,12 +284,14 @@ class Scope extends pObject {
             // actual beem drawing
             ctx.beginPath();
             sumdelta[2]=0;
-            ctx.moveTo(px+y[0][0],pyx-y[1][0]);
-            for (var i=1; i<DL; i++) {
-                ctx.lineTo(px+y[0][i],pyx-y[1][i]);
-                sumdelta[2]+=Math.sqrt((y[0][i]-y[0][i-1])*(y[0][i]-y[0][i-1])+(y[1][i]-y[1][i-1])*(y[1][i]-y[1][i-1]));
+            for (var k=0; k<asl; k++) {
+                ctx.moveTo(px+y[0][0]+k*asx,pyx-y[1][0]+k*asy);
+                for (var i=1; i<DL; i++) {
+                    ctx.lineTo(px+y[0][i]+k*asx,pyx-y[1][i]+k*asy);
+                    if (k==0) sumdelta[2]+=Math.sqrt((y[0][i]-y[0][i-1])*(y[0][i]-y[0][i-1])+(y[1][i]-y[1][i-1])*(y[1][i]-y[1][i-1]));
+                }
+                ctx.lineTo(px+y[0][0]+k*asx,pyx-y[1][0]+k*asy);
             }
-            ctx.lineTo(px+y[0][0],pyx-y[1][0]);
             sumdelta[2]/=N*L; if (findState!="off") sumdelta[2]/=(findValue*findValue);
             this.beamControl(sumdelta[2]);
             ctx.stroke();
@@ -287,10 +301,12 @@ class Scope extends pObject {
         else {
             ctx.beginPath();
             sumdelta[2]=0;
-            ctx.moveTo(px,py0-this.calcModeY(-1,y[0][0+tptr[0]],y[1][0+tptr[0]])-k_rot.getValue()*DL/500);
-            for (var i=1; i<DL; i++) {
-                ctx.lineTo(px+i,py0-this.calcModeY(-1,y[0][i+tptr[0]],y[1][i+tptr[0]])-k_rot.getValue()*(DL/2-i)/250);
-                sumdelta[2]+=Math.abs(this.calcModeY(-1,y[0][i-1+tptr[0]],y[1][i-1+tptr[0]])-this.calcModeY(-1,y[0][i+tptr[0]],y[1][i+tptr[0]]));
+            for (var k=0; k<asl; k++) {
+                ctx.moveTo(px+k*asx,py0-this.calcModeY(-1,y[0][0+tptr[0]],y[1][0+tptr[0]])-k_rot.getValue()*DL/500+k*asy);
+                for (var i=1; i<DL; i++) {
+                    ctx.lineTo(px+i+k*asx,py0-this.calcModeY(-1,y[0][i+tptr[0]],y[1][i+tptr[0]])-k_rot.getValue()*(DL/2-i)/250+k*asy);
+                    if (k==0) sumdelta[2]+=Math.abs(this.calcModeY(-1,y[0][i-1+tptr[0]],y[1][i-1+tptr[0]])-this.calcModeY(-1,y[0][i+tptr[0]],y[1][i+tptr[0]]));
+                }
             }
             sumdelta[2]/=N*L; if (findState!="off") sumdelta[2]/=(findValue*findValue);
             this.beamControl(sumdelta[2]);

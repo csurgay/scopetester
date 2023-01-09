@@ -150,13 +150,11 @@ class Frame extends pObject {
         new Label(x[pPos],pY+1," "+pLabel+" ",15);
     }
     draw(ctx) {
-        ctx.save();
         ctx.beginPath();
         ctx.lineWidth=2;
         ctx.strokeStyle = "rgb(0, 25, 0)";
-        ctx.roundRect(this.x, this.y, this.w, this.h, 20);
+        roundRect(ctx, this.x, this.y, this.w, this.h, 20);
         ctx.stroke();
-        ctx.restore();
         super.draw(ctx);
     }
 }

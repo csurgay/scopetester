@@ -15,7 +15,6 @@ class Vfd extends pObject {
         s=(ss[0]+"."+ss[1]).substring(0,this.digits+1);
         var l=s.length; if (s.indexOf('.')>=0) l++;
         if (this.getValue()<0) s='-'+s.slice(1);
-        ctx.save();
         ctx.beginPath();
         grd = ctx.createRadialGradient(this.x+this.w/2,this.y+this.h/2,
             2*this.w/5, this.x+this.w/2,this.y+this.h/2,
@@ -43,7 +42,6 @@ class Vfd extends pObject {
         var d=4;
         ctx.rect(this.x-d,this.y-d,this.w+2*d,this.h+2*d);
         ctx.stroke();
-        ctx.restore();
         super.draw(ctx);
     }
 }

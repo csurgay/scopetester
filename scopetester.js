@@ -60,6 +60,22 @@ function error(msg) {
     console.error(new Date(Date.now()).toISOString()+": "+msg);
 }
 
+function myRoundRect(ctx,x,y,w,h,r) {
+    ctx.moveTo(x+r,y);
+    ctx.lineTo(x+w-r,y);
+    ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r);
+    ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h);
+    ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r);
+    ctx.quadraticCurveTo(x,y,x+r,y);
+}
+function roundRect(ctx,x,y,w,h,r) {
+    if (typeof InstallTrigger !== 'undefined') myRoundRect(ctx,x,y,w,h,r);
+    else ctx.roundRect(x,y,w,h,r);
+}
+
 function run() {
     draw(ctx);
     if (b_power.state==1) setTimeout(run,1000);
@@ -68,7 +84,6 @@ function run() {
 var i=0, prevX=70, prevY=250;
 function run1() {
     scope.drawScreen(ctx);
-    ctx.save();
     ctx.beginPath();
     ctx.lineWidth=6;
     ctx.strokeStyle="rgb(200,200,200)"
@@ -78,7 +93,7 @@ function run1() {
     prevY+=Math.floor(3*Math.random())-1;
     if (prevX!=70) ctx.lineTo(prevX,prevY);
     ctx.stroke();
-    ctx.restore();
+    ctx.lineWidth=1;
     var kt=k_time.k.getValue();
     var kt_=k_time.k_.getValue();
     timebase=tb[kt+9]*tb_[kt_+10];
