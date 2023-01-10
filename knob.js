@@ -2,7 +2,7 @@ var pDelta; // for holding -event.delta
 var xd, yd, rd, nd, kd; // for x,y for drawing
 
 class Knob extends pObject {
-    constructor(pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos) {
+    constructor(pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos,pMarker="marker") {
         const pos={"knob":-27,"double":-44,"sweep":78, 
         "double_s":-40, "delay":78, "func":-57, "range":-55, 
         "volts":-55, "sigdouble":-30};
@@ -19,9 +19,11 @@ class Knob extends pObject {
         this.l=pLabel;
         this.color="#EEEEEE";
         this.haircolor="gray";
-        this.pointercolor="red";
+        this.markercolor="red";
         var xLabel=pX; if (lpos=="sigdouble") xLabel+=70;
         new Label(xLabel,pY+pos[lpos],pLabel,12);
+        this.marker=pMarker;
+        this.shadow=true;
         ui.push(this);
     }
     getValue() {
@@ -52,6 +54,12 @@ class Knob extends pObject {
         xd=this.x+this.r;
         yd=this.y+this.r;
         rd=this.r; nd=this.ticks; kd=this.value;
+        if (this.shadow) {
+            ctx.beginPath();
+            ctx.fillStyle = "rgba(60,60,60,0.2)";
+            ctx.ellipse(xd,yd,2*rd,rd,Math.PI/4,-Math.PI/2,Math.PI/2);
+            ctx.fill();
+        }
         ctx.beginPath();
         ctx.strokeStyle=this.haircolor;
         ctx.lineTo(xd+rd,yd);
@@ -63,12 +71,14 @@ class Knob extends pObject {
             ctx.lineTo(xd+2*rd/3*Math.sin(2*Math.PI*i/nd),yd-2*rd/3*Math.cos(2*Math.PI*i/nd));
         }
         ctx.stroke();
-        ctx.beginPath();
-        ctx.lineWidth=2;
-        ctx.strokeStyle=this.pointercolor;
-        ctx.moveTo(xd+rd*Math.sin(2*Math.PI*kd/nd),yd-rd*Math.cos(2*Math.PI*kd/nd));
-        ctx.lineTo(xd+3*rd/5*Math.sin(2*Math.PI*kd/nd),yd-3*rd/5*Math.cos(2*Math.PI*kd/nd));
-        ctx.stroke();
+        if (this.marker=="marker") {
+            ctx.beginPath();
+            ctx.lineWidth=2;
+            ctx.strokeStyle=this.markercolor;
+            ctx.moveTo(xd+rd*Math.sin(2*Math.PI*kd/nd),yd-rd*Math.cos(2*Math.PI*kd/nd));
+            ctx.lineTo(xd+3*rd/5*Math.sin(2*Math.PI*kd/nd),yd-3*rd/5*Math.cos(2*Math.PI*kd/nd));
+            ctx.stroke();
+        }
         ctx.lineWidth=1;
         super.draw(ctx);
     }
@@ -82,6 +92,7 @@ class DoubleKnob extends pObject {
         this.k_.hitPad=2; // so that hit rect is smaller for inner knob
         this.k.limit=Math.floor(this.k.ticks/2);
         this.k_.limit=Math.floor(this.k_.ticks/2);
+        this.k.shadow=false;
     }
     setSwitchBufferNeeded() {
         super.setSwitchBufferNeeded();
@@ -101,10 +112,11 @@ class DekorKnob extends DoubleKnob {
         this.rDekor=rDekor;
         this.k_.color="rgb(200,20,20)";
         this.k_.haircolor=this.k_.color;
-        this.k_.pointercolor="#EEEEEE";
+        this.k_.markercolor="#EEEEEE";
         this.varLabel=new Label(pX-rDekor,pY-rDekor,"Var",11);
         this.varLabel.bgcolor="rgba(200,20,20,0.75)";
         this.varLabel.fgcolor="rgba(220,220,220,1)";
+        this.varLabel.background=true;
         this.iconCircle(ui,pX,pY+2,this.rDekor,vals);
         this.captionCircle(ui,pX,pY+3,this.rDekor);
     }
@@ -210,6 +222,7 @@ class FuncKnob extends DoubleKnob {
         super(pX,pY,bufgen.length,33,"Func                         ","func",35,19);
         this.dutyLabel=new Label(pX+40,pY-55,"Param",12);
         this.dutyLabel.bgcolor=hl_gray;
+        this.dutyLabel.background=true;
         this.k.value=0;
         this.k_.color="gray";
         this.k_.haircolor="#EEEEEE";
@@ -233,7 +246,6 @@ class ScaleKnob extends Knob {
     constructor(pX,pY) {
         super(3,pX,pY,25,scale.length,0,"Range","range");
         this.iconCircle(pX,pY+4,40,scale);
-        ui.push(this);
     }
     iconCircle(x,y,r,scale) {
         var n=scale.length;
@@ -255,7 +267,6 @@ class MonitorKnob extends Knob {
         super(-1,pX,pY,18,a_monitor.length,4,"none","none");
         this.value0=false;
         this.iconCircle(pX,pY+2,30,a_monitor);
-        ui.push(this);
     }
     iconCircle(x,y,r,a_monitor) {
         var n=a_monitor.length;

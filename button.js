@@ -43,14 +43,12 @@ class Button extends pObject {
     }
     draw(ctx) {
         ctx.beginPath();
-        grd = ctx.createRadialGradient(this.x+this.w/2,this.y+this.h/2,
-            2*this.w/5, this.x+this.w/2,this.y+this.h/2,
-            2*this.w/3);
-        grd.addColorStop(0, "rgb(10,30,30)");
-        grd.addColorStop(1, bgcolor);
-        ctx.fillStyle = grd;
-        if (this.type=="power") 
-            ctx.fillRect(this.x-dVfd,this.y-dVfd/2,this.w+2*dVfd,this.h+dVfd);
+        ctx.fillStyle = "black";
+            roundRect(ctx,this.x-1,this.y-1,this.w+1,this.h+1,2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.fillStyle = "rgba(70,70,70,0.3)";
+            roundRect(ctx,this.x,this.y,this.w+2,this.h+3,3);
         ctx.fill();
         ctx.drawImage(this.state==1?this.img_on:this.img_off,this.x,this.y,this.w,this.h);
         super.draw(ctx);
@@ -73,6 +71,7 @@ class PowerButton extends Button {
                 scope.ch[i].b_dc.state=1;
             }
             k_monitor.callSwitchOff();
+            powerState="start"; powerValue=1.0; setTimeout(setPower,10);
         }
         // power switch-off event
         if (this.state==1) {
@@ -80,8 +79,18 @@ class PowerButton extends Button {
                 buttons[i].callSwitchOff();
             }
             k_monitor.callSwitchOff();
+            powerState="off";
         }
         super.clickXY(x,y);
+    }
+}
+function setPower() {
+    trace("setPower");
+    if (powerState=="start") {
+        powerValue+=1;
+        scope.draw(ctx);
+        if (powerValue>255) powerState="off";
+        else setTimeout(setPower,10);
     }
 }
 class ChOnButton extends Button {
@@ -115,6 +124,14 @@ class FindButton extends ChOnButton {
         // findState: "search"/"found"/"off", y/findValue displayed
     }
 }
+function setFind() {
+    trace("setFind");
+    if (findState=="search") {
+        findValue*=1.2;
+        scope.draw(ctx);
+        setTimeout(setFind,10);
+    }
+}
 class DebugButton extends ChOnButton {
     constructor(pX,pY,pW,pH,pLabel,pType) {
         super(pX,pY,pW,pH,pLabel,pType);
@@ -123,15 +140,6 @@ class DebugButton extends ChOnButton {
         super.clickXY(x,y);
         if (this.state==1) { logWindow.removeAttribute("hidden"); }
         else if (this.state==0) logWindow.setAttribute("hidden","hidden");
-        // findState: "search"/"found"/"off", y/findValue displayed
-    }
-}
-function setFind() {
-    trace("setFind");
-    if (findState=="search") {
-        findValue*=1.2;
-        scope.draw(ctx);
-        setTimeout(setFind,10);
     }
 }
 class MicButton extends ChOnButton {
@@ -174,11 +182,8 @@ class ResvButton extends ChOnButton {
     callSwitchOff() {
         if (this.state==1) {
             super.clickXY(0,0);
-            this.switchOff();
             draw(ctx);
         }
-    }
-    switchOff() {
     }
 }
 class Radio extends pObject {

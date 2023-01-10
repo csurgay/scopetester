@@ -16,8 +16,10 @@ function initBufgen() {
     bufgen.push(new BufferGenerator("Square7",f_square_harmonic,'fullIcon'));
     bufgen.push(new BufferGenerator("Trapezoid",f_trapezoid,'fullIcon'));
     bufgen.push(new BufferGenerator("Ramp",f_ramp,'fullIcon'));
+    bufgen.push(new BufferGenerator("Sinc",f_gauss,'fullIcon'));
     bufgen.push(new BufferGenerator("Sinc",f_sinc,'fullIcon'));
-    bufgen.push(new BufferGenerator("Exp",f_exp,'fullIcon'));
+    bufgen.push(new BufferGenerator("Sinc",f_pulse,'fullIcon'));
+//    bufgen.push(new BufferGenerator("Exp",f_exp,'fullIcon'));
     bufgen.push(new BufferGenerator("Log",f_log,'fullIcon'));
     bufgen.push(new BufferGenerator("Beats",f_beats,'fullIcon'));
     bufgen.push(new BufferGenerator("ECG",f_ecg,'fullIcon'));
@@ -25,8 +27,8 @@ function initBufgen() {
     bufgen.push(new BufferGenerator("Morse",f_morse,'fullIcon'));
     // Menomano (LaLinea) eredeti plotter rajz -> buffer function buffer
     initMenomano();
-    bufgen.push(new BufferGenerator("MenoX",f_menomanoX,"halficon"));
-    bufgen.push(new BufferGenerator("MenoY",f_menomanoY,"halficon"));
+    bufgen.push(new BufferGenerator("MenoX",f_menomanoX,"halfIcon"));
+    bufgen.push(new BufferGenerator("MenoY",f_menomanoY,"halfIcon"));
 //    bufgen.push(new BufferGenerator("Sawtooth",f_sawtooth,'fullIcon'));
 //    bufgen.push(new BufferGenerator("Triangle7",f_triangle_harmonic,'fullIcon'));
 }
@@ -142,7 +144,7 @@ function f_sine(x,o) {
     for (var i=16; i>2; i--) if (Math.abs(o)>i) o*=2;
     angle_rad = 1.0 * x * Math.PI / L2;
     if (o==0) 
-        return ampl*Math.pow(Math.sin(angle_rad),1);
+        return ampl*Math.sin(angle_rad);
     else if (o>0) 
         return ampl*(2*Math.pow(Math.sin((angle_rad+Math.PI/2)/2),2*(o+1))-1);
     else 
@@ -153,11 +155,27 @@ function f_beats(x,o) {
     angle_rad = 1.0 * x * Math.PI / L2;
     return ampl*Math.sin(angle_rad*(o+2))*Math.sin(angle_rad);
 }
+function f_gauss(x,o) {
+    x-=L/2;
+    if (o>16) o-=33;
+    angle_rad = 1.0 * x * Math.PI / L4;
+    if (o>=0) angle_rad*=(angle_rad*(o*o+1));
+    else angle_rad*=(angle_rad/(-o/2+1));
+    return 2*ampl*Math.pow(Math.E,-angle_rad)-ampl;
+}
 function f_sinc(x,o) {
     x-=L/2; if (x==0) x=0.001;
     if (o>16) o-=33;
     angle_rad = 1.0 * x * Math.PI / L2;
-    return ampl*Math.sin((2+o/8)*Math.PI*angle_rad)/(Math.PI*angle_rad);
+    return ampl*Math.sin((4+o/4)*Math.PI*angle_rad)/(Math.PI*angle_rad)/2;
+}
+function f_pulse(x,o) {
+    if (o>16) o-=33;
+    var ox=Math.abs(o)+1;
+    var Lx=L8/ox;
+    if (x<=L2-Lx) return -f_gauss(x+Lx,ox-1)/2-ampl/2;
+    else if (x>L2-Lx && x<L2+Lx) return f_sine(2*ox*x,0);
+    else return f_gauss(x-Lx,ox-1)/2+ampl/2;
 }
 function f_exp(x,o) {
     x=x%L;

@@ -68,7 +68,7 @@ class Icon extends pObject {
             ctx.beginPath();
             ctx.strokeStyle="black";
             ampl=127;
-            var halfed=1; if (this.halfIcon=="halficon") halfed=3;
+            var halfed=1; if (this.halfIcon=="halfIcon") halfed=3;
             ctx.moveTo(this.x,this.y-this.h*this.f(0)/ampl/halfed);
             order=0;
             for (var i=0; i<this.w; i++) 
@@ -96,6 +96,7 @@ class Label extends pObject {
         this.adjustRect(this.tX-this.w/2-2,this.tY-this.h/2,this.w+4,this.h-3);
         this.s=pS;
         this.size=pSize;
+        this.background=false;
         ui.push(this);
     }
     adjustXY(pX,pY) {
@@ -108,10 +109,11 @@ class Label extends pObject {
     draw(ctx) {
         ctx.beginPath();
         ctx.font = this.size+'px Arial';
-        ctx.fillStyle=this.bgcolor;
-        ctx.fillRect(this.x,this.y-1,this.w,this.h+3);
+        if (this.background) {
+            ctx.fillStyle=this.bgcolor;
+            ctx.fillRect(this.x,this.y-1,this.w,this.h+3);
+        }
         ctx.fill();
-        ctx.stroke();
         ctx.beginPath();
         ctx.fillStyle="black";
         ctx.fillStyle=this.fgcolor;
@@ -147,7 +149,8 @@ class Frame extends pObject {
         super(pX,pY,pW,pH);
         var x={"center":pX+pW/2,"rightish":pX+3*pW/4};
         ui.push(this);
-        new Label(x[pPos],pY+1," "+pLabel+" ",15);
+        this.label=new Label(x[pPos],pY+1," "+pLabel+" ",15);
+        this.label.background=true;
     }
     draw(ctx) {
         ctx.beginPath();

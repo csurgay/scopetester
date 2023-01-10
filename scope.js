@@ -24,7 +24,7 @@ class Scope extends pObject {
         b_ch1=new ChOnButton(795,650,24,16,"CH1","on");
         b_ch2=new ChOnButton(795,650,24,16,"CH2","on");
         b_chon=[b_ch1,b_ch2];
-        b_dual=new ChOnButton(795,650,24,16,"Dual","on");
+        b_dual=new ChOnButton(795,650,24,16,"Alt","on");
         b_add=new ChOnButton(795,650,24,16,"Add","on");
         b_mod=new ChOnButton(795,650,24,16,"AM","on");
         b_xy=new ChOnButton(795,650,24,16,"X-Y","on");
@@ -41,12 +41,12 @@ class Scope extends pObject {
         b_mic=new MicButton(20,1380,24,16,"Mic","small");
         b_debug=new DebugButton(20,430,24,16,"Debug","small");
         this.ch=[new ScopeChannel(685,80), new ScopeChannel(825,80)];
-        k_intensity=new Knob(8,30,105,15,17,0,"Intensity","knob");
-        k_focus=new Knob(8,30,160,15,17,0,"Focus","knob");
-        k_astigm=new Knob(8,30,215,15,17,0,"Astigm","knob");
-        k_illum=new Knob(16,30,270,15,17,0,"Illum","knob");
+        k_intensity=new Knob(8,30,105,15,17,0,"Intensity","knob","nomarker");
+        k_focus=new Knob(8,30,160,15,17,0,"Focus","knob","nomarker");
+        k_astigm=new Knob(8,30,215,15,17,0,"Astigm","knob","nomarker");
+        k_illum=new Knob(16,30,270,15,17,0,"Illum","knob","nomarker");
         k_illum.value0=false;
-        k_rot=new Knob(15,30,325,15,31,0,"Rotation","knob");
+        k_rot=new Knob(15,30,325,15,31,0,"Rotation","knob","nomarker");
         k_time=new TimeKnob(850,180);
         new Vfd(710,75,4,()=>{return 10*k_delay.k.getValue()+k_delay.k_.getValue();},()=>{return b_power.state==0 || 10*k_delay.k.getValue()+k_delay.k_.getValue()==0;});
         k_delay=new DoubleKnob(665,75,100,100,"Delay","double",35,20);
@@ -224,6 +224,7 @@ class Scope extends pObject {
         int2=Math.floor(180+170*(int1+8-ast*ast/20)/16); // 180..350
         int3=Math.sqrt(Math.sqrt(timebase*beamLength));  // 1..3500
         int2-=(10*int3); if (int2<1) int2=1;
+        if (powerState=="start") int2=powerValue;
         alpha1=int2/255;
         if (alpha1>1) alpha1=1; if (alpha1<0.05) alpha1=0.05;
         ss="rgba("+int2/4+","+int2+","+int2/4+","+alpha1+")";
