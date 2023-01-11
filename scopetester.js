@@ -12,9 +12,9 @@ function init() {
     vfd=new Image(); vfd.src='./images/vfds.jpg'; vfd.onload=()=>wait();
     vfd_=new Image(); vfd_.src='./images/vfd-s.jpg'; vfd_.onload=()=>wait();
     led_on=new Image(); led_on.src='./images/led_on_2416.jpg'; led_on.onload=()=>wait();
-    led_on_power=new Image(); led_on_power.src='./images/PowerOn.png'; led_on_power.onload=()=>wait();
+    led_on_powers=new Image(); led_on_powers.src='./images/PowerOnGreenS.jpg'; led_on_powers.onload=()=>wait();
     led_off=new Image(); led_off.src='./images/led_off_2416.jpg'; led_off.onload=()=>wait();
-    led_off_power=new Image(); led_off_power.src='./images/PowerOff.png'; led_off_power.onload=()=>wait();
+    led_off_powers=new Image(); led_off_powers.src='./images/PowerOffGreenS.jpg'; led_off_powers.onload=()=>wait();
     led_red=new Image(); led_red.src='./images/led_red_2416.jpg'; led_red.onload=()=>wait();
 }
 
@@ -43,7 +43,7 @@ function start() {
     siggen=[new Siggen(75,530,"1"),new Siggen(445,530,"2")];
     scope=new Scope(70,10,DL/10,17);
     initChannels();
-    b_power=new PowerButton(12,10,40,50,"","power");
+    b_power=new PowerButton(10,25,40,35,"ON","power");
     draw(ctx);
     setTimeout(processEvent,100);
 }

@@ -47,8 +47,10 @@ class Button extends pObject {
             roundRect(ctx,this.x-1,this.y-1,this.w+1,this.h+1,2);
         ctx.fill();
         ctx.beginPath();
-        ctx.fillStyle = "rgba(70,70,70,0.3)";
-            roundRect(ctx,this.x,this.y,this.w+2,this.h+3,3);
+        var shadowD=this.type=="power"?5:3;
+        var shadowR=this.type=="power"?1:3;
+        ctx.fillStyle = shadowcolor;
+            roundRect(ctx,this.x,this.y,this.w+shadowD-1,this.h+shadowD,shadowR);
         ctx.fill();
         ctx.drawImage(this.state==1?this.img_on:this.img_off,this.x,this.y,this.w,this.h);
         super.draw(ctx);
@@ -57,8 +59,8 @@ class Button extends pObject {
 class PowerButton extends Button {
     constructor(pX,pY,pW,pH,pLabel,pType) {
         super(pX,pY,pW,pH,pLabel,pType);
-        this.img_on=led_on_power;
-        this.img_off=led_off_power;
+        this.img_on=led_on_powers;
+        this.img_off=led_off_powers;
         buttons.splice(-1); // remove this last power button from buttons
     }
     clickXY(x,y) {
@@ -87,9 +89,9 @@ class PowerButton extends Button {
 function setPower() {
     trace("setPower");
     if (powerState=="start") {
-        powerValue+=1;
+        powerValue+=3;
         scope.draw(ctx);
-        if (powerValue>255) powerState="off";
+        if (powerValue>255) { powerState="off"; draw(ctx); }
         else setTimeout(setPower,10);
     }
 }

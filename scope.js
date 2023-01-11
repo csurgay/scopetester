@@ -41,12 +41,12 @@ class Scope extends pObject {
         b_mic=new MicButton(20,1380,24,16,"Mic","small");
         b_debug=new DebugButton(20,430,24,16,"Debug","small");
         this.ch=[new ScopeChannel(685,80), new ScopeChannel(825,80)];
-        k_intensity=new Knob(8,30,105,15,17,0,"Intensity","knob","nomarker");
-        k_focus=new Knob(8,30,160,15,17,0,"Focus","knob","nomarker");
-        k_astigm=new Knob(8,30,215,15,17,0,"Astigm","knob","nomarker");
-        k_illum=new Knob(16,30,270,15,17,0,"Illum","knob","nomarker");
+        k_intensity=new Knob(8,30,105,15,17,0,"Intensity","knob");
+        k_focus=new Knob(8,30,160,15,17,0,"Focus","knob");
+        k_astigm=new Knob(8,30,215,15,17,0,"Astigm","knob");
+        k_illum=new Knob(16,30,270,15,17,0,"Illum","knob");
         k_illum.value0=false;
-        k_rot=new Knob(15,30,325,15,31,0,"Rotation","knob","nomarker");
+        k_rot=new Knob(15,30,325,15,31,0,"Rotation","knob");
         k_time=new TimeKnob(850,180);
         new Vfd(710,75,4,()=>{return 10*k_delay.k.getValue()+k_delay.k_.getValue();},()=>{return b_power.state==0 || 10*k_delay.k.getValue()+k_delay.k_.getValue()==0;});
         k_delay=new DoubleKnob(665,75,100,100,"Delay","double",35,20);
@@ -66,14 +66,21 @@ class Scope extends pObject {
     }
     drawScreen(ctx) {
         // draw screen
+        if (powerState!="start" || powerValue==1.0) {
+            ctx.beginPath();
+            ctx.fillStyle = shadowcolor;
+            roundRect(ctx, this.x+5, this.y+5, this.w+15, this.h+15, 20);
+            ctx.fill();
+        }
         ctx.beginPath();
-        ctx.strokeStyle = "rgb(0, 25, 0)";
-        ctx.lineWidth=6;
+        ctx.strokeStyle = "rgb(25, 50, 25)";
+        ctx.lineWidth=20;
         ctx.fillStyle = "rgba(50, 100, 50, 1)";
         roundRect(ctx, this.x, this.y, this.w, this.h, 20);
         ctx.stroke();
         ctx.fill();
         ctx.beginPath();
+        ctx.strokeStyle = "rgb(0, 25, 0)";
         ctx.lineWidth=1;
         // draw grid
         d=this.d;
@@ -227,23 +234,23 @@ class Scope extends pObject {
         if (powerState=="start") int2=powerValue;
         alpha1=int2/255;
         if (alpha1>1) alpha1=1; if (alpha1<0.05) alpha1=0.05;
-        ss="rgba("+int2/4+","+int2+","+int2/4+","+alpha1+")";
+        ss="rgba(0,"+int2+",0,"+alpha1+")";
         ctx.strokeStyle=ss;
         ctx.lineWidth=1+Math.abs(blur1/2);
-        if (int2>230) ctx.lineWidth+=(int2-230)/20;
+        if (int2>200) ctx.lineWidth+=((int2-200)/25);
         if (findState!="off") ctx.lineWidth+=1;
         ctx.filter="blur("+(Math.abs(blur1/2))+"px)";
     }
     draw(ctx) {
         d=this.d;
         dd=this.dd;
-        this.drawScreen(ctx);
         this.calcY();
         this.triggerSeek();
         // intensity and focus
         int1=k_intensity.getValue();
         blur1=k_focus.getValue();
         // draw beams
+        this.drawScreen(ctx);
         ctx.save();
         roundRect(ctx, this.x+3, this.y+3, this.w-6, this.h-6, 20);
         ctx.clip();
