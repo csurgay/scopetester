@@ -1,10 +1,13 @@
-const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.23";
+const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.24";
 var canvas, ctx, logWindow, traceString="", now, scope, siggen; // main ui objects
 var no_images_to_load, vfd, vfd_, led_on_power, led_on, led_off_power, led_off, led_red; // canvas images
-const L=2000, L2=L/2, L4=L/4, L8=L/8; // buffer length
+const L=2048, L2=L/2, L4=L/4, L8=L/8; // buffer length
 const N=1; // sample channel buffers (sch) length = N*L
 const DL=500; // Display length
 const A = 127; // default amplitude (on integer scale, A -> 1.0)
+const f=new FFT(2048); // buffer for FFT spectrum data
+const out=f.createComplexArray();
+const input=f.createComplexArray();
 var timebase, q, delay; // not sure yet, q=timebase*L/512
 const sqrt=1.0293022366; // ^24=2 (sqrt=1.07177347; // ^10=2)
 const bgcolor="#bbbbbb";

@@ -38,29 +38,30 @@ var angle_rad; // for 2*PI calcultions
 
 function initChannels() {
     trace("initChannels");
-    for (var i=0; i<2; i++) {
+    for (var c=0; c<2; c++) {
         // amplitude
-        ampls[i]=siggen[i].k_ampl.k.getValue();
-        ampls_[i]=siggen[i].k_ampl.k_.getValue();
-        ampls[i]=100*Math.pow(1.005,10*ampls[i])+ampls_[i]/10;
-        if (ampls[i]<0.1) ampls[i]=0.1;
+        ampls[c]=siggen[c].k_ampl.k.getValue();
+        ampls_[c]=siggen[c].k_ampl.k_.getValue();
+        ampls[c]=100*Math.pow(1.005,10*ampls[c])+ampls_[c]/10;
+        if (ampls[c]<0.1) ampls[c]=0.1;
         // frequency
-        scales[i]=parseFloat(scale[siggen[i].k_scale.getValue()]);
-        freqs[i]=siggen[i].k_freq.k.getValue();
-        freqs_[i]=siggen[i].k_freq.k_.getValue();
-        freqs[i]/=10.0; if (freqs[i]<0) freqs[i]=freqs[i]/10;
-        freqs_[i]/=1000.0;
-        freqs[i]=scales[i]*(freqs[i]+1)+freqs_[i];
-        if (freqs[i]<0.001) freqs[i]=0.001;
+        scales[c]=parseFloat(scale[siggen[c].k_scale.getValue()]);
+        freqs[c]=siggen[c].k_freq.k.getValue();
+        freqs_[c]=siggen[c].k_freq.k_.getValue();
+        freqs[c]/=10.0; if (freqs[c]<0) freqs[c]=freqs[c]/10;
+        freqs_[c]/=1000.0;
+        freqs[c]=scales[c]*(freqs[c]+1)+freqs_[c];
+        if (freqs[c]<0.001) freqs[c]=0.001;
         // phase
-        phases[i]=15*siggen[i].k_phase.k.getValue()+siggen[i].k_phase.k_.getValue()/2; 
-        if (phases[i]<0) phases[i]+=360;
-        phases[i]=L*phases[i]/360;
+        phases[c]=15*siggen[c].k_phase.k.getValue()+siggen[c].k_phase.k_.getValue()/2; 
+        if (phases[c]<0) phases[c]+=360;
+        phases[c]=L*phases[c]/360;
         // dc offset
-        dcs[i]=siggen[i].k_dc.k.getValue();
-        dcs_[i]=siggen[i].k_dc.k_.getValue();
-        dcs[i]=dcs[i]/10+dcs_[i]/1000;
+        dcs[c]=siggen[c].k_dc.k.getValue();
+        dcs_[c]=siggen[c].k_dc.k_.getValue();
+        dcs[c]=dcs[c]/10+dcs_[c]/1000;
     }
+    // calc signal data into sch
     for (var c=0; c<2; c++) {
         ampl=ampls[c];
         freq=freqs[c];
@@ -83,6 +84,11 @@ function initChannels() {
             }
         }
     }
+    var input=f.toComplexArray(sch[0]);
+    f.realTransform(out, input);
+//    for (var i=0; i<sch[0].length; i++) input[2*i]=sch[0][i];
+//    f.transform(out,input);
+    for (var i=0; i<sch[1].length; i++) sch[1][i]=out[i];
 }
 
 function initMenomano() {

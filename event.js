@@ -1,6 +1,6 @@
 var e=[], evt, evtState="idle", objectUI, eN=0;
 var mouseDownObject=null, mouseDownX, mouseDownY, mouseMoved, mouseDownTime;
-var turnSensitity=120; // move if deltaY >= turnSensitivity/knob.ticks
+var turnSensitity=240; // move if deltaY >= turnSensitivity/knob.ticks
 
 class EventUI {
     constructor(pName,pTime,pObjectUI,pX,pY) {

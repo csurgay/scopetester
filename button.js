@@ -89,10 +89,10 @@ class PowerButton extends Button {
 function setPower() {
     trace("setPower");
     if (powerState=="start") {
-        powerValue+=3;
-        scope.draw(ctx);
-        if (powerValue>255) { powerState="off"; draw(ctx); }
-        else setTimeout(setPower,10);
+        powerValue+=15;
+        draw(ctx);
+        if (powerValue>255) { powerState="off"; }
+        else setTimeout(setPower,100);
     }
 }
 class ChOnButton extends Button {
