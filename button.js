@@ -5,7 +5,7 @@ var ypos={"power":-27,"on":0,"small":-15,"siggen":0};
 var grd; // for grad on Canvas
 
 class Button extends pObject {
-    constructor(pX,pY,pW,pH,pLabel,pType) {
+    constructor(pX,pY,pW,pH,pLabel,pType,pShow=true) {
         super(pX,pY,pW,pH);
         this.class="Button";
         this.name=pLabel;
@@ -17,9 +17,12 @@ class Button extends pObject {
         this.cY=pY+pH/2;
         this.state=0;
         this.type=pType;
-        ui.push(this);
-        this.label=new Label(this.cX,this.cY,pLabel,pType=="small"?12:(pType=="on"?12:(pType=="siggen"?15:15)));
-        this.setLabelXY(pType);
+        this.show=pShow;
+        if (pShow) {
+            ui.push(this);
+            this.label=new Label(this.cX,this.cY,pLabel,pType=="small"?12:(pType=="on"?12:(pType=="siggen"?15:15)));
+            this.setLabelXY(pType);
+        }
         buttons.push(this);
     }
     getValue() {
@@ -66,7 +69,6 @@ class PowerButton extends Button {
     clickXY(x,y) {
         // power switch-on event
         if (this.state==0) {
-            b_dual.state=1;
             b_auto.state=1;
             for (var i=0; i<2; i++) {
                 siggen[i].b_ch.state=1;
@@ -84,6 +86,9 @@ class PowerButton extends Button {
             powerState="off";
         }
         super.clickXY(x,y);
+        if (this.state==1) {
+            k_mode.setButtonValue();
+        }
     }
 }
 function setPower() {
@@ -189,16 +194,17 @@ class ResvButton extends ChOnButton {
     }
 }
 class Radio extends pObject {
-    constructor(pX,pY,pListButtons) {
+    constructor(pX,pY,pListButtons,pShow=true) {
         super(pX,pY,25,pListButtons.length*dButton);
         this.name="Radio";
         this.live=false;
         this.b=pListButtons;
+        this.show=pShow;
         for (var i=0; i<pListButtons.length; i++) {
             pListButtons[i].radio=this;
             pListButtons[i].x=pX;
             pListButtons[i].y=pY+i*dButton;
-            pListButtons[i].label.adjustXY(0,i*dButton);
+            if (pShow) pListButtons[i].label.adjustXY(0,i*dButton);
         }
         ui.push(this);
     }

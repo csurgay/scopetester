@@ -84,11 +84,6 @@ function initChannels() {
             }
         }
     }
-    var input=f.toComplexArray(sch[0]);
-    f.realTransform(out, input);
-//    for (var i=0; i<sch[0].length; i++) input[2*i]=sch[0][i];
-//    f.transform(out,input);
-    for (var i=0; i<sch[1].length; i++) sch[1][i]=out[i];
 }
 
 function initMenomano() {

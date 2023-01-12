@@ -21,14 +21,14 @@ class Scope extends pObject {
         k_vol=new Knob(8,885,675,20,17,0,"Volume","knob");
         k_vol.setSwitchBufferNeeded();
         k_monitor=new MonitorKnob(885,735);
-        b_ch1=new ChOnButton(795,650,24,16,"CH1","on");
-        b_ch2=new ChOnButton(795,650,24,16,"CH2","on");
+        b_ch1=new ChOnButton(795,650,24,16,"CH1","on",false);
+        b_ch2=new ChOnButton(795,650,24,16,"CH2","on",false);
         b_chon=[b_ch1,b_ch2];
-        b_dual=new ChOnButton(795,650,24,16,"Alt","on");
-        b_add=new ChOnButton(795,650,24,16,"Add","on");
-        b_mod=new ChOnButton(795,650,24,16,"AM","on");
-        b_xy=new ChOnButton(795,650,24,16,"X-Y","on");
-        radio_mode=new Radio(795,650,[b_ch1,b_ch2,b_dual,b_add,b_mod,b_xy]);
+        b_dual=new ChOnButton(795,650,24,16,"ALT","on",false);
+        b_add=new ChOnButton(795,650,24,16,"ADD","on",false);
+        b_mod=new ChOnButton(795,650,24,16,"AM","on",false);
+        b_xy=new ChOnButton(795,650,24,16,"X-Y","on",false);
+        radio_mode=new Radio(795,650,[b_ch1,b_ch2,b_dual,b_add,b_mod,b_xy],false);
         b_auto=new ChOnButton(895,530,24,16,"Auto","on");
         b_ch1tr=new ChOnButton(895,530,24,16,"CH1","on");
         b_ch2tr=new ChOnButton(895,530,24,16,"CH2","on");
@@ -63,15 +63,15 @@ class Scope extends pObject {
 //        k_hold=new DoubleKnob(880,520,50,50,"HoldOff","double_s",30,15);
         k_slope=new Knob(-1,800,590,17,2,0,"Slope","knob");
         k_slope.value0=false;
+        k_mode=new ModeKnob(792,680);
+        b_fft=new ChOnButton(792,740,24,16,"FFT","on");
     }
     drawScreen(ctx) {
         // draw screen
-        if (powerState!="start" || powerValue==1.0) {
-            ctx.beginPath();
-            ctx.fillStyle = shadowcolor;
-            roundRect(ctx, this.x+5, this.y+5, this.w+15, this.h+15, 20);
-            ctx.fill();
-        }
+        ctx.beginPath();
+        ctx.fillStyle = shadowcolor;
+        roundRect(ctx, this.x+5, this.y+5, this.w+15, this.h+15, 20);
+        ctx.fill();
         ctx.beginPath();
         ctx.strokeStyle = "rgb(25, 50, 25)";
         ctx.lineWidth=20;
@@ -257,7 +257,7 @@ class Scope extends pObject {
         this.astigmCalc();
         // Actual beam drawing for Dual, Ch1, Ch2
         if (b_dual.state==1 || b_ch1.state==1 || b_ch2.state==1) {
-            for (var c=0; c<2; c++) {
+            for (var c=0; c<2; c++) if (c!=1 || b_dual.state!=1 || b_fft.state!=1) {
                 if (b_dual.state==1 || c==0 && b_ch1.state==1 || c==1 && b_ch2.state==1) {
                     if (b_dual.state==0) py[c]=py0;
                     ctx.beginPath();
@@ -320,6 +320,21 @@ class Scope extends pObject {
             this.beamControl(sumdelta[2]);
             ctx.stroke();
             ctx.lineWidth=1;
+        }
+        if (b_fft.state==1 && b_xy.state!=1) {
+            fftIn=f.createComplexArray();
+            for (var i=0; i<L; i++) {
+                fftIn[2*i]=this.calcModeY(-1,y[0][i],y[1][i]);
+            }
+            fftOut=f.createComplexArray();
+            f.transform(fftOut, fftIn);
+            ctx.beginPath();
+            ctx.moveTo(px,py0-fftOut[0]);
+            for (var i=1; i<DL; i++) {
+                ctx.lineTo(px+i,py0-fftOut[8*i]);
+            }
+            ctx.lineWidth=1;
+            ctx.stroke();
         }
         ctx.restore();
     }

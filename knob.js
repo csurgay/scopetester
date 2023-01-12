@@ -297,3 +297,28 @@ class MonitorKnob extends Knob {
         astarted=false;
     }
 }
+
+class ModeKnob extends Knob {
+    constructor(pX,pY) {
+        for (var i=0; i<radio_mode.b.length; i++)
+            a_mode.push(radio_mode.b[i].name);
+        super(-1,pX,pY,21,a_mode.length,2,"none","none");
+        this.value0=false;
+        this.iconCircle(pX,pY+2,34,a_mode);
+    }
+    iconCircle(x,y,r,a_mode) {
+        var n=a_mode.length;
+        for (var i=0; i<n; i++) {
+            new Label(x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),a_mode[i],12);
+        }
+    }
+    turnY(pDelta) {
+        super.turnY(pDelta);
+        this.setButtonValue();
+    }
+    setButtonValue() {
+        for (var i=0; i<buttons.length; i++)
+            if (buttons[i].radio==radio_mode && buttons[i].name==a_mode[this.value])
+                buttons[i].clickXY(0,0);
+    }
+}
