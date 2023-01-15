@@ -147,6 +147,8 @@ class DebugButton extends ChOnButton {
         super.clickXY(x,y);
         if (this.state==1) { logWindow.removeAttribute("hidden"); }
         else if (this.state==0) logWindow.setAttribute("hidden","hidden");
+        clearTimeout(attimer);
+        if (this.state==1) attimer=setTimeout(autotest,100);
     }
 }
 class MicButton extends ChOnButton {

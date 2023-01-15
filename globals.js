@@ -1,14 +1,14 @@
 const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.24";
 var canvas, ctx, logWindow, traceString="", now, scope, siggen; // main ui objects
 var no_images_to_load, vfd, vfd_, led_on_power, led_on, led_off_power, led_off, led_red; // canvas images
-const L=4096, L2=L/2, L4=L/4, L8=L/8; // buffer length
-const N=1; // sample channel buffers (sch) length = N*L
+const L=2000, L2=L/2, L4=L/4, L8=L/8; // buffer length
+const N=16; // y buffers length = N*L
 const DL=500; // Display length
 const A = 127; // default amplitude (on integer scale, A -> 1.0)
-const f=new FFT(L); // buffer for FFT spectrum data
-var fftIn=new Array(L), fftOut=new Array(L);
+const FFTN=32768;
+const f=new FFT(FFTN); // buffer for FFT spectrum data
+var fftIn=new Array(FFTN).fill(0), fftOut=new Array(FFTN).fill(0);
 var timebase, q, delay; // not sure yet, q=timebase*L/512
-const sqrt=1.0293022366; // ^24=2 (sqrt=1.07177347; // ^10=2)
 const bgcolor="#bbbbbb";
 const shadowcolor="rgba(70,70,70,0.3)";
 const hl_green="rgba(80,160,80,0.35)"; // knob and label highlight
@@ -16,9 +16,9 @@ const hl_gray="rgba(100,100,100,0.35)";
 var k_intensity, k_focus, k_astigm, k_illum, k_rot, k_xpos, b_xcal, b_ycal, k_vol, k_monitor;
 var b_power;
 var bufgen=[];
-var ch=[new Array(L),new Array(L)]; // original channel buffer, will get rid of
 var y=[new Array(N*L), new Array(N*L)]; // two y buffers for scope
 var sch=[new Array(L),new Array(L)]; // signal channel buffer, no freq
+var schlen=[0,0]; // length of signal buffer data for lower frequencies
 var micch=[new Array(L),new Array(L)]; // mic channel buffer
 var order, ampl, freq, ampls=[0,0], ampls_=[0,0], avgs=[0,0];
 var sumdelta=[0,0,0]; // third for Mode(Add,AM) beam length

@@ -312,6 +312,10 @@ class ModeKnob extends Knob {
             new Label(x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),a_mode[i],12);
         }
     }
+    clickXY(pX,pY) {
+        super.clickXY(pX,pY);
+        this.setButtonValue();
+    }
     turnY(pDelta) {
         super.turnY(pDelta);
         this.setButtonValue();

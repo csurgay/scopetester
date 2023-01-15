@@ -167,9 +167,10 @@ class Scope extends pObject {
                 if (scope.ch[c].b_gnd.state==0 && siggen[c].b_ch.state==1) {
                     // main y calculation
                     QI=Math.floor(freqs[c]*(10.0*Q*i+delay)%(L));
-                    if (freqs[c]*10*Q>=L/2) { 
+                    if (freqs[c]*10*Q>=L/3) { 
                         y[c][i]=i%2==0?(Math.min(...sch[c])-avgs[c])/level/2:(Math.max(...sch[c])-avgs[c])/level/2;
                     }
+                    // main formula for y calc
                     else {
                         y[c][i]=(sch[c][QI]-avgs[c])/level/2;
                         if (isNaN(y[c][i])) {
@@ -200,7 +201,7 @@ class Scope extends pObject {
             prevValue=y[c][0];
             if (b_mode.state==1) prevValue=this.calcModeY(c,y[0][0],y[1][0]);
             tptr[c]=-1; // init trigger pointer
-            while (!tcond && tptr[c]<N*L) {
+            while (!tcond && tptr[c]<L) {
                 tptr[c]++;
                 currValue=y[c][tptr[c]];
                 if (b_mode.state==1) currValue=this.calcModeY(c,y[0][tptr[c]],y[1][tptr[c]]);
@@ -270,7 +271,7 @@ class Scope extends pObject {
                             if (k==0) sumdelta[c]+=Math.abs(y[c][i+tptr[0]]-y[c][i-1+tptr[0]]);
                         }
                     }
-                    sumdelta[c]/=N*L; if (findState!="off") sumdelta[c]/=findValue*findValue;
+                    sumdelta[c]/=L; if (findState!="off") sumdelta[c]/=findValue*findValue;
                     this.beamControl(sumdelta[c]);
                     ctx.stroke();
                     ctx.lineWidth=1;
@@ -300,7 +301,7 @@ class Scope extends pObject {
                 }
                 ctx.lineTo(px+y[0][0]+k*asx,pyx-y[1][0]+k*asy);
             }
-            sumdelta[2]/=N*L; if (findState!="off") sumdelta[2]/=(findValue*findValue);
+            sumdelta[2]/=L; if (findState!="off") sumdelta[2]/=(findValue*findValue);
             this.beamControl(sumdelta[2]);
             ctx.stroke();
             ctx.lineWidth=1;
@@ -316,22 +317,26 @@ class Scope extends pObject {
                     if (k==0) sumdelta[2]+=Math.abs(this.calcModeY(-1,y[0][i-1+tptr[0]],y[1][i-1+tptr[0]])-this.calcModeY(-1,y[0][i+tptr[0]],y[1][i+tptr[0]]));
                 }
             }
-            sumdelta[2]/=N*L; if (findState!="off") sumdelta[2]/=(findValue*findValue);
+            sumdelta[2]/=L; if (findState!="off") sumdelta[2]/=(findValue*findValue);
             this.beamControl(sumdelta[2]);
             ctx.stroke();
             ctx.lineWidth=1;
         }
+        // FFT draw
         if (b_fft.state==1 && b_xy.state!=1) {
-            fftIn=f.createComplexArray();
-            for (var i=0; i<L; i++) {
-                fftIn[2*i]=this.calcModeY(-1,y[0][i],y[1][i]);
+            for (var i=0; i<FFTN; i++) {
+                var ii=Math.floor(schlen[0]*i/FFTN);
+                fftIn[i]=this.calcModeY(0,y[0][ii],y[1][ii])/127;
             }
-            fftOut=f.createComplexArray();
-            f.transform(fftOut, fftIn);
+            f.realTransform(fftOut, fftIn);
+            f.completeSpectrum(fftOut);
+            var A=Math.max(...y[1])/100;
             ctx.beginPath();
-            ctx.moveTo(px,py0-fftOut[0]);
+            ctx.moveTo(px,py0+2*d+fftOut[1][0]/A);
             for (var i=1; i<DL; i++) {
-                ctx.lineTo(px+i,py0-fftOut[8*i]);
+                yResult=0;
+                for (var j=0; j<8; j++) yResult+=fftOut[8*i-j];
+                ctx.lineTo(px+i,py0+2*d+yResult/8/A);
             }
             ctx.lineWidth=1;
             ctx.stroke();

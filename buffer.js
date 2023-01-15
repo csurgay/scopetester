@@ -52,6 +52,7 @@ function initChannels() {
         freqs_[c]/=1000.0;
         freqs[c]=scales[c]*(freqs[c]+1)+freqs_[c];
         if (freqs[c]<0.001) freqs[c]=0.001;
+        schlen[c]=L/freqs[c];
         // phase
         phases[c]=15*siggen[c].k_phase.k.getValue()+siggen[c].k_phase.k_.getValue()/2; 
         if (phases[c]<0) phases[c]+=360;
@@ -66,7 +67,7 @@ function initChannels() {
         ampl=ampls[c];
         freq=freqs[c];
         order=siggen[c].k_func.k_.getValue();
-        for (var x=0; x<N*L; x++) {
+        for (var x=0; x<L; x++) {
             if (b_mic.state==1) {
                 sch[c][x]=(1-2*siggen[c].b_inv.state)*micch[c][(freq*x+phases[c])];
             }

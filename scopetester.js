@@ -18,6 +18,32 @@ function init() {
     led_red=new Image(); led_red.src='./images/led_red_2416.jpg'; led_red.onload=()=>wait();
 }
 
+var ati=0;
+var atknob=0;
+var attimer;
+function autotest() {
+//    console.log("autotest: "+atknob+" "+ati);
+    while(ati<ui.length && atknob==0) {
+        if (ui[ati++].class=="Knob") {
+            atknob=1;
+        }
+    }
+    if (atknob++>0) {
+        if (atknob<4) ui[ati-1].turnY(1);
+        else if (atknob<10) ui[ati-1].turnY(-1);
+        else if (atknob<11) ui[ati-1].clickXY(0,0);
+        else atknob=0;
+        initChannels();
+        draw(ctx);
+        attimer=setTimeout(autotest,1);
+    }
+    else {
+        ati=0;
+        atknob=0;
+        draw(ctx);
+    }
+}
+
 function wait() {
     no_images_to_load--;
     if (no_images_to_load==0) setTimeout(start,100);
