@@ -16,16 +16,28 @@ class EventUI {
 
 function hitXY(x,y) {
     trace("hitXY("+x+","+y+")");
-    for (var i=ui.length-1; i>=0; i--) {
-        if (ui[i].hitXY(x,y)) {
-            return ui[i]; 
+    for (let i=uictx.length-1; i>=0; i--) {
+        if (uictx[i].hitXY(x-canvas.getBoundingClientRect().left,y-canvas.getBoundingClientRect().top)) {
+            return uictx[i]; 
+        }
+    }
+    for (let i=uidebugctx.length-1; i>=0; i--) {
+        if (uidebugctx[i].hitXY(x-debugcanvas.getBoundingClientRect().left,y-debugcanvas.getBoundingClientRect().top)) {
+            return uidebugctx[i]; 
         }
     }
     return null;
 }
 
-function mouseInit(canvas) {
+var keypressOnlyOnce=false;
+function eventInit(canvas) {
     trace("mouseInit");
+    if (!keypressOnlyOnce) {
+        keypressOnlyOnce=true;
+        document.addEventListener('keypress', function(event) {
+            new EventUI("keypress",Date.now(),null,event.key,event.code);
+        }, false);
+    }   
     canvas.addEventListener('wheel', function(event) {
         objectUI=hitXY(event.clientX,event.clientY);
         if (objectUI!=null) {
@@ -113,7 +125,19 @@ function processEvent() {
     if (e.length>0) {
         trace("processEvent");
         evt=e.shift();
-        if (evt.name=="wheel") {
+        while(Date.now()<evt.time) ;
+        if (evt.name=="keypress") {
+            if (evt.x=="d") { b_debug.clickXY(0,0); draw(ctx); }
+            else if (evt.x=="0") { b_reset.clickXY(0,0); draw(ctx); }
+            else if (evt.x=="1") { b_presets[0].clickXY(0,0); draw(ctx); }
+            else if (evt.x=="2") { b_presets[1].clickXY(0,0); draw(ctx); }
+            else if (evt.x=="3") { b_presets[2].clickXY(0,0); draw(ctx); }
+            else if (evt.x=="4") { b_presets[3].clickXY(0,0); draw(ctx); }
+            else if (evt.x=="5") { b_presets[4].clickXY(0,0); draw(ctx); }
+            else if (evt.x=="6") { b_presets[5].clickXY(0,0); draw(ctx); }
+//            alert(`Key pressed ${evt.x} \r\n Key code value: ${evt.y}`);
+        }
+        else if (evt.name=="wheel") {
             evt.objectUI.turnY(evt.y);
             if (evt.objectUI.initChannelsNeeded) initChannels();
             draw(ctx);

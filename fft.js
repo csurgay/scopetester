@@ -10,7 +10,7 @@ class FFT {
 
     // NOTE: Use of `var` is intentional for old V8 versions
     var table = new Array(this.size * 2);
-    for (var i = 0; i < table.length; i += 2) {
+    for (let i = 0; i < table.length; i += 2) {
       const angle = Math.PI * i / this.size;
       table[i] = Math.cos(angle);
       table[i + 1] = -Math.sin(angle);
@@ -19,7 +19,7 @@ class FFT {
 
     // Find size's power of two
     var power = 0;
-    for (var t = 1; this.size > t; t <<= 1)
+    for (let t = 1; this.size > t; t <<= 1)
       power++;
 
     // Calculate initial step's width:
@@ -29,9 +29,9 @@ class FFT {
 
     // Pre-compute bit-reversal patterns
     this._bitrev = new Array(1 << this._width);
-    for (var j = 0; j < this._bitrev.length; j++) {
+    for (let j = 0; j < this._bitrev.length; j++) {
       this._bitrev[j] = 0;
-      for (var shift = 0; shift < this._width; shift += 2) {
+      for (let shift = 0; shift < this._width; shift += 2) {
         var revShift = this._width - shift - 2;
         this._bitrev[j] |= ((j >>> shift) & 3) << revShift;
       }
@@ -44,21 +44,21 @@ class FFT {
 }
 FFT.prototype.fromComplexArray = function fromComplexArray(complex, storage) {
   var res = storage || new Array(complex.length >>> 1);
-  for (var i = 0; i < complex.length; i += 2)
+  for (let i = 0; i < complex.length; i += 2)
     res[i >>> 1] = complex[i];
   return res;
 };
 
 FFT.prototype.createComplexArray = function createComplexArray() {
   const res = new Array(this._csize);
-  for (var i = 0; i < res.length; i++)
+  for (let i = 0; i < res.length; i++)
     res[i] = 0;
   return res;
 };
 
 FFT.prototype.toComplexArray = function toComplexArray(input, storage) {
   var res = storage || this.createComplexArray();
-  for (var i = 0; i < res.length; i += 2) {
+  for (let i = 0; i < res.length; i += 2) {
     res[i] = input[i >>> 1];
     res[i + 1] = 0;
   }
@@ -68,7 +68,7 @@ FFT.prototype.toComplexArray = function toComplexArray(input, storage) {
 FFT.prototype.completeSpectrum = function completeSpectrum(spectrum) {
   var size = this._csize;
   var half = size >>> 1;
-  for (var i = 2; i < half; i += 2) {
+  for (let i = 2; i < half; i += 2) {
     spectrum[size - i] = spectrum[i];
     spectrum[size - i + 1] = -spectrum[i + 1];
   }
@@ -106,7 +106,7 @@ FFT.prototype.inverseTransform = function inverseTransform(out, data) {
   this._data = data;
   this._inv = 1;
   this._transform4();
-  for (var i = 0; i < out.length; i++)
+  for (let i = 0; i < out.length; i++)
     out[i] /= this.size;
   this._out = null;
   this._data = null;
@@ -152,7 +152,7 @@ FFT.prototype._transform4 = function _transform4() {
     for (outOff = 0; outOff < size; outOff += len) {
       // Full case
       var limit = outOff + quarterLen;
-      for (var i = outOff, k = 0; i < limit; i += 2, k += step) {
+      for (let i = outOff, k = 0; i < limit; i += 2, k += step) {
         const A = i;
         const B = A + quarterLen;
         const C = B + quarterLen;
@@ -338,7 +338,7 @@ FFT.prototype._realTransform4 = function _realTransform4() {
 
     // Loop through offsets in the data
     for (outOff = 0; outOff < size; outOff += len) {
-      for (var i = 0, k = 0; i <= hquarterLen; i += 2, k += step) {
+      for (let i = 0, k = 0; i <= hquarterLen; i += 2, k += step) {
         var A = outOff + i;
         var B = A + quarterLen;
         var C = B + quarterLen;

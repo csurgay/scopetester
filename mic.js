@@ -18,12 +18,12 @@ function recordAudio() {
     },
     function (e) {
         // creates the audio context
-        context = new AudioContext({sampleRate: 40960});
+        context = new AudioContext({sampleRate: 8192});
         // creates an audio node from the microphone incoming stream
         mediaStream = context.createMediaStreamSource(e);
         bufferSize=2048;
-        numberOfInputChannels = 2;
-        numberOfOutputChannels = 2;
+        numberOfInputChannels = 1;
+        numberOfOutputChannels = 1;
                 // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createScriptProcessor
         // bufferSize: the onaudioprocess event is called when the buffer is full
         if (context.createScriptProcessor) {
@@ -33,8 +33,8 @@ function recordAudio() {
         }
         recorder.onaudioprocess = function (e) {
             leftchannel=new Float32Array(e.inputBuffer.getChannelData(0));
-            rightchannel=new Float32Array(e.inputBuffer.getChannelData(1));
-            for (var i=0; i<ch[0].length; i++) {
+            rightchannel=new Float32Array(e.inputBuffer.getChannelData(0));
+            for (let i=0; i<micch[0].length; i++) {
                 micch[0][i]=140*leftchannel[i];
                 micch[1][i]=140*rightchannel[i];
             }

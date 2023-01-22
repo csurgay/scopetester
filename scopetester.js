@@ -1,10 +1,13 @@
 // ScopeTester - Peter Csurgay 2022
 function init() {
     canvas = document.getElementById("myCanvas");
+    debugcanvas = document.getElementById("debugcanvas");
     ctx = canvas.getContext("2d");
-    mouseInit(canvas);
-    timebase=1000000; // microseconds
-    new DebugLabel(460,455,"",15,()=>{return ""+
+    debugctx = debugcanvas.getContext("2d");
+    eventInit(canvas);
+    eventInit(debugcanvas);
+    presetManager=new PresetManager();
+    new DebugLabel(460,355,"",15,()=>{return ""+
         "heap:"+window.performance.memory.totalJSHeapSize/1000000+
         " used:"+window.performance.memory.usedJSHeapSize/1000000+
         " limit:"+window.performance.memory.jsHeapSizeLimit/1000000;});
@@ -18,20 +21,18 @@ function init() {
     led_red=new Image(); led_red.src='./images/led_red_2416.jpg'; led_red.onload=()=>wait();
 }
 
-var ati=0;
-var atknob=0;
-var attimer;
+var ati=0, atknob=0, attimer; // autotest
+
 function autotest() {
-//    console.log("autotest: "+atknob+" "+ati);
-    while(ati<ui.length && atknob==0) {
-        if (ui[ati++].class=="Knob") {
+    while(ati<uictx.length && atknob==0) {
+        if (uictx[ati++].class=="Knob") {
             atknob=1;
         }
     }
     if (atknob++>0) {
-        if (atknob<4) ui[ati-1].turnY(1);
-        else if (atknob<10) ui[ati-1].turnY(-1);
-        else if (atknob<11) ui[ati-1].clickXY(0,0);
+        if (atknob<4) uictx[ati-1].turnY(1);
+        else if (atknob<10) uictx[ati-1].turnY(-1);
+        else if (atknob<11) uictx[ati-1].clickXY(0,0);
         else atknob=0;
         initChannels();
         draw(ctx);
@@ -49,6 +50,11 @@ function wait() {
     if (no_images_to_load==0) setTimeout(start,100);
 }
 
+function clearCanvas(ctx) {
+    ctx.fillStyle=bgcolor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
 function draw(ctx) {
     // Cal LEDs
     b_xcal.state=0;
@@ -57,18 +63,20 @@ function draw(ctx) {
     if (scope.ch[0].k_volts.k_.getValue()!=0) b_ycal.showRed();
     if (scope.ch[1].k_volts.k_.getValue()!=0) b_ycal.showRed();
     // draw
-    ctx.fillStyle=bgcolor;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    for (var i=0; i<ui.length; i++) ui[i].draw(ctx);
+    clearCanvas(ctx);
+    clearCanvas(debugctx);
+    for (let i=0; i<uictx.length; i++) uictx[i].draw(ctx);
+    for (let i=0; i<uidebugctx.length; i++) uidebugctx[i].draw(debugctx);
 }
 
 function start() {
     logWindow=document.getElementById('log');
     log(credit);
     initBufgen();
-    siggen=[new Siggen(75,530,"1"),new Siggen(445,530,"2")];
+    siggen=[new Siggen(75,530,"1"),new Siggen(415,530,"2")];
     scope=new Scope(70,10,DL/10,17);
     initChannels();
+    initMonitor();
     b_power=new PowerButton(10,25,40,35,"ON","power");
     draw(ctx);
     setTimeout(processEvent,100);

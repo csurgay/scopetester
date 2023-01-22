@@ -6,7 +6,7 @@ class Knob extends pObject {
         const pos={"knob":-27,"double":-44,"sweep":78, 
         "double_s":-40, "delay":78, "func":-57, "range":-55, 
         "volts":-55, "sigdouble":-30};
-        super(pX-pR,pY-pR,2*pR,2*pR);
+        super(ctx,pX-pR,pY-pR,2*pR,2*pR);
         this.class="Knob";
         this.name=pLabel;
         this.live=true;
@@ -21,10 +21,10 @@ class Knob extends pObject {
         this.haircolor="gray";
         this.markercolor="red";
         var xLabel=pX; if (lpos=="sigdouble") xLabel+=70;
-        new Label(xLabel,pY+pos[lpos],pLabel,12);
+        new Label(ctx,xLabel,pY+pos[lpos],pLabel,12);
         this.marker=pMarker;
         this.shadow=true;
-        ui.push(this);
+        uipush(this);
     }
     getValue() {
         if (this.value0) {
@@ -33,13 +33,16 @@ class Knob extends pObject {
         }
         else return this.value;
     }
+    reset() {
+        this.value=this.defaultValue;
+    }
     clickXY(x,y) {
         this.value=this.defaultValue;
         super.clickXY(x,y);
     }
     turnY(pDelta) {
         // set new value within limit
-        for (var i=0; i<1; i++) {
+        for (let i=0; i<1; i++) {
             if (this.limit==-1 ||
                 ((this.value!=this.limit || pDelta<0) &&
                 (this.value!=(this.limit+1)%this.ticks || pDelta>0))) {
@@ -86,7 +89,7 @@ class Knob extends pObject {
 
 class DoubleKnob extends pObject {
     constructor(pX,pY,pTicks,pTicks_,pLabel,lpos,pR,pR_) {
-        super(pX-pR,pY-pR,2*pR,2*pR);
+        super(ctx,pX-pR,pY-pR,2*pR,2*pR);
         this.k=new Knob(-1,pX,pY,pR,pTicks,0,pLabel,lpos);
         this.k_=new Knob(-1,pX,pY,pR_,pTicks_,0,"",0);
         this.k_.hitPad=2; // so that hit rect is smaller for inner knob
@@ -113,12 +116,12 @@ class DekorKnob extends DoubleKnob {
         this.k_.color="rgb(200,20,20)";
         this.k_.haircolor=this.k_.color;
         this.k_.markercolor="#EEEEEE";
-        this.varLabel=new Label(pX-rDekor,pY-rDekor,"Var",11);
+        this.varLabel=new Label(ctx,pX-rDekor,pY-rDekor,"Var",11);
         this.varLabel.bgcolor="rgba(200,20,20,0.75)";
         this.varLabel.fgcolor="rgba(220,220,220,1)";
         this.varLabel.background=true;
-        this.iconCircle(ui,pX,pY+2,this.rDekor,vals);
-        this.captionCircle(ui,pX,pY+3,this.rDekor);
+        this.iconCircle(pX,pY+2,this.rDekor,vals);
+        this.captionCircle(pX,pY+3,this.rDekor);
     }
 }
 
@@ -127,33 +130,33 @@ class TimeDekorKnob extends DekorKnob {
         super(pX,pY,tb,tb_,pLabel,pPosType,pR,pR_,rDekor);
         new UiTimeDekor(pX,pY,this.rDekor);
     }
-    iconCircle(ui,x,y,r,tb) {
+    iconCircle(x,y,r,tb) {
         nd=tb.length;
-        for (var i=0; i<nd; i++) {
+        for (let i=0; i<nd; i++) {
             kd=i; if (kd>this.k.ticks/2) kd-=this.k.ticks;
-            var sv=tb[kd+8]; var su="ms"; // value and unit
+            var sv=tb[kd+11]; var su="ms"; // value and unit
             if (sv>=100) { sv/=1000; su="s"; }
             else if (sv<=0.05) { sv*=1000; su="us"; }
             var sl=""+sv; sl=sl.replace("0.",".");
-            new Label(x+r*Math.sin(2*Math.PI*i/nd),y-r*Math.cos(2*Math.PI*i/nd),sl,12);
+            new Label(ctx,x+r*Math.sin(2*Math.PI*i/nd),y-r*Math.cos(2*Math.PI*i/nd),sl,12);
         }
     }
-    captionCircle(ui,x,y,r) {
-        new Label(x-r-4,y-r+12,"ms",12);
-        new Label(x+r+1,y+r-7,"us",12);
-        new Label(x-r-1,y+r-7,"sec",12);
+    captionCircle(x,y,r) {
+        new Label(ctx,x-r-4,y-r+12,"ms",12);
+        new Label(ctx,x+r+1,y+r-7,"us",12);
+        new Label(ctx,x-r-1,y+r-7,"sec",12);
     }
 }
 
 class TimeKnob extends TimeDekorKnob {
     constructor(pX,pY) {
-        super(pX,pY,"Sweep Timebase","sweep",50,25,62);
+        super(pX,pY,"Main A Timebase","sweep",50,25,62);
     }
 }
 
 class DelaybaseKnob extends TimeDekorKnob {
     constructor(pX,pY) {
-        super(pX,pY,"Delay Timebase","delay",40,20,52);
+        super(pX,pY,"Delayed B Timebase","delay",40,20,52);
     }
 }
 
@@ -163,38 +166,38 @@ class VoltsKnob extends DekorKnob {
         this.k.limit=9;
         new UiVoltDekor(pX,pY,this.rDekor);
     }
-    iconCircle(ui,x,y,r,vpd) {
+    iconCircle(x,y,r,vpd) {
         var n=vpd.length;
-        for (var i=0; i<n; i++) {
+        for (let i=0; i<n; i++) {
             var kt=i; if (kt>this.k.ticks/2) kt-=this.k.ticks;
             var sv=vpd[kt+Math.round(this.k.ticks/2)-1]; 
             var su="V"; // value and unit
             if (sv>=100) { sv/=1000; su="kV"; }
             else if (sv<=0.05) { sv*=1000; su="mV"; }
             var sl=""+sv; sl=sl.replace("0.",".");
-            new Label(x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),sl);
+            new Label(ctx,x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),sl);
         }
     }
-    captionCircle(ui,x,y,r) {
-        new Label(x,y+r+16,"mV",12);
+    captionCircle(x,y,r) {
+        new Label(ctx,x,y+r+16,"mV",12);
     }
 }
 
 class UiTimeDekor extends pObject {
     constructor(pX,pY,pR) {
-        super(pX,pY,0,0);
+        super(ctx,pX,pY,0,0);
         this.r=pR;
-        ui.push(this);
+        uipush(this);
     }
     draw(ctx) {
         ctx.beginPath();
         ctx.lineWidth=16;
         ctx.strokeStyle=hl_green;
-        ctx.arc(this.x,this.y,this.r,Math.PI*61/69,Math.PI*130/69);
+        ctx.arc(this.x,this.y,this.r,Math.PI*185/180,Math.PI*323/180);
         ctx.stroke();
         ctx.beginPath();
         ctx.strokeStyle=hl_gray;
-        ctx.arc(this.x,this.y,this.r,Math.PI*131/69,Math.PI*37/69);
+        ctx.arc(this.x,this.y,this.r,Math.PI*325/180,Math.PI*97/180);
         ctx.stroke();
         ctx.lineWidth=1;
     }
@@ -202,9 +205,9 @@ class UiTimeDekor extends pObject {
 
 class UiVoltDekor extends pObject {
     constructor(pX,pY,pR) {
-        super(pX,pY,0,0);
+        super(ctx,pX,pY,0,0);
         this.r=pR;
-        ui.push(this);
+        uipush(this);
     }
     draw(ctx) {
 //        super.draw(ctx);
@@ -220,7 +223,7 @@ class UiVoltDekor extends pObject {
 class FuncKnob extends DoubleKnob {
     constructor(pX,pY) {
         super(pX,pY,bufgen.length,33,"Func                         ","func",35,19);
-        this.dutyLabel=new Label(pX+40,pY-55,"Param",12);
+        this.dutyLabel=new Label(ctx,pX+40,pY-55,"Param",12);
         this.dutyLabel.bgcolor=hl_gray;
         this.dutyLabel.background=true;
         this.k.value=0;
@@ -234,8 +237,8 @@ class FuncKnob extends DoubleKnob {
     }
     iconCircle(x,y,r,bufgen) {
         var n=bufgen.length;
-        for (var i=0; i<n; i++) {
-            new Icon(x+r*Math.sin(2*Math.PI*i/n)-2,
+        for (let i=0; i<n; i++) {
+            new Icon(ctx,x+r*Math.sin(2*Math.PI*i/n)-2,
             y-r*Math.cos(2*Math.PI*i/n),20,6,bufgen[i].f,
             bufgen[i].halfIcon);
         }
@@ -249,15 +252,18 @@ class ScaleKnob extends Knob {
     }
     iconCircle(x,y,r,scale) {
         var n=scale.length;
-        for (var i=0; i<n; i++) {
+        for (let i=0; i<n; i++) {
             var unit=""+scale[i]; 
             if (unit=="1") unit="1k"; 
             else if (unit=="10") unit="10k";
             else if (unit=="100") unit="100k";
             else if (unit=="1000") unit="1M";
+            else if (unit==".00001") unit=".01";
+            else if (unit==".0001") unit=".1";
+            else if (unit==".001") unit="1";
             else if (unit==".01") unit="10";
             else if (unit==".1") unit="100";
-            new Label(x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),unit,12);
+            new Label(ctx,x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),unit,12);
         }
     }
 }
@@ -270,12 +276,15 @@ class MonitorKnob extends Knob {
     }
     iconCircle(x,y,r,a_monitor) {
         var n=a_monitor.length;
-        for (var i=0; i<n; i++) {
-            new Label(x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),a_monitor[i],12);
+        for (let i=0; i<n; i++) {
+            new Label(ctx,x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),a_monitor[i],12);
         }
     }
     on() {
         return a_monitor[this.value]!="Off";
+    }
+    reset() {
+        this.callSwitchOff();
     }
     turnY(pDelta) {
         super.turnY(pDelta);
@@ -300,7 +309,7 @@ class MonitorKnob extends Knob {
 
 class ModeKnob extends Knob {
     constructor(pX,pY) {
-        for (var i=0; i<radio_mode.b.length; i++)
+        for (let i=0; i<radio_mode.b.length; i++)
             a_mode.push(radio_mode.b[i].name);
         super(-1,pX,pY,21,a_mode.length,2,"none","none");
         this.value0=false;
@@ -308,8 +317,8 @@ class ModeKnob extends Knob {
     }
     iconCircle(x,y,r,a_mode) {
         var n=a_mode.length;
-        for (var i=0; i<n; i++) {
-            new Label(x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),a_mode[i],12);
+        for (let i=0; i<n; i++) {
+            new Label(ctx,x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),a_mode[i],12);
         }
     }
     clickXY(pX,pY) {
@@ -320,8 +329,12 @@ class ModeKnob extends Knob {
         super.turnY(pDelta);
         this.setButtonValue();
     }
+    reset() {
+        super.reset();
+        this.setButtonValue();
+    }
     setButtonValue() {
-        for (var i=0; i<buttons.length; i++)
+        for (let i=0; i<buttons.length; i++)
             if (buttons[i].radio==radio_mode && buttons[i].name==a_mode[this.value])
                 buttons[i].clickXY(0,0);
     }

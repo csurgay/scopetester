@@ -1,7 +1,13 @@
 var hitX, hitY;
 
+function uipush(obj) {
+    if (obj.ctx==ctx) uictx.push(obj);
+    else if (obj.ctx==debugctx) uidebugctx.push(obj);
+}
+
 class pObject {
-    constructor(pX,pY,pW,pH) {
+    constructor(ctx,pX,pY,pW,pH) {
+        this.ctx=ctx;
         this.class="class";
         this.name="dummy";
         this.x=pX;
@@ -32,8 +38,8 @@ class pObject {
     }
     hitXY(x,y) {
         if (this.live) {
-            hitX=x-canvas.getBoundingClientRect().left;
-            hitY=y-canvas.getBoundingClientRect().top
+            hitX=x;
+            hitY=y;
             if (hitX>this.x+this.hitPad && hitX<this.x+this.w-this.hitPad && 
                 hitY>this.y+this.hitPad && hitY<this.y+this.h-this.hitPad) return true; 
             else return false;
@@ -55,24 +61,25 @@ class pObject {
 }
 
 class Icon extends pObject {
-    constructor(pX,pY,pW,pH,pFunc,pHalfIcon) {
-        var ret=super(pX,pY,pW,pH);
+    constructor(ctx,pX,pY,pW,pH,pFunc,pHalfIcon) {
+        var ret=super(ctx,pX,pY,pW,pH);
         this.f=pFunc;
         this.halfIcon=pHalfIcon;
         this.ChOnType=false;
         this.parent=null;
-        ui.push(this);
+        uipush(this);
     }
     draw(ctx) {
         if (!this.ChOnType || this.parent.b_ch.state==1) {
             ctx.beginPath();
             ctx.strokeStyle="black";
+            ctx.lineWidth=1;
             ampl=127;
             var halfed=1; if (this.halfIcon=="halfIcon") halfed=3;
             ctx.moveTo(this.x,this.y-this.h*this.f(0)/ampl/halfed);
-            order=0;
-            for (var i=0; i<this.w; i++) 
-                ctx.lineTo(this.x+i,this.y-this.h*this.f(Math.floor(L*i/this.w),0)/ampl/halfed);
+//            order=0;
+            for (let i=0; i<this.w; i++) 
+                ctx.lineTo(this.x+i,this.y-this.h*this.f(Math.floor(this.f(-17)*i/this.w),0)/ampl/halfed);
             ctx.stroke();
         }
     }
@@ -80,16 +87,18 @@ class Icon extends pObject {
 
 class DebugIcon extends Icon {
     constructor(pX,pY,pW,pH,pFunc) {
-        var ret=super(pX,pY,pW,pH,pFunc);
+        var ret=super(debugctx,pX,pY,pW,pH,pFunc);
     }
     draw(ctx) {
-        if (b_debug.state==1) super.draw(ctx);
+        if (b_debug.state==1) {
+            super.draw(ctx);
+        }
     }
 }
 
 class Label extends pObject {
-    constructor(pX,pY,pS,pSize) {        
-        var ret=super(pX,pY,getTextWidth(ctx,pS,pSize),pSize+1);
+    constructor(ctx,pX,pY,pS,pSize) {        
+        var ret=super(ctx,pX,pY,getTextWidth(ctx,pS,pSize),pSize+1);
         this.tX=pX; this.tY=pY;
         this.bgcolor=bgcolor;
         this.fgcolor="black";
@@ -97,7 +106,7 @@ class Label extends pObject {
         this.s=pS;
         this.size=pSize;
         this.background=false;
-        ui.push(this);
+        uipush(this);
     }
     adjustXY(pX,pY) {
         this.tX+=pX;
@@ -127,7 +136,7 @@ class Label extends pObject {
 
 class DebugLabel extends Label {
     constructor(pX,pY,pS,pSize,pCalcFunc) {
-        super(pX,pY,pS,pSize);
+        super(debugctx,pX,pY,pS,pSize);
         this.debugFrame=false;
         this.calcFunc=pCalcFunc;
     }
@@ -146,10 +155,10 @@ function getTextWidth(ctx,pS,pSize) {
 
 class Frame extends pObject {
     constructor(pX,pY,pW,pH,pLabel,pPos) {
-        super(pX,pY,pW,pH);
+        super(ctx,pX,pY,pW,pH);
         var x={"center":pX+pW/2,"rightish":pX+3*pW/4};
-        ui.push(this);
-        this.label=new Label(x[pPos],pY+1," "+pLabel+" ",15);
+        uipush(this);
+        this.label=new Label(ctx,x[pPos],pY+1," "+pLabel+" ",15);
         this.label.background=true;
     }
     draw(ctx) {

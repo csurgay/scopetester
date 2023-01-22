@@ -2,10 +2,10 @@ class Siggen extends pObject {
     constructor(pX,pY,pNo) {
         var pW=370, pH=310, pX2=pX+105, pX3=pX+155;
         var pY1=pY-15, pY2=pY1+75, pY3=pY2+75, pY4=pY3+75;
-        super(pX,pY,pW,300);
+        super(ctx,pX,pY,pW,300);
         this.myChannel=pNo;
-        new Frame(pX-65,pY-65,pW-10,pH,"CH"+pNo+" Signal                ","rightish");
-        this.b_ch=new ChOnButton(pX+pW-120,pY-71,24,16,"ON","siggen");
+        new Frame(pX-65,pY-65,pW-40,pH,"CH"+pNo+" Signal                ","rightish");
+        this.b_ch=new ChOnButton(pX+pW-145,pY-71,24,16,"ON","siggen");
         this.b_ch.setSwitchBufferNeeded();
         this.b_ch.initChannelsNeeded=true;
         this.k_scale=new ScaleKnob(pX,pY+5);
@@ -30,10 +30,10 @@ class Siggen extends pObject {
         this.k_dc=new DoubleKnob(pX2,pY4,201,101,"Offset (V DC) ","sigdouble",30,15);
         this.k_dc.setSwitchBufferNeeded();
         this.k_dc.setInitChannelsNeeded();
-        new Vfd(pX3,pY1,6,()=>{return Math.round(1000*freqs[0+pNo-1])/1000;},()=>{return this.b_ch.state==0;});
-        new Vfd(pX3,pY2,6,()=>{return ampls[0+pNo-1]/100;},()=>{return this.b_ch.state==0;});
-        new Vfd(pX3,pY3,6,()=>{return Math.round(360*phases[0+pNo-1]/L);},()=>{return this.b_ch.state==0;});
-        new Vfd(pX3,pY4,6,()=>{return dcs[0+pNo-1];},()=>{return this.b_ch.state==0;});
+        new Vfd(pX3-5,pY1,6,()=>{return Math.round(100000*freqs[0+pNo-1])/100000;},()=>{return this.b_ch.state==0;});
+        new Vfd(pX3-5,pY2,6,()=>{return ampls[0+pNo-1]/100;},()=>{return this.b_ch.state==0;});
+        new Vfd(pX3-5,pY3,6,()=>{return Math.round(360*phases[0+pNo-1]/L);},()=>{return this.b_ch.state==0;});
+        new Vfd(pX3-5,pY4,6,()=>{return dcs[0+pNo-1];},()=>{return this.b_ch.state==0;});
         this.b_phalf=new ChOnButton(pX-20,pY4-15,24,16,"Pos+","on");
         this.b_phalf.setInitChannelsNeeded();
         this.b_nhalf=new ChOnButton(pX-20,pY4+3,24,16,"Neg-","on");
@@ -42,7 +42,7 @@ class Siggen extends pObject {
         this.b_inv.setInitChannelsNeeded();
         this.b_abs=new ChOnButton(pX+42,pY4+3,24,16,"Abs","on");
         this.b_abs.setInitChannelsNeeded();
-        this.display=new DebugIcon(pX-50,pY+180,100,20,(x)=>{return sch[pNo-1][x];});
+        this.display=new DebugIcon(0,100*pNo,100,20,(x)=>{if (x==-17) return schlen[pNo-1]; else return sch[pNo-1][x];});
         this.display.ChOnType=true;
         this.display.parent=this;
     }
