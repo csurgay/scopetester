@@ -1,11 +1,12 @@
 var d, dd; // for UI layout geometry calculations
 var ast, asl, asx, asy; // astigm control value, line multiplication, x,y direction
-var illum, int1, int2, int3, blur1, blur2, alpha1, ss; // for scale grid illumination, inensity and focus blur value
+var illum, int1, int2, int3, blur1, alpha1; // for scale grid illumination, inensity and focus blur value
 var Q,QI; // for frequency calculations
 var tptr=[0,0], lastTptr=[0,0], tcond; // trigger pointer, last valid tptr, trigger condition
 var currValue, prevValue; // curr and prev y value for trigger condition calc
 var slope, tlevel; // trigger level
 var px,py0,py=[0,0]; // screen center lines for channels and dual
+var lineWidth, strokeStyle, blurWidth;
 
 class Scope extends pObject {
     constructor(pX,pY,pD,pDD) {
@@ -135,7 +136,7 @@ class Scope extends pObject {
         }
         ctx.stroke();
     }
-    // channel data calc into y[c], findValue calc
+    // channel data calc into dispch[c], findValue calc
     calcY() {
         var minY=1000000, maxY=-1000000; // for find
         // timebase
@@ -201,7 +202,7 @@ class Scope extends pObject {
                     dispch[c][i]=0;
                 }
                 if (isNaN(dispch[c][i])) {
-                    error("NaN: y["+c+"]["+i+"]");
+                    error("NaN: dispch["+c+"]["+i+"]");
                     NaNerror=true;
                 }
             }
@@ -217,12 +218,12 @@ class Scope extends pObject {
         for (let c=1; c>=0; c--) {
             tcond=false; // trigger condition
             prevValue=dispch[c][0];
-            if (b_mode.state==1) prevValue=this.calcModeY(c,y[0][0],y[1][0]);
+            if (b_mode.state==1) prevValue=this.calcModeY(c,dispch[0][0],dispch[1][0]);
             tptr[c]=-1; // init trigger pointer
             while (!tcond && tptr[c]<L) {
                 tptr[c]++;
                 currValue=dispch[c][tptr[c]];
-                if (b_mode.state==1) currValue=this.calcModeY(c,y[0][tptr[c]],y[1][tptr[c]]);
+                if (b_mode.state==1) currValue=this.calcModeY(c,dispch[0][tptr[c]],dispch[1][tptr[c]]);
                 if (k_slope.getValue()==0 && prevValue<tlevel && currValue>=tlevel) tcond=true;
                 if (k_slope.getValue()==1 && prevValue>tlevel && currValue<=tlevel) tcond=true;
                 prevValue=currValue;
@@ -247,22 +248,31 @@ class Scope extends pObject {
     }
     beamControl(beamLength) {
         // beam intensity, focus blur and astigm
-        int2=Math.floor(160+160*(int1+8-ast*ast/20)/16); // 180..350
+        int2=Math.floor(160+160*(int1+8-ast*ast/20)/16); // 160..320
         if (findState!="off") int2+=20;
-        int3=Math.sqrt(Math.sqrt(beamLength*timebase));
+        int3=Math.sqrt(beamLength);
         int2-=(10*int3); if (int2<128) int2=128;
         if (powerState=="start") int2=powerValue;
-        alpha1=int2/255;
+        alpha1=Math.round(100*int2/255)/100;
         if (alpha1>1) alpha1=1; if (alpha1<0.05) alpha1=0.05;
-        ss="rgba(0,"+int2+",0,"+alpha1+")";
-        ctx.strokeStyle=ss;
-        ctx.lineWidth=int2/120+Math.abs(blur1/2);
-        if (int2>200) ctx.lineWidth+=((int2-200)/50);
-        if (findState!="off") ctx.lineWidth+=1;
-        ctx.filter="blur("+(Math.abs(blur1/2))+"px)";
+        strokeStyle="rgba(0,"+Math.round(int2)+",0,"+alpha1+")";
+        lineWidth=int2/120+Math.abs(blur1/2);
+        if (int2>200) lineWidth+=((int2-200)/50);
+        if (findState!="off") lineWidth+=1;
+        lineWidth=Math.round(100*lineWidth)/100;
+        blurWidth=Math.abs(blur1/2);
+        
+        if (b_debug.state==1) log(strokeStyle+" "+lineWidth+" "+blurWidth);
+    }
+    setStroke() {
+        ctx.strokeStyle=strokeStyle;
+        ctx.lineWidth=lineWidth;
+        ctx.filter="blur("+blurWidth+"px)";
+        ctx.lineCap = "round";
     }
     stroke(c) {
         this.beamControl(sumdelta[c]);
+        this.setStroke();
         if (int2>250) {
             for (let i=8; i>0; i--) {
                 ctx.lineWidth=(int2-250)/6*i;
@@ -270,7 +280,7 @@ class Scope extends pObject {
                 ctx.stroke();
             }
         }
-        this.beamControl(sumdelta[c]);
+        this.setStroke();
         ctx.stroke();
         if (int2>310) {
             ctx.lineWidth=2;

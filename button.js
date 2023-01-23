@@ -97,7 +97,7 @@ function setPower() {
     if (powerState=="start") {
         powerValue+=10;
         draw(ctx);
-        if (powerValue>230) { powerState="off"; draw(ctx); }
+        if (powerValue>=230) { powerState="off"; draw(ctx); }
         else setTimeout(setPower,100);
     }
 }
@@ -146,7 +146,7 @@ class FindButton extends Button {
 function setFind() {
     trace("setFind");
     if (findState=="search") {
-        findValue*=1.2;
+        findValue*=1.5;
         draw(ctx);
         setTimeout(setFind,5);
     }

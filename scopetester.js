@@ -4,7 +4,6 @@ function init() {
     debugcanvas = document.getElementById("debugcanvas");
     ctx = canvas.getContext("2d");
     debugctx = debugcanvas.getContext("2d");
-    ctx.lineCap = "round";
     ctx.lineJoin = "round";
     eventInit(canvas);
     eventInit(debugcanvas);

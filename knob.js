@@ -138,7 +138,7 @@ class TimeDekorKnob extends DekorKnob {
             if (sv>=100) { sv/=1000; su="s"; }
             else if (sv<=0.05) { sv*=1000; su="us"; }
             var sl=""+sv; sl=sl.replace("0.",".");
-            new Label(ctx,x+r*Math.sin(2*Math.PI*i/nd),y-r*Math.cos(2*Math.PI*i/nd),sl,12);
+            new Label(ctx,x+r*Math.sin(2*Math.PI*i/nd),y-r*Math.cos(2*Math.PI*i/nd),sl,10);
         }
     }
     captionCircle(x,y,r) {
@@ -151,6 +151,7 @@ class TimeDekorKnob extends DekorKnob {
 class TimeKnob extends TimeDekorKnob {
     constructor(pX,pY) {
         super(pX,pY,"Main A Timebase","sweep",50,25,62);
+        this.k.shadow=true;
     }
 }
 
@@ -192,6 +193,7 @@ class UiTimeDekor extends pObject {
     draw(ctx) {
         ctx.beginPath();
         ctx.lineWidth=16;
+        ctx.lineCap="butt";
         ctx.strokeStyle=hl_green;
         ctx.arc(this.x,this.y,this.r,Math.PI*185/180,Math.PI*323/180);
         ctx.stroke();
