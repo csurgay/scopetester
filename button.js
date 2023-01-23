@@ -47,7 +47,7 @@ class Button extends pObject {
     }
     draw(ctx) {
         ctx.beginPath();
-        ctx.fillStyle = "black";
+        ctx.fillStyle = "rgba(0,0,0,0.75)";
             roundRect(ctx,this.x-1,this.y-1,this.w+1,this.h+1,2);
         ctx.fill();
         ctx.beginPath();

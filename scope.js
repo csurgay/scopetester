@@ -415,6 +415,10 @@ class Scope extends pObject {
                     if (b_cursor.state==1) {
                         readoutText="V";
                         yResult=dispch[c][5*d+xCur+tptr[0]]*volts[c]/50;
+                        if (b_add.state==1 || b_mod.state==1) {
+                            yResult=scope.calcModeY(0,dispch[0][5*d+xCur+tptr[0]]*volts[0]/50,
+                                dispch[1][5*d+xCur+tptr[0]]*volts[1]/50);
+                        }
                         if (Math.abs(yResult)<0.1) {
                             yResult*=1000;
                             readoutText="mV";
@@ -453,7 +457,7 @@ class Scope extends pObject {
         if (b_ch1.state==1) return ych0;
         else if (b_ch2.state==1) return ych1;
         else if (b_add.state==1) return ych0+ych1;
-        else if (b_mod.state==1) return ych0*ych1/ampls[1];
+        else if (b_mod.state==1) return ych0*ych1/ampls[0];
         else if (b_dual.state==1) return [ych0,ych1][c];
     }
 }
