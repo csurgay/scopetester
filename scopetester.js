@@ -4,6 +4,8 @@ function init() {
     debugcanvas = document.getElementById("debugcanvas");
     ctx = canvas.getContext("2d");
     debugctx = debugcanvas.getContext("2d");
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     eventInit(canvas);
     eventInit(debugcanvas);
     presetManager=new PresetManager();
@@ -87,7 +89,9 @@ function log(msg) {
 }
 
 function trace(msg) {
-    traceString += " . "+msg;
+    if (isNaN(b_debug) || b_debug.state==1) {
+        traceString += " . "+msg;
+    }
 }
 
 function error(msg) {

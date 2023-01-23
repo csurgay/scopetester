@@ -256,15 +256,13 @@ class Scope extends pObject {
         if (alpha1>1) alpha1=1; if (alpha1<0.05) alpha1=0.05;
         ss="rgba(0,"+int2+",0,"+alpha1+")";
         ctx.strokeStyle=ss;
-        ctx.lineWidth=1+int2/120+Math.abs(blur1/2);
+        ctx.lineWidth=int2/120+Math.abs(blur1/2);
         if (int2>200) ctx.lineWidth+=((int2-200)/50);
         if (findState!="off") ctx.lineWidth+=1;
         ctx.filter="blur("+(Math.abs(blur1/2))+"px)";
     }
     stroke(c) {
         this.beamControl(sumdelta[c]);
-        ctx.lineCap = 'round';
-        ctx.lineJoin = "round";
         if (int2>250) {
             for (let i=8; i>0; i--) {
                 ctx.lineWidth=(int2-250)/6*i;
@@ -276,6 +274,11 @@ class Scope extends pObject {
         ctx.stroke();
         if (int2>310) {
             ctx.lineWidth=2;
+            ctx.strokeStyle="rgb(255,255,255)";
+            ctx.stroke();
+        }
+        else if (int2>300) {
+            ctx.lineWidth=1;
             ctx.strokeStyle="rgb(255,255,255)";
             ctx.stroke();
         }

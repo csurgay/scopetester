@@ -63,6 +63,7 @@ class Knob extends pObject {
             ctx.fill();
         }
         ctx.beginPath();
+        ctx.lineWidth=1;
         ctx.strokeStyle=this.haircolor;
         ctx.lineTo(xd+rd,yd);
         ctx.fillStyle = this.color;
