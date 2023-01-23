@@ -76,7 +76,7 @@ class PowerButton extends Button {
                 scope.ch[i].b_dc.state=1;
             }
             k_monitor.callSwitchOff();
-            powerState="start"; powerValue=1.0; setTimeout(setPower,10);
+            powerState="start"; powerValue=80.0; setTimeout(setPower,10);
         }
         // power switch-off event
         if (this.state==1) {
@@ -95,9 +95,9 @@ class PowerButton extends Button {
 function setPower() {
     trace("setPower");
     if (powerState=="start") {
-        powerValue+=15;
+        powerValue+=10;
         draw(ctx);
-        if (powerValue>240) { powerState="off"; draw(ctx); }
+        if (powerValue>230) { powerState="off"; draw(ctx); }
         else setTimeout(setPower,100);
     }
 }
@@ -137,7 +137,7 @@ class FindButton extends Button {
     clickXY(x,y) {
         if (b_power.state==1) {
             super.clickXY(x,y);
-            if (this.state==1) { findState="search"; findValue=1.0; setTimeout(setFind,10); }
+            if (this.state==1) { findState="search"; findValue=1.0; setTimeout(setFind,5); }
             else if (this.state==0) findState="off";
             // findState: "search"/"found"/"off", y/findValue displayed
         }
@@ -148,7 +148,7 @@ function setFind() {
     if (findState=="search") {
         findValue*=1.2;
         draw(ctx);
-        setTimeout(setFind,10);
+        setTimeout(setFind,5);
     }
 }
 function reset() {

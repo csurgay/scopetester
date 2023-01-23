@@ -56,8 +56,8 @@ class Scope extends pObject {
         k_delay.k.limit=k_delay.k.ticks-1;
         k_delay.k_.limit=k_delay.k_.ticks-1;
         k_delaybase=new DelaybaseKnob(695,180);
-        k_xpos=new Knob(24,820,75,20,49,0,"Pos X","knob");
-        b_xcal=new IndicatorLed(895,90,24,16,"Cal","on");
+        k_xpos=new Knob(24,807,75,20,49,0,"Pos X","knob");
+        b_xcal=new IndicatorLed(895,100,24,16,"Cal","on");
         b_ycal=new IndicatorLed(660,430,24,16,"Cal","on");
         k_trig=new DoubleKnob(830,520,50,50,"Level","double_s",30,15);
         k_trig.k.defaultFastRate=1;
@@ -74,6 +74,8 @@ class Scope extends pObject {
         b_reset=new DebugButton(20,140,24,16,"Reset","small");
         for (let i=0; i<6; i++)
         b_presets.push(new DebugButton(20,180+i*40,24,16,"Preset"+i,"small"));
+        b_cursor=new ChOnButton(835,37,24,16,"","cursor");
+        k_cursor=new DoubleKnob(895,55,51,201,"Cursor","cursor",30,15);
     }
     drawScreen(ctx) {
         // draw screen
@@ -141,16 +143,16 @@ class Scope extends pObject {
             tb_[k_time.k_.getValue()+Math.floor(k_time.k_.ticks/2)];
         Q=timebase*L/DL;
         // delay
-        delay=tb[k_delaybase.k.getValue()+Math.floor(k_delaybase.k.ticks/2-1)]*
+        delaybase=tb[k_delaybase.k.getValue()+Math.floor(k_delaybase.k.ticks/2-1)]*
             tb_[k_delaybase.k_.getValue()+Math.floor(k_delaybase.k_.ticks/2)];
-        delay=(10*k_delay.k.getValue()+k_delay.k_.getValue()/10)*delay;
-        delay=delay*L;
+        delay=(10*k_delay.k.getValue()+k_delay.k_.getValue()/10)*delaybase;
+        delay=delay;
         // loop of channels: second channel first!
         for (let c=1; c>=0; c--) {
-            // level (Volts/Div)
+            // Volts/Div
             var l=this.ch[c].k_volts.k.getValue(); l=(l+Math.floor(vpd.length/2))%vpd.length;
             var l_=this.ch[c].k_volts.k_.getValue(); l_=(l_+Math.floor(vpd_.length/2))%vpd_.length;
-            var level=vpd[l]*vpd_[l_];
+            volts[c]=vpd[l]*vpd_[l_];
             // x and y pos
             py[c]=-this.ch[c].k_ypos.getValue();
             px=k_xpos.getValue();
@@ -178,14 +180,14 @@ class Scope extends pObject {
                 // if CH is switched on
                 if (scope.ch[c].b_gnd.state==0 && siggen[c].b_ch.state==1) {
                     // main y calculation
-                    QI=Math.floor(freqs[c]*(10.0*Q*i+delay)%(schlen[c]));
+                    QI=Math.floor(freqs[c]*(10.0*Q*i+delay*L)%(schlen[c]));
                     if (freqs[c]*10*Q>=L/3) { 
-                        dispch[c][i]=i%2==0?(minsch-avgs[c])/level/2:(maxsch-avgs[c])/level/2;
+                        dispch[c][i]=i%2==0?(minsch-avgs[c])/volts[c]/2:(maxsch-avgs[c])/volts[c]/2;
                     }
                     // main formula for y calc
                     else {
 //                        if (b_xy.state==1) QI=i%schlen[c];
-                        dispch[c][i]=(sch[c][QI]-avgs[c])/level/2;
+                        dispch[c][i]=(sch[c][QI]-avgs[c])/volts[c]/2;
                         if (isNaN(dispch[c][i])) {
                             error("NaN: QI="+QI);
                         }
@@ -245,18 +247,39 @@ class Scope extends pObject {
     }
     beamControl(beamLength) {
         // beam intensity, focus blur and astigm
-        int2=Math.floor(180+170*(int1+8-ast*ast/20)/16); // 180..350
-        int3=beamLength/4;
+        int2=Math.floor(160+160*(int1+8-ast*ast/20)/16); // 180..350
+        if (findState!="off") int2+=20;
+        int3=Math.sqrt(Math.sqrt(beamLength*timebase));
         int2-=(10*int3); if (int2<128) int2=128;
         if (powerState=="start") int2=powerValue;
         alpha1=int2/255;
         if (alpha1>1) alpha1=1; if (alpha1<0.05) alpha1=0.05;
         ss="rgba(0,"+int2+",0,"+alpha1+")";
         ctx.strokeStyle=ss;
-        ctx.lineWidth=1+Math.abs(blur1/2);
-        if (int2>200) ctx.lineWidth+=((int2-200)/40);
+        ctx.lineWidth=1+int2/120+Math.abs(blur1/2);
+        if (int2>200) ctx.lineWidth+=((int2-200)/50);
         if (findState!="off") ctx.lineWidth+=1;
         ctx.filter="blur("+(Math.abs(blur1/2))+"px)";
+    }
+    stroke(c) {
+        this.beamControl(sumdelta[c]);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = "round";
+        if (int2>250) {
+            for (let i=8; i>0; i--) {
+                ctx.lineWidth=(int2-250)/6*i;
+                ctx.strokeStyle="rgba("+(int2-150)/4+","+(int2-150)+","+(int2-150)/4+",0.1)";
+                ctx.stroke();
+            }
+        }
+        this.beamControl(sumdelta[c]);
+        ctx.stroke();
+        if (int2>310) {
+            ctx.lineWidth=2;
+            ctx.strokeStyle="rgb(255,255,255)";
+            ctx.stroke();
+        }
+        ctx.lineWidth=1;
     }
     draw(ctx) {
         d=this.d;
@@ -289,9 +312,7 @@ class Scope extends pObject {
                         }
                     }
                     sumdelta[c]/=L; if (findState!="off") sumdelta[c]/=findValue*findValue;
-                    this.beamControl(sumdelta[c]);
-                    ctx.stroke();
-                    ctx.lineWidth=1;
+                    this.stroke(c);
                 }
             }
         }
@@ -322,9 +343,7 @@ class Scope extends pObject {
                 ctx.lineTo(px+dispch[0][0]+k*asx,pyx-dispch[1][0]+k*asy);
             }
             sumdelta[2]/=(L*4); if (findState!="off") sumdelta[2]/=(findValue*findValue);
-            this.beamControl(sumdelta[2]);
-            ctx.stroke();
-            ctx.lineWidth=1;
+            this.stroke(2);
         }
         // Beam for Mode (Add, AM)
         else {
@@ -341,9 +360,7 @@ class Scope extends pObject {
                 }
             }
             sumdelta[2]/=L; if (findState!="off") sumdelta[2]/=(findValue*findValue);
-            this.beamControl(sumdelta[2]);
-            ctx.stroke();
-            ctx.lineWidth=1;
+            this.stroke(2);
         }
         // FFT draw
         if (b_fft.state==1 && b_xy.state!=1) {
@@ -369,26 +386,65 @@ class Scope extends pObject {
                 }
                 ctx.lineTo(px+i,py[1]+2*d+A*yResult);
             }
+            ctx.strokeStyle="rgb(0,255,0)";
             ctx.lineWidth=1;
+            ctx.stroke();
+        }
+        // Cursor
+        if (b_cursor.state==1) {
+            xCur=10*k_cursor.k.getValue()+k_cursor.k_.getValue();
+            yResult=px+5*d+xCur;
+            ctx.beginPath();
+            ctx.lineWidth=1;
+            ctx.moveTo(yResult,ROYSIG[0]+8);
+            ctx.lineTo(yResult,ROYSIG[1]-9);
             ctx.stroke();
         }
         // Readout
         if (b_readout.state==1) {
             ctx.beginPath();
             ctx.fillStyle="rgba(0,255,0,1.0)";
-            ctx.font="16px Times New Roman";
+            ctx.font="bold 16px Arial";
             ctx.textAlign="left";
             ctx.textBaseline="middle";
             for (let c=0; c<2; c++) {
-                var readoutText=["CH1: ","CH2: "][c]+bufgen[siggen[c].k_func.k.getValue()].name
-                    +" ("+siggen[c].k_func.k_.getValue()+")";
-                ctx.fillText(readoutText,ROXSIG,ROYSIG[c]);
+                if (b_chon[c].state==1 || b_dual.state==1 || (c==0 && (b_add.state==1 || b_mod.state==1))) {
+                    var readoutText=["CH1: ","CH2: "][c]+bufgen[siggen[c].k_func.k.getValue()].name;
+                        if (siggen[c].k_func.k_.getValue()!=0) readoutText+=" ("+siggen[c].k_func.k_.getValue()+")";
+                    ctx.fillText(readoutText,ROXSIG,ROYSIG[c]);
+                    if (b_cursor.state==1) {
+                        readoutText="V";
+                        yResult=dispch[c][5*d+xCur+tptr[0]]*volts[c]/50;
+                        if (Math.abs(yResult)<0.1) {
+                            yResult*=1000;
+                            readoutText="mV";
+                        }
+                        yResult=Math.round(yResult*100)/100;
+                        ctx.fillText(""+yResult+readoutText,ROXVOLTS,ROYSIG[c]);
+                    }
+                }
             }
             yResult=Math.round(timebase*1000)/1000;
             readoutText="ms";
             if (yResult<=0.05) {yResult*=1000; readoutText="us";}
             else if (yResult>=100) {yResult/=1000; readoutText="sec";}
             ctx.fillText("A: "+yResult+readoutText,ROXTB,ROYTB);
+
+            yResult=Math.round(delaybase*100000)/100000;
+            readoutText="ms";
+            if (yResult<=0.05) {yResult*=1000; readoutText="us";}
+            else if (yResult>=100) {yResult/=1000; readoutText="sec";}
+            yResult=Math.round(yResult*1000)/1000;
+            ctx.fillText("B: "+yResult+readoutText,ROXDB,ROYDB);
+
+            if (delay!=0) {
+                yResult=Math.round(delay*1000000)/1000000;
+                readoutText="ms";
+                if (yResult<=0.05) {yResult*=1000; readoutText="us";}
+                else if (yResult>=100) {yResult/=1000; readoutText="sec";}
+                yResult=Math.round(yResult*10000)/10000;
+                ctx.fillText("DLY: "+yResult+readoutText,ROXDLY,ROYDLY);
+            }
             ctx.fill();
         }
         ctx.restore();

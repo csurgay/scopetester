@@ -1,15 +1,14 @@
-const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.25";
-
+const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.27";
 var canvas, ctx, debugcanvas, debugctx, logWindow, traceString="", now;
 var scope, siggen, presetManager; // global objects
-var no_images_to_load, vfd, vfd_, led_on_power, led_on, led_off_power, led_off, led_red; // canvas images
+var no_images_to_load, vfd, vfd_, led_on_powers, led_on, led_off_powers, led_off, led_red; // canvas images
 const L=2048, L2=L/2, L4=L/4, L8=L/8; // buffer length
 const DL=500; // Display length
 const A = 127; // default amplitude (on integer scale, A -> 1.0)
 const FFTN=2048;
 const f=new FFT(FFTN); // buffer for FFT spectrum data
 var fftIn=new Array(FFTN).fill(0), fftOut=new Array(FFTN).fill(0);
-var timebase, q, delay; // not sure yet, q=timebase*L/512
+var timebase, delaybase, q, delay, volts=[0,0]; // not sure yet, q=timebase*L/512
 const bgcolor="#bbbbbb";
 const shadowcolor="rgba(70,70,70,0.3)";
 const hl_green="rgba(80,160,80,0.35)"; // knob and label highlight
@@ -49,6 +48,8 @@ var k_mode, a_mode=[];
 var b_fft, k_fftx, k_ffty;
 var mq=[0,0], mqi=[0,0]; // monitor q and qi for channels
 var b_readout;
-const ROXSIG=100, ROYSIG=[20,436], ROXTB=450, ROYTB=436;
+const ROXSIG=100, ROXVOLTS=300, ROYSIG=[20,436], ROXTB=400, ROYTB=436;
+const ROXDB=500, ROYDB=436, ROXDLY=400, ROYDLY=20;
 var NaNerror; // jump loops if NaN error happens for easier testing
 var b_debug, b_reset, b_presets=[];
+var b_cursor, k_cursor, xCur;

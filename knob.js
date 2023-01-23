@@ -3,9 +3,9 @@ var xd, yd, rd, nd, kd; // for x,y for drawing
 
 class Knob extends pObject {
     constructor(pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos,pMarker="marker") {
-        const pos={"knob":-27,"double":-44,"sweep":78, 
-        "double_s":-40, "delay":78, "func":-57, "range":-55, 
-        "volts":-55, "sigdouble":-30};
+        const pos={"none":[0,0],"knob":[0,-27],"double":[0,-44],"sweep":[0,78], 
+        "double_s":[0,-40], "delay":[0,78], "func":[0,-57], "range":[0,-55], 
+        "volts":[0,-55], "sigdouble":[70,-30], "cursor":[-45,-25]};
         super(ctx,pX-pR,pY-pR,2*pR,2*pR);
         this.class="Knob";
         this.name=pLabel;
@@ -20,8 +20,7 @@ class Knob extends pObject {
         this.color="#EEEEEE";
         this.haircolor="gray";
         this.markercolor="red";
-        var xLabel=pX; if (lpos=="sigdouble") xLabel+=70;
-        new Label(ctx,xLabel,pY+pos[lpos],pLabel,12);
+        new Label(ctx,pX+pos[lpos][0],pY+pos[lpos][1],pLabel,12);
         this.marker=pMarker;
         this.shadow=true;
         uipush(this);
@@ -91,7 +90,7 @@ class DoubleKnob extends pObject {
     constructor(pX,pY,pTicks,pTicks_,pLabel,lpos,pR,pR_) {
         super(ctx,pX-pR,pY-pR,2*pR,2*pR);
         this.k=new Knob(-1,pX,pY,pR,pTicks,0,pLabel,lpos);
-        this.k_=new Knob(-1,pX,pY,pR_,pTicks_,0,"",0);
+        this.k_=new Knob(-1,pX,pY,pR_,pTicks_,0,"","none");
         this.k_.hitPad=2; // so that hit rect is smaller for inner knob
         this.k.limit=Math.floor(this.k.ticks/2);
         this.k_.limit=Math.floor(this.k_.ticks/2);
