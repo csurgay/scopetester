@@ -144,6 +144,7 @@ function processEvent() {
         }
         else if (evt.name=="mousedown") {
             mouseDownObject=evt.objectUI;
+            mouseDownTime=evt.time;
             mouseDownY=evt.y;
             mouseMoved=false;
         }
@@ -175,7 +176,14 @@ function processEvent() {
             if (mouseDownObject!=null) {
                 if (mouseDownObject==evt.objectUI && 
                     (!mouseMoved || mouseDownObject.class=="Button")) {
-                    evt.objectUI.clickXY(evt.x,evt.y);
+                    if (mouseDownObject.class=="Knob"
+                        && evt.objectUI.pullable
+                        && evt.time-mouseDownTime>300) {
+                        evt.objectUI.pullpush();
+                    } 
+                    else {
+                        evt.objectUI.clickXY(evt.x,evt.y);
+                    }
                     if (mouseDownObject.initChannelsNeeded) initChannels();
                     draw(ctx);
                 }

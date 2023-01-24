@@ -20,7 +20,7 @@ class Scope extends pObject {
         new Frame(845,630,85,145,"Monitor","center");
         new Frame(790,465,140,150,"Trigger","center");
         new Frame(690,630,145,145,"FFT","center");
-        k_vol=new Knob(8,885,675,20,17,0,"Volume","knob");
+        k_vol=new Knob(ctx,8,885,675,20,17,0,"Volume","knob");
         k_vol.setSwitchBufferNeeded();
         k_monitor=new MonitorKnob(885,735);
         b_ch1=new ChOnButton(795,1000,24,16,"CH1","on",false);
@@ -42,41 +42,42 @@ class Scope extends pObject {
         b_preset=new PresetButton(20,395,24,16,"Preset","small");
         b_mic=new MicButton(20,430,24,16,"Mic","small");
         this.ch=[new ScopeChannel(685,80), new ScopeChannel(825,80)];
-        k_intensity=new Knob(8,30,105,15,17,0,"Intensity","knob");
-        k_focus=new Knob(8,30,160,15,17,0,"Focus","knob");
-        k_astigm=new Knob(8,30,215,15,17,0,"Astigm","knob");
-        k_illum=new Knob(16,30,270,15,17,0,"Illum","knob");
+        k_intensity=new Knob(ctx,8,30,105,15,17,0,"Intensity","knob");
+        k_focus=new Knob(ctx,8,30,160,15,17,0,"Focus","knob");
+        k_astigm=new Knob(ctx,8,30,215,15,17,0,"Astigm","knob");
+        k_illum=new Knob(ctx,16,30,270,15,17,0,"Illum","knob");
         k_illum.value0=false;
-        k_rot=new Knob(15,30,325,15,31,0,"Rotation","knob");
-        k_time=new TimeKnob(850,180);
+        k_rot=new Knob(ctx,15,30,325,15,31,0,"Rotation","knob");
+        k_delaybase=new DelaybaseKnob(200,100);
+        k_timebase=new DelaybaseKnob(400,100);
+        k_time=new TimeKnob(775,180);
         new Vfd(710,75,4,()=>{return 10*k_delay.k.getValue()+k_delay.k_.getValue()/10;},()=>{
             return b_power.state==0 || 10*k_delay.k.getValue()+k_delay.k_.getValue()==0;});
-        k_delay=new DoubleKnob(665,75,100,100,"Delay Mult","double",35,20);
+        k_delay=new DoubleKnob(ctx,665,75,100,100,"Delay Mult","cursor",36,20);
         k_delay.k.value0=false;
         k_delay.k_.value0=false;
         k_delay.k.limit=k_delay.k.ticks-1;
         k_delay.k_.limit=k_delay.k_.ticks-1;
-        k_delaybase=new DelaybaseKnob(695,180);
-        k_xpos=new Knob(24,807,75,20,49,0,"Pos X","knob");
-        b_xcal=new IndicatorLed(895,100,24,16,"Cal","on");
+        k_xpos=new Knob(ctx,24,655,180,20,49,0,"Pos X","knob");
+        b_xcal=new IndicatorLed(660,245,24,16,"Cal","on");
         b_ycal=new IndicatorLed(660,430,24,16,"Cal","on");
-        k_trig=new DoubleKnob(830,520,50,50,"Level","double_s",30,15);
+        k_trig=new DoubleKnob(ctx,830,520,50,50,"Level","double_s",30,15);
         k_trig.k.defaultFastRate=1;
 //        k_hold=new DoubleKnob(880,520,50,50,"HoldOff","double_s",30,15);
-        k_slope=new Knob(-1,830,590,17,2,0,"Slope","knob");
+        k_slope=new Knob(ctx,-1,830,590,17,2,0,"Slope","knob");
         k_slope.value0=false;
         k_mode=new ModeKnob(735,535);
         b_fft=new ChOnButton(760,740,24,16,"FFT","on");
-        k_ffty=new Knob(39,730,700,20,40,0,"On / Ymag","double_s");
+        k_ffty=new Knob(ctx,39,730,700,20,40,0,"On / Ymag","double_s");
         k_ffty.value0=false;
-        k_fftx=new Knob(10,800,700,20,21,0,"Xmag","double_s");
+        k_fftx=new Knob(ctx,10,800,700,20,21,0,"Xmag","double_s");
         b_readout=new ChOnButton(745,590,24,16,"Readout","readout");
         b_debug=new DebugButton(20,100,24,16,"Debug","small");
         b_reset=new DebugButton(20,140,24,16,"Reset","small");
         for (let i=0; i<6; i++)
         b_presets.push(new DebugButton(20,180+i*40,24,16,"Preset"+i,"small"));
-        b_cursor=new ChOnButton(835,37,24,16,"","cursor");
-        k_cursor=new DoubleKnob(895,55,51,201,"Cursor","cursor",30,15);
+        k_cursor=new DoubleKnob(ctx,870,75,51,201,"Cursor","cursor",36,23);
+        k_cursor.setPullable("cursor");
     }
     drawScreen(ctx) {
         // draw screen
@@ -260,9 +261,8 @@ class Scope extends pObject {
         if (int2>200) lineWidth+=((int2-200)/50);
         if (findState!="off") lineWidth+=1;
         lineWidth=Math.round(100*lineWidth)/100;
-        blurWidth=Math.abs(blur1/2);
-        
-        if (b_debug.state==1) log(strokeStyle+" "+lineWidth+" "+blurWidth);
+        blurWidth=Math.abs(blur1/2);      
+//        if (b_debug.state==1) log(strokeStyle+" "+lineWidth+" "+blurWidth);
     }
     setStroke() {
         ctx.strokeStyle=strokeStyle;
@@ -404,7 +404,7 @@ class Scope extends pObject {
             ctx.stroke();
         }
         // Cursor
-        if (b_cursor.state==1) {
+        if (k_cursor.k.pulled) {
             xCur=10*k_cursor.k.getValue()+k_cursor.k_.getValue();
             yResult=px+5*d+xCur;
             ctx.beginPath();
@@ -425,7 +425,7 @@ class Scope extends pObject {
                     var readoutText=["CH1: ","CH2: "][c]+bufgen[siggen[c].k_func.k.getValue()].name;
                         if (siggen[c].k_func.k_.getValue()!=0) readoutText+=" ("+siggen[c].k_func.k_.getValue()+")";
                     ctx.fillText(readoutText,ROXSIG,ROYSIG[c]);
-                    if (b_cursor.state==1) {
+                    if (k_cursor.k.pulled) {
                         readoutText="V";
                         yResult=dispch[c][5*d+xCur+tptr[0]]*volts[c]/50;
                         if (b_add.state==1 || b_mod.state==1) {
@@ -476,7 +476,7 @@ class Scope extends pObject {
 }
 class ScopeChannel {
     constructor(pX,pY) {
-        this.k_ypos=new Knob(24,pX+65,pY+247,20,49,0,"Pos Y","knob");
+        this.k_ypos=new Knob(ctx,24,pX+65,pY+247,20,49,0,"Pos Y","knob");
         this.k_volts=new VoltsKnob(pX,pY+275);
         this.k_volts.k.value0=false;
         this.k_volts.k_.value0=false;

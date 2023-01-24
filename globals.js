@@ -26,7 +26,7 @@ var sumdelta=[0,0,0]; // third for Mode(Add,AM) beam length
 var scales=[0,0], freqs=[0,0], freqs_=[0,0], phases=[0,0], dcs=[0,0], dcs_=[0,0];
 var uictx=[], uidebugctx=[]; // for hit, click, turn
 var buttons=[]; // for switch off at power off
-var b_chon, k_time, k_delay, k_delaybase, k_trig, k_hold, k_slope;
+var b_chon, k_time, k_timebase, k_delay, k_delaybase, k_trig, k_hold, k_slope;
 var radio_mode, b_ch1, b_ch2, b_dual, b_add, b_mod, b_xy;
 var radio_trig, b_limit, b_auto, b_ch1tr, b_ch2tr, b_mode, b_chtr;
 var b_find, b_preset, b_mic;
@@ -52,4 +52,4 @@ const ROXSIG=100, ROXVOLTS=300, ROYSIG=[20,436], ROXTB=400, ROYTB=436;
 const ROXDB=500, ROYDB=436, ROXDLY=400, ROYDLY=20;
 var NaNerror; // jump loops if NaN error happens for easier testing
 var b_debug, b_reset, b_presets=[];
-var b_cursor, k_cursor, xCur;
+var k_cursor, xCur;

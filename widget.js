@@ -56,7 +56,7 @@ class pObject {
         ctx.stroke();
     }
     draw(ctx) {
-        if (b_debug.state==1 && this.debugFrame) this.drawRect(ctx);
+        if (false && b_debug.state==1 && this.debugFrame) this.drawRect(ctx);
     }
 }
 
