@@ -59,7 +59,7 @@ class Knob extends pObject {
         }
         if (this.turnedTogether!=null) {
             this.turnedTogether.value=this.value;
-            if (this.pulled) this.value=savedValue;
+//            if (this.pulled) this.value=savedValue;
         }
         super.turnY(pDelta);
     }
@@ -67,12 +67,12 @@ class Knob extends pObject {
         this.pulled=!this.pulled;
         this.pulledTogether.pulled=!this.pulledTogether.pulled;
         if (this.pulled) {
-            this.x-=2; this.y-=1;
-            this.pulledTogether.x-=2; this.pulledTogether.y-=1;
+            this.x-=1; this.y-=1;
+            this.pulledTogether.x-=1; this.pulledTogether.y-=1;
         }
         else {
-            this.x+=2; this.y+=1;
-            this.pulledTogether.x+=2; this.pulledTogether.y+=1;
+            this.x+=1; this.y+=1;
+            this.pulledTogether.x+=1; this.pulledTogether.y+=1;
         }
     }
     draw(ctx) {
