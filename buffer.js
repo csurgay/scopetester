@@ -9,29 +9,29 @@ class BufferGenerator {
 function initBufgen() {
     trace("initBufgen");
 //    bufgen.push(new BufferGenerator("GND",f_gnd,'fullIcon'));
-    bufgen.push(new BufferGenerator("Sine",f_sine,'fullIcon'));
-    bufgen.push(new BufferGenerator("Triang",f_triangle_ideal,'fullIcon'));
+    bufgen.push(new BufferGenerator("SINE",f_sine,'fullIcon'));
+    bufgen.push(new BufferGenerator("TRIANG",f_triangle_ideal,'fullIcon'));
 //    bufgen.push(new BufferGenerator("PWM",f_pwm,'fullIcon'));
-    bufgen.push(new BufferGenerator("Square",f_square_ideal,'fullIcon'));
-    bufgen.push(new BufferGenerator("HarmSq",f_square_harmonic,'fullIcon'));
-    bufgen.push(new BufferGenerator("Trapez",f_trapezoid,'fullIcon'));
-    bufgen.push(new BufferGenerator("Ramp",f_ramp,'fullIcon'));
-    bufgen.push(new BufferGenerator("Gauss",f_gauss,'fullIcon'));
-    bufgen.push(new BufferGenerator("Sinc",f_sinc,'fullIcon'));
-    bufgen.push(new BufferGenerator("Pulse",f_pulse,'fullIcon'));
+    bufgen.push(new BufferGenerator("SQUARE",f_square_ideal,'fullIcon'));
+    bufgen.push(new BufferGenerator("HARMSQ",f_square_harmonic,'fullIcon'));
+    bufgen.push(new BufferGenerator("TRAP",f_trapezoid,'fullIcon'));
+    bufgen.push(new BufferGenerator("RAMP",f_ramp,'fullIcon'));
+    bufgen.push(new BufferGenerator("GAUSS",f_gauss,'fullIcon'));
+    bufgen.push(new BufferGenerator("SINC",f_sinc,'fullIcon'));
+    bufgen.push(new BufferGenerator("PULSE",f_pulse,'fullIcon'));
 //    bufgen.push(new BufferGenerator("Exp",f_exp,'fullIcon'));
-    bufgen.push(new BufferGenerator("Log",f_log,'fullIcon'));
-    bufgen.push(new BufferGenerator("Beats",f_beats,'fullIcon'));
+    bufgen.push(new BufferGenerator("EXP",f_log,'fullIcon'));
+    bufgen.push(new BufferGenerator("BEATS",f_beats,'fullIcon'));
     bufgen.push(new BufferGenerator("ECG",f_ecg,'fullIcon'));
     bufgen.push(new BufferGenerator("NTSC",f_ntsc,'fullIcon'));
     initMorse();
-    bufgen.push(new BufferGenerator("Morse",f_morse,'fullIcon'));
+    bufgen.push(new BufferGenerator("MORSE",f_morse,'fullIcon'));
     // Menomano (LaLinea) eredeti plotter rajz -> buffer function buffer
     initMenomano();
-    bufgen.push(new BufferGenerator("LineaX",f_menomanoX,"halfIcon"));
-    bufgen.push(new BufferGenerator("LineaY",f_menomanoY,"halfIcon"));
+    bufgen.push(new BufferGenerator("MENOX",f_menomanoX,"halfIcon"));
+    bufgen.push(new BufferGenerator("MANOY",f_menomanoY,"halfIcon"));
 //    bufgen.push(new BufferGenerator("Sawtooth",f_sawtooth,'fullIcon'));
-//    bufgen.push(new BufferGenerator("Triangle7",f_triangle_harmonic,'fullIcon'));
+//    bufgen.push(new BufferGenerator("HarmTri",f_triangle_harmonic,'fullIcon'));
 }
 
 var yy; // for vertical calculation;

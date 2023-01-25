@@ -1,5 +1,6 @@
 var pDelta; // for holding -event.delta
 var xd, yd, rd, nd, kd; // for x,y for drawing
+const pullDx=-1, pullDy=1;
 
 class Knob extends pObject {
     constructor(ctx,pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos,pMarker="marker") {
@@ -67,12 +68,12 @@ class Knob extends pObject {
         this.pulled=!this.pulled;
         this.pulledTogether.pulled=!this.pulledTogether.pulled;
         if (this.pulled) {
-            this.x-=1; this.y-=1;
-            this.pulledTogether.x-=1; this.pulledTogether.y-=1;
+            this.x+=pullDx; this.y+=pullDy;
+            this.pulledTogether.x+=pullDx; this.pulledTogether.y+=pullDy;
         }
         else {
-            this.x+=1; this.y+=1;
-            this.pulledTogether.x+=1; this.pulledTogether.y+=1;
+            this.x-=pullDx; this.y-=pullDy;
+            this.pulledTogether.x-=pullDx; this.pulledTogether.y-=pullDy;
         }
     }
     draw(ctx) {
@@ -87,8 +88,8 @@ class Knob extends pObject {
         }
         if (this.pulled && this.pullShadow) {
             ctx.beginPath();
-            ctx.fillStyle = "rgba(0,0,0,0.5)";
-            ctx.ellipse(xd,yd,1.2*rd,rd,Math.PI/4,-Math.PI/2,Math.PI/2);
+            ctx.fillStyle = "rgba(0,0,0,0.7)";
+            ctx.ellipse(xd,yd,1.15*rd,rd,Math.PI/4,-Math.PI/2,Math.PI/2);
             ctx.fill();
         }
         ctx.beginPath();

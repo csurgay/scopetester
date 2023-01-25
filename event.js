@@ -29,7 +29,7 @@ function hitXY(x,y) {
     return null;
 }
 
-var keypressOnlyOnce=false;
+var keypressOnlyOnce=false, moveCounter;
 function eventInit(canvas) {
     trace("mouseInit");
     if (!keypressOnlyOnce) {
@@ -196,7 +196,14 @@ function processEvent() {
                 if (mouseDownObject==evt.objectUI && 
                     (!mouseMoved || mouseDownObject.class=="Button" || 
                     mouseDownObject.class=="Knob" && evt.time-mouseDownTime<200 )) {
-                    mouseDownObject.clickXY(evt.x,evt.y);
+                    if (mouseDownObject.class=="Knob"
+                        && evt.objectUI.pullable
+                        && evt.time-mouseDownTime>300) {
+                        evt.objectUI.pullpush();
+                    }
+                    else {
+                        mouseDownObject.clickXY(evt.x,evt.y);
+                    }
                     if (mouseDownObject.initChannelsNeeded) initChannels();
                     draw(ctx);
                 }

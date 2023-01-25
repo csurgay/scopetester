@@ -6,7 +6,7 @@ var tptr=[0,0], lastTptr=[0,0], tcond; // trigger pointer, last valid tptr, trig
 var currValue, prevValue; // curr and prev y value for trigger condition calc
 var slope, tlevel; // trigger level
 var px,py0,py=[0,0]; // screen center lines for channels and dual
-var lineWidth, strokeStyle, blurWidth;
+var lineWidth, strokeStyle, blurWidth, expdays;
 
 class Scope extends pObject {
     constructor(pX,pY,pD,pDD) {
@@ -251,17 +251,24 @@ class Scope extends pObject {
         // beam intensity, focus blur and astigm
         int2=Math.floor(160+160*(int1+8-ast*ast/20)/16); // 160..320
         if (findState!="off") int2+=20;
-        int3=Math.sqrt(beamLength);
-        int2-=(10*int3); if (int2<128) int2=128;
+        if (!isNaN(beamLength)) {
+            int3=Math.sqrt(beamLength);
+            int2-=(10*int3);
+        }
         if (powerState=="start") int2=powerValue;
+        expdays=(new Date()-new Date(expdate))/1000/3600/24;
+        if (expdays>7) {
+            int2-=(30*(expdays-7));
+        }
+        if (int2<128) int2=128;
         alpha1=Math.round(100*int2/255)/100;
         if (alpha1>1) alpha1=1; if (alpha1<0.05) alpha1=0.05;
-        strokeStyle="rgba(0,"+Math.round(int2)+",0,"+alpha1+")";
         lineWidth=int2/120+Math.abs(blur1/2);
         if (int2>200) lineWidth+=((int2-200)/50);
         if (findState!="off") lineWidth+=1;
         lineWidth=Math.round(100*lineWidth)/100;
-        blurWidth=Math.abs(blur1/2);      
+        blurWidth=Math.abs(blur1/2);
+        strokeStyle="rgba(0,"+Math.round(int2)+",0,"+alpha1+")";
 //        if (b_debug.state==1) log(strokeStyle+" "+lineWidth+" "+blurWidth);
     }
     setStroke() {
@@ -404,7 +411,7 @@ class Scope extends pObject {
             ctx.stroke();
         }
         // Cursor
-        if (k_cursor.k.pulled) {
+        if (b_power.state==1 && k_cursor.k.pulled) {
             xCur=10*k_cursor.k.getValue()+k_cursor.k_.getValue();
             yResult=px+5*d+xCur;
             ctx.beginPath();
@@ -416,7 +423,7 @@ class Scope extends pObject {
         // Readout
         if (b_readout.state==1) {
             ctx.beginPath();
-            ctx.fillStyle="rgba(0,255,0,1.0)";
+            ctx.fillStyle="rgba(0,240,0,0.9)";
             ctx.font="bold 16px Arial";
             ctx.textAlign="left";
             ctx.textBaseline="middle";
@@ -424,7 +431,7 @@ class Scope extends pObject {
                 if (b_chon[c].state==1 || b_dual.state==1 || (c==0 && (b_add.state==1 || b_mod.state==1))) {
                     var readoutText=["CH1: ","CH2: "][c]+bufgen[siggen[c].k_func.k.getValue()].name;
                         if (siggen[c].k_func.k_.getValue()!=0) readoutText+=" ("+siggen[c].k_func.k_.getValue()+")";
-                    ctx.fillText(readoutText,ROXSIG,ROYSIG[c]);
+                    drawText(readoutText,ROXSIG,ROYSIG[c]);
                     if (k_cursor.k.pulled) {
                         readoutText="V";
                         yResult=dispch[c][5*d+xCur+tptr[0]]*volts[c]/50;
@@ -437,7 +444,7 @@ class Scope extends pObject {
                             readoutText="mV";
                         }
                         yResult=Math.round(yResult*100)/100;
-                        ctx.fillText(""+yResult+readoutText,ROXVOLTS,ROYSIG[c]);
+                        drawText(""+yResult+readoutText,ROXVOLTS,ROYSIG[c]);
                     }
                 }
             }
@@ -445,14 +452,14 @@ class Scope extends pObject {
             readoutText="ms";
             if (yResult<=0.05) {yResult*=1000; readoutText="us";}
             else if (yResult>=100) {yResult/=1000; readoutText="sec";}
-            ctx.fillText("A: "+yResult+readoutText,ROXTB,ROYTB);
+            drawText("A: "+yResult+readoutText,ROXTB,ROYTB);
 
             yResult=Math.round(delaybase*100000)/100000;
             readoutText="ms";
             if (yResult<=0.05) {yResult*=1000; readoutText="us";}
             else if (yResult>=100) {yResult/=1000; readoutText="sec";}
             yResult=Math.round(yResult*1000)/1000;
-            ctx.fillText("B: "+yResult+readoutText,ROXDB,ROYDB);
+            drawText("B: "+yResult+readoutText,ROXDB,ROYDB);
 
             if (delay!=0) {
                 yResult=Math.round(delay*1000000)/1000000;
@@ -460,7 +467,7 @@ class Scope extends pObject {
                 if (yResult<=0.05) {yResult*=1000; readoutText="us";}
                 else if (yResult>=100) {yResult/=1000; readoutText="sec";}
                 yResult=Math.round(yResult*10000)/10000;
-                ctx.fillText("DLY: "+yResult+readoutText,ROXDLY,ROYDLY);
+                drawText("DLY: "+yResult+readoutText,ROXDLY,ROYDLY);
             }
             ctx.fill();
         }
