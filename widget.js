@@ -174,9 +174,10 @@ function drawText(str,pdx,pdy) {
     ctx.beginPath();
 	var dx=pdx, dy=pdy, dl=0.8, dd=8;
 	for (let i=0; i<str.length; i++) {
-		if (str.charAt(i)=="^") {dx=pdx; dy+=16;}
+        var c=str.charAt(i);
+		if (c=='^' || c=='\n') {dx=pdx; dy+=16;}
 		else {
-			var l=letters[str.charAt(i)];
+			var l=letters[c];
 			for (let j=0; j<l.length/4; j++) {
 				ctx.moveTo(dx+dl*l[4*j+0], dy+dl*l[4*j+1]);
 				ctx.lineTo(dx+dl*l[4*j+2], dy+dl*l[4*j+3]);

@@ -173,6 +173,12 @@ class PresetManager {
         }
     }
 }
+function setImprintY() {
+    if (imprintY==1000) return;
+    imprintY--;
+    draw(ctx);
+    setTimeout(setImprintY,50);
+}
 class DebugButton extends Button {
     constructor(pX,pY,pW,pH,pLabel,pType) {
         super(debugctx,pX,pY,pW,pH,pLabel,pType);
@@ -201,7 +207,12 @@ class DebugButton extends Button {
             if (this.state==1) { 
                 var pri=parseInt(this.name.substring(6));
                 reset();
+                clearTimeout(imprintTimer); imprintY=1000;
                 if (pri==0) {
+                    imprintY=400;
+                    imprintTimer=setTimeout(setImprintY,50);
+                }
+                else if (pri==1) {
                     presetManager.reset();
                     presetManager.add(3,"wheel",siggen[0].k_func.k,0,-1);
                     presetManager.add(4,"wheel",siggen[0].k_scale,0,-1);
@@ -212,7 +223,7 @@ class DebugButton extends Button {
                     initChannels();
                     presetManager.add(1,"wheel",k_monitor,0,-1);
                 }
-                else if (pri==1) {
+                else if (pri==2) {
                     presetManager.reset();
                     presetManager.add(2,"wheel",siggen[0].k_func.k,0,-1);
                     presetManager.add(1,"wheel",siggen[1].k_func.k,0,-1);
@@ -231,7 +242,7 @@ class DebugButton extends Button {
                     presetManager.add(1,"mousedown",siggen[1].b_phalf,0,0);
                     presetManager.add(1,"mouseup",siggen[1].b_phalf,0,0);
                 }
-                else if (pri==2) {
+                else if (pri==3) {
                     presetManager.reset();
                     presetManager.add(2,"wheel",k_mode,0,-1);
                     presetManager.add(4,"wheel",siggen[0].k_func.k,0,-1);
@@ -241,7 +252,7 @@ class DebugButton extends Button {
                     presetManager.add(1,"wheel",scope.ch[0].k_volts.k,0,1);
                     presetManager.add(5,"wheel",scope.ch[0].k_volts.k_,0,1);
                 }
-                else if (pri==3) {
+                else if (pri==4) {
                     presetManager.reset();
                     presetManager.add(20,"wheel",siggen[0].k_freq.k,0,1,1);
                     presetManager.add(70,"wheel",siggen[1].k_freq.k,0,1,1);
@@ -252,7 +263,7 @@ class DebugButton extends Button {
                     presetManager.add(3,"wheel",k_mode,0,-1);
                     presetManager.add(300,"wheel",siggen[1].k_phase.k_,0,1,1);
                 }
-                else if (pri==4) {
+                else if (pri==5) {
                     presetManager.reset();
                     presetManager.add(6,"wheel",siggen[0].k_func.k,0,-1);
                     presetManager.add(6,"wheel",siggen[1].k_func.k,0,-1);
@@ -274,7 +285,7 @@ class DebugButton extends Button {
                     presetManager.add(6,"wheel",k_time.k,0,-1);
                     presetManager.add(100,"wheel",k_delay.k_,0,1,20);
                 }
-                else if (pri==5) {
+                else if (pri==6) {
                     presetManager.reset();
                     presetManager.add(1,"wheel",siggen[0].k_func.k,0,1);
                     presetManager.add(6,"wheel",siggen[0].k_func.k_,0,1);

@@ -315,6 +315,12 @@ class Scope extends pObject {
         roundRect(ctx, this.x+3, this.y+3, this.w-6, this.h-6, 20);
         ctx.clip();
         this.astigmCalc();
+        // imprint text rolling
+        if (imprintY!=1000) {
+            drawText(imprint,px,imprintY--);
+            ctx.restore();
+            return;
+        }
         // Actual beam drawing for Dual, Ch1, Ch2
         if (b_dual.state==1 || b_ch1.state==1 || b_ch2.state==1) {
             for (let c=0; c<2; c++) if (c!=1 || b_dual.state!=1 || b_fft.state!=1) {
