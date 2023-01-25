@@ -342,13 +342,15 @@ class PresetButton extends Button {
         if (b_power.state==1) {
             super.clickXY(x,y);
             if (this.state==1) {
-                for(var i=0; i<uictx.length; i++) {
-                    if (!isNaN(uictx[i].ticks)) {
-                        uictx[i].value=Math.floor(Math.random()*uictx[i].ticks);
-                    }
-                }
-                initChannels();
-                draw(ctx);
+                // for(var i=0; i<uictx.length; i++) {
+                //     if (!isNaN(uictx[i].ticks)) {
+                //         uictx[i].value=Math.floor(Math.random()*uictx[i].ticks);
+                //     }
+                // }
+                // initChannels();
+                // draw(ctx);
+                b_presets[lastPreset++].clickXY(0,0);
+                if (lastPreset>=b_presets.length) lastPreset=0;
                 setTimeout(()=>{b_preset.callSwitchOff();},500);
             }
             else if (this.state==0) this.callSwitchOff();
