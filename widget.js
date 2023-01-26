@@ -156,7 +156,7 @@ function getTextWidth(ctx,pS,pSize) {
 class Frame extends pObject {
     constructor(pX,pY,pW,pH,pLabel,pPos) {
         super(ctx,pX,pY,pW,pH);
-        var x={"center":pX+pW/2,"rightish":pX+3*pW/4};
+        var x={"center":pX+pW/2,"rightish":pX+245};
         uipush(this);
         this.label=new Label(ctx,x[pPos],pY+1," "+pLabel+" ",15);
         this.label.background=true;
@@ -178,6 +178,10 @@ function drawText(str,pdx,pdy) {
 		if (c=='^' || c=='\n') {dx=pdx; dy+=16;}
 		else {
 			var l=letters[c];
+            if (l===undefined) {
+                error(c+" ("+str+") is not defined in letters");
+                return;
+            }
 			for (let j=0; j<l.length/4; j++) {
 				ctx.moveTo(dx+dl*l[4*j+0], dy+dl*l[4*j+1]);
 				ctx.lineTo(dx+dl*l[4*j+2], dy+dl*l[4*j+3]);

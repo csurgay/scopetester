@@ -136,6 +136,7 @@ function processEvent() {
             else if (evt.x=="5") { b_presets[4].clickXY(0,0); draw(ctx); }
             else if (evt.x=="6") { b_presets[5].clickXY(0,0); draw(ctx); }
             else if (evt.x=="7") { b_presets[6].clickXY(0,0); draw(ctx); }
+            else if (evt.x=="8") { b_presets[7].clickXY(0,0); draw(ctx); }
 //            alert(`Key pressed ${evt.x} \r\n Key code value: ${evt.y}`);
         }
         else if (evt.name=="wheel") {
@@ -148,15 +149,23 @@ function processEvent() {
             mouseDownTime=evt.time;
             mouseDownY=evt.y;
             mouseMoved=false;
+            if (mouseDownObject.class=="PushButton") {
+                mouseDownObject.showPushed("pushillum");
+                if (mouseDownObject.radio!=null)
+                    mouseDownObject.radio.showNoPush(mouseDownObject);
+            }
         }
         else if (evt.name=="touchstart") {
             mouseDownObject=evt.objectUI;
             mouseDownTime=evt.time;
             mouseDownY=evt.y;
             mouseMoved=false;
+            if (mouseDownObject.class=="PushButton") {
+                mouseDownObject.showPushed("pushillum");
+            }
         }
         else if (evt.name=="mousemove") {
-            if (mouseDownObject!=null) {
+            if (mouseDownObject!=null && mouseDownObject.class!="Button" && mouseDownObject.class!="PushButton") {
                 mouseDownObject.turnY(mouseDownY-evt.y);
                 mouseDownY=evt.y;
                 mouseMoved=true;
@@ -165,7 +174,7 @@ function processEvent() {
             }
         }
         else if (evt.name=="touchmove") {
-            if (mouseDownObject!=null) {
+            if (mouseDownObject!=null && mouseDownObject.class!="Button" && mouseDownObject.class!="PushButton") {
                 mouseDownObject.turnY(mouseDownY-evt.y);
                 mouseDownY=evt.y;
                 mouseMoved=true;
@@ -176,7 +185,7 @@ function processEvent() {
         else if (evt.name=="mouseup") {
             if (mouseDownObject!=null) {
                 if (mouseDownObject==evt.objectUI && 
-                    (!mouseMoved || mouseDownObject.class=="Button")) {
+                    (!mouseMoved || mouseDownObject.class=="Button" || mouseDownObject.class=="PushButton")) {
                     if (mouseDownObject.class=="Knob"
                         && evt.objectUI.pullable
                         && evt.time-mouseDownTime>300) {
@@ -195,7 +204,7 @@ function processEvent() {
             if (mouseDownObject!=null) {
                 log("deltaT:"+(evt.time-mouseDownTime));
                 if (mouseDownObject==evt.objectUI && 
-                    (!mouseMoved || mouseDownObject.class=="Button" || 
+                    (!mouseMoved || mouseDownObject.class=="Button" || mouseDownObject.class=="PushButton" || 
                     mouseDownObject.class=="Knob" && evt.time-mouseDownTime<200 )) {
                     if (mouseDownObject.class=="Knob"
                         && evt.objectUI.pullable

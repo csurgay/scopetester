@@ -5,7 +5,7 @@ var Q,QI; // for frequency calculations
 var tptr=[0,0], lastTptr=[0,0], tcond; // trigger pointer, last valid tptr, trigger condition
 var currValue, prevValue; // curr and prev y value for trigger condition calc
 var slope, tlevel; // trigger level
-var px,py0,py=[0,0]; // screen center lines for channels and dual
+var px0,px,py0,py=[0,0]; // screen center lines for channels and dual
 var lineWidth, strokeStyle, blurWidth, expdays;
 
 class Scope extends pObject {
@@ -31,16 +31,18 @@ class Scope extends pObject {
         b_mod=new ChOnButton(795,1000,24,16,"AM","on",false);
         b_xy=new ChOnButton(795,1000,24,16,"X-Y","on",false);
         radio_mode=new Radio(795,1000,[b_ch1,b_ch2,b_dual,b_add,b_mod,b_xy],false);
-        b_auto=new ChOnButton(895,530,24,16,"Auto","on");
-        b_ch1tr=new ChOnButton(895,530,24,16,"CH1","on");
-        b_ch2tr=new ChOnButton(895,530,24,16,"CH2","on");
-        b_mode=new ChOnButton(895,530,24,16,"Mode","on");
+        b_auto=new PushButton(ctx,895,530,27,18,"Auto","on");
+        b_auto.state=1;
+        b_ch1tr=new PushButton(ctx,895,530,27,18,"CH1","on");
+        b_ch2tr=new PushButton(ctx,895,530,27,18,"CH2","on");
+        b_mode=new PushButton(ctx,895,530,27,18,"Mode","on");
         b_chtr=[b_ch1tr,b_ch2tr];
         radio_trig=new Radio(895,530,[b_auto,b_ch1tr,b_ch2tr,b_mode]);
         b_limit=new IndicatorLed(895,480,24,16,"Limit","on");
-        b_find=new FindButton(20,360,24,16,"Find","small");
-        b_preset=new PresetButton(20,395,24,16,"Preset","small");
-        b_mic=new MicButton(20,430,24,16,"Mic","small");
+        b_find=new FindButton(20,360,27,18,"Find","small");
+        b_preset=new PresetButton(20,395,27,18,"Preset","small");
+        b_preset.illum=false;
+        b_mic=new MicButton(20,430,27,18,"Mic","small");
         this.ch=[new ScopeChannel(685,80), new ScopeChannel(825,80)];
         k_intensity=new Knob(ctx,8,30,105,15,17,0,"Intensity","knob");
         k_focus=new Knob(ctx,8,30,160,15,17,0,"Focus","knob");
@@ -67,15 +69,15 @@ class Scope extends pObject {
         k_slope=new Knob(ctx,-1,830,590,17,2,0,"Slope","knob");
         k_slope.value0=false;
         k_mode=new ModeKnob(735,535);
-        b_fft=new ChOnButton(760,740,24,16,"FFT","on");
+        b_fft=new PushButton(ctx,760,740,27,18,"FFT","on");
         k_ffty=new Knob(ctx,39,730,700,20,40,0,"On / Ymag","double_s");
         k_ffty.value0=false;
         k_fftx=new Knob(ctx,10,800,700,20,21,0,"Xmag","double_s");
-        b_readout=new ChOnButton(745,590,24,16,"Readout","readout");
+        b_readout=new PushButton(ctx,745,590,27,18,"Readout","readout");
         b_debug=new DebugButton(20,100,24,16,"Debug","small");
         b_reset=new DebugButton(20,140,24,16,"Reset","small");
-        for (let i=0; i<7; i++)
-        b_presets.push(new DebugButton(20,180+i*40,24,16,"Preset"+i,"small"));
+        for (let i=0; i<8; i++)
+            b_presets.push(new DebugButton(20,180+i*40,24,16,"Preset"+i,"small"));
         k_cursor=new DoubleKnob(ctx,870,75,51,201,"Cursor","cursor",36,23);
         k_cursor.setPullable("cursor");
     }
@@ -157,13 +159,13 @@ class Scope extends pObject {
             volts[c]=vpd[l]*vpd_[l_];
             // x and y pos
             py[c]=-this.ch[c].k_ypos.getValue();
-            px=k_xpos.getValue();
+            px0=this.x+dd;
+            px=px0+10*k_xpos.getValue();
             // find value one adjust at a time
             if (findState!="off") py[c]/=findValue;
             // gnd lines position
             py0=this.y+dd+4*d+py[c]*10;
             py[c]=py0+(c*2-1)*d;
-            px=this.x+dd+px*10;
             // averages for AC coupling
             avgs[c]=0; var n=0;
             for (let i=0; i<sch[c].length; i++) {
@@ -208,7 +210,7 @@ class Scope extends pObject {
                 }
             }
         }
-        if (findState=="search" && minY>-4*dd && maxY<4*dd) {
+        if (findState=="search" && minY>-4*dd && maxY<4*dd && findValue>20) {
             findState="found";
         }
     }
@@ -216,6 +218,7 @@ class Scope extends pObject {
     triggerSeek() {
         slope=k_slope.getValue();
         tlevel=10*k_trigger.k.getValue()+k_trigger.k_.getValue();
+        b_limit.state=0;
         for (let c=1; c>=0; c--) {
             tcond=false; // trigger condition
             prevValue=dispch[c][0];
@@ -230,7 +233,6 @@ class Scope extends pObject {
                 prevValue=currValue;
             }
             if (b_chtr[c].state==1 || b_mode.state==1) {
-                b_limit.state=0;
                 if (tptr[c]>=L) {
                     tptr[c]=lastTptr[c];
                     b_limit.state=1;
@@ -330,10 +332,12 @@ class Scope extends pObject {
                     // beam length for beam intensity calcukation
                     sumdelta[c]=0;
                     for (let k=0; k<asl; k++) {
-                        ctx.moveTo(px+k*asx,py[c]-dispch[c][0+tptr[0]]-k_rot.getValue()*DL/500+k*asy);
+                        var ii=findState=="off"?i:((i+findValue*(DL/4+px0-px))/(findValue+1));
+                        ctx.moveTo(px+ii+k*asx,py[c]-dispch[c][0+tptr[0]]-k_rot.getValue()*DL/500+k*asy);
                         for (let i=1; i<DL; i++) {
-                            ctx.lineTo(px+i+k*asx,py[c]-dispch[c][i+tptr[0]]
-                                -k_rot.getValue()*(DL/2-i)/250+k*asy);
+                            ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
+                            ctx.lineTo(px+ii+k*asx,py[c]-dispch[c][i+tptr[0]]
+                                -k_rot.getValue()*(DL/2-ii)/250+k*asy);
                             if (k==0) sumdelta[c]+=Math.abs(dispch[c][i+tptr[0]]-dispch[c][i-1+tptr[0]]);
                         }
                     }
@@ -376,11 +380,13 @@ class Scope extends pObject {
             ctx.beginPath();
             sumdelta[2]=0;
             for (let k=0; k<asl; k++) {
-                ctx.moveTo(px+k*asx,py0-this.calcModeY(-1,dispch[0][0+tptr[0]],
+                var ii=findState=="off"?i:((i+findValue*(DL/4+px0-px))/(findValue+1));
+                ctx.moveTo(px+ii+k*asx,py0-this.calcModeY(-1,dispch[0][0+tptr[0]],
                     dispch[1][0+tptr[0]])-k_rot.getValue()*DL/500+k*asy);
                 for (let i=1; i<DL; i++) {
-                    ctx.lineTo(px+i+k*asx,py0-this.calcModeY(-1,dispch[0][i+tptr[0]],
-                        dispch[1][i+tptr[0]])-k_rot.getValue()*(DL/2-i)/250+k*asy);
+                    ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
+                    ctx.lineTo(px+ii+k*asx,py0-this.calcModeY(-1,dispch[0][i+tptr[0]],
+                        dispch[1][i+tptr[0]])-k_rot.getValue()*(DL/2-ii)/250+k*asy);
                     if (k==0) sumdelta[2]+=Math.abs(this.calcModeY(-1,dispch[0][i-1+tptr[0]],
                         dispch[1][i-1+tptr[0]])-this.calcModeY(-1,dispch[0][i+tptr[0]],dispch[1][i+tptr[0]]));
                 }
@@ -440,16 +446,22 @@ class Scope extends pObject {
                     drawText(readoutText,ROXSIG,ROYSIG[c]);
                     if (k_cursor.k.pulled) {
                         readoutText="V";
-                        yResult=dispch[c][5*d+xCur+tptr[0]]*volts[c]/50;
-                        if (b_add.state==1 || b_mod.state==1) {
-                            yResult=scope.calcModeY(0,dispch[0][5*d+xCur+tptr[0]]*volts[0]/50,
-                                dispch[1][5*d+xCur+tptr[0]]*volts[1]/50);
+                        var ptr=5*d+xCur+tptr[0];
+                        if (ptr>L) {
+                            yResult=""; readoutText="TRIG!";
                         }
-                        if (Math.abs(yResult)<0.1) {
-                            yResult*=1000;
-                            readoutText="mV";
+                        else {
+                            yResult=dispch[c][ptr]*volts[c]/50;
+                            if (b_add.state==1 || b_mod.state==1) {
+                                yResult=scope.calcModeY(0,dispch[0][5*d+xCur+tptr[0]]*volts[0]/50,
+                                    dispch[1][5*d+xCur+tptr[0]]*volts[1]/50);
+                            }
+                            if (Math.abs(yResult)<0.1) {
+                                yResult*=1000;
+                                readoutText="mV";
+                            }
+                            yResult=Math.round(yResult*100)/100;
                         }
-                        yResult=Math.round(yResult*100)/100;
                         drawText(""+yResult+readoutText,ROXVOLTS,ROYSIG[c]);
                     }
                 }
@@ -493,9 +505,10 @@ class ScopeChannel {
         this.k_volts=new VoltsKnob(pX,pY+275);
         this.k_volts.k.value0=false;
         this.k_volts.k_.value0=false;
-        this.b_ac=new ChOnButton(pX+70,pY+312,24,16,"AC",'on');
-        this.b_gnd=new ChOnButton(pX+70,pY+312,24,16,"Gnd",'on');
-        this.b_dc=new ChOnButton(pX+70,pY+312,24,16,"DC",'on');
+        this.b_ac=new PushButton(ctx,pX+70,pY+312,27,18,"AC",'on');
+        this.b_gnd=new PushButton(ctx,pX+70,pY+312,27,18,"Gnd",'on');
+        this.b_dc=new PushButton(ctx,pX+70,pY+312,27,18,"DC",'on');
+        this.b_dc.state=1;
         this.acdc=new Radio(pX+70,pY+312,[this.b_ac,this.b_gnd,this.b_dc]);
     }
 }

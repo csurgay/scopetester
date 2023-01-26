@@ -1,6 +1,6 @@
 // Button Label position per pType
-var xpos={"power":0,"on":-29, "small":0,"siggen":-29,"readout":-40};
-var ypos={"power":-27,"on":0,"small":-15,"siggen":0,"readout":0};
+var xpos={"power":0,"on":-29, "small":0,"siggen":-32,"readout":-40};
+var ypos={"power":-27,"on":0,"small":-15,"siggen":-3,"readout":0};
 
 var grd; // for grad on Canvas
 
@@ -56,8 +56,75 @@ class Button extends pObject {
         ctx.fillStyle = shadowcolor;
             roundRect(ctx,this.x,this.y,this.w+shadowD-1,this.h+shadowD,shadowR);
         ctx.fill();
-        ctx.drawImage(this.state==1?this.img_on:this.img_off,this.x,this.y,this.w,this.h);
+        if (b_power.state==0 || this.state==0) {
+            ctx.drawImage(this.img_off,this.x+2,this.y+2,this.w-4,this.h-4);
+        }
+        else {
+            ctx.drawImage(this.img_on,this.x,this.y,this.w,this.h);
+        }
         super.draw(ctx);
+    }
+}
+var pbl1=2, pbl2=1, pbq=1;
+class PushButton extends Button {
+    constructor(ctx,pX,pY,pW,pH,pLabel,pType,pShow) {
+        super(ctx,pX,pY,pW,pH,pLabel,pType,pShow);
+        this.class="PushButton";
+        this.illum=true;
+    }
+    showPushed(offpushon) {
+        if (offpushon=="off") this.draw(this.ctx,3);
+        else if (offpushon=="offnoillum") this.draw(this.ctx,3,"noillum");
+        else if (offpushon=="push") this.draw(this.ctx,0);
+        else if (offpushon=="pushillum") this.draw(this.ctx,0,"illum");
+        else if (offpushon=="on") this.draw(this.ctx,1);
+    }
+    draw(ctx, offd=-17, pIllum="none") {
+        if (offd==-17) {
+            offd=this.state==1?1:3;
+        }
+        var pbx=this.x, pby=this.y, pbdx=this.w, pbdy=this.h;
+        ctx.beginPath(); // gray border
+        ctx.fillStyle="rgb(100,100,100)";
+        // ctx.fillRect(pbx,pby,pbdx,pbdy);
+        roundRect(ctx,pbx,pby,pbdx,pbdy,3);
+        ctx.fill();
+        ctx.beginPath(); // black hole
+        ctx.fillStyle="rgb(0,0,0)";
+        ctx.fillRect(pbx+pbl1,pby+pbl1,pbdx-2*pbl1,pbdy-2*pbl1);
+        ctx.fill();
+        ctx.beginPath(); // front plane
+        ctx.fillStyle="rgb(120,120,120)";
+        roundRect(ctx,pbx +offd +pbl1+pbl2 +pbq, pby +offd +pbl1+pbl2 +pbq, 
+            pbdx -2*(pbl1+pbl2+pbq), pbdy-2*(pbl1+pbl2+pbq),1);
+        ctx.fill();
+        ctx.beginPath(); // left plane
+        ctx.fillStyle="rgb(90,90,90)";
+        ctx.moveTo(pbx +pbl1+pbl2, pby +pbl1+pbl2);
+        ctx.lineTo(pbx +offd +pbl1+pbl2 +pbq, pby +offd +pbl1+pbl2 +pbq);
+        ctx.lineTo(pbx +offd +pbl1+pbl2 +pbq, pby +offd +pbl1+pbl2 +pbq +pbdy-2*(pbl1+pbl2+pbq));
+        ctx.lineTo(pbx +pbl1+pbl2, pby +pbl1+pbl2 +pbdy-2*(pbl1+pbl2));
+        ctx.lineTo(pbx+pbl1+pbl2,pby+pbl1+pbl2 +pbq);
+        ctx.fill();
+        ctx.beginPath(); // top plane
+        ctx.fillStyle="rgb(150,150,150)";
+        ctx.moveTo(pbx +pbl1+pbl2, pby +pbl1+pbl2);
+        ctx.lineTo(pbx +offd +pbl1+pbl2 +pbq, pby +offd +pbl1+pbl2 +pbq);
+        ctx.lineTo(pbx +offd +pbl1+pbl2 +pbq +pbdx -2*(pbl1+pbl2 +pbq), pby +offd +pbl1+pbl2 +pbq);
+        ctx.lineTo(pbx +pbl1+pbl2 +pbdx -2*(pbl1+pbl2), pby +pbl1+pbl2);
+        ctx.lineTo(pbx +pbl1+pbl2, pby +pbl1+pbl2);
+        ctx.fill();
+        if (this.illum) {
+            if (pIllum=="illum" && b_power.state==1)
+                ctx.drawImage(this.img_on,pbx +offd +pbl1+pbl2+pbq, pby +offd +pbl1+pbl2+pbq, 
+                    pbdx -2*(pbl1+pbl2+pbq), pbdy-2*(pbl1+pbl2+pbq));    
+            else if (pIllum=="noillum" || b_power.state==0)
+            ctx.drawImage(this.img_off,pbx +offd +pbl1+pbl2+pbq, pby +offd +pbl1+pbl2+pbq, 
+                pbdx -2*(pbl1+pbl2+pbq), pbdy-2*(pbl1+pbl2+pbq));    
+            else
+                ctx.drawImage(this.state==1?this.img_on:this.img_off,pbx +offd +pbl1+pbl2+pbq, pby +offd +pbl1+pbl2+pbq, 
+                    pbdx -2*(pbl1+pbl2+pbq), pbdy-2*(pbl1+pbl2+pbq));    
+        }
     }
 }
 class PowerButton extends Button {
@@ -70,18 +137,14 @@ class PowerButton extends Button {
     clickXY(x,y) {
         // power switch-on event
         if (this.state==0) {
-            b_auto.state=1;
-            for (let i=0; i<2; i++) {
-                siggen[i].b_ch.state=1;
-                scope.ch[i].b_dc.state=1;
-            }
             k_monitor.callSwitchOff();
             powerState="start"; powerValue=80.0; setTimeout(setPower,10);
         }
         // power switch-off event
         if (this.state==1) {
             for (let i=0; i<buttons.length; i++) {
-                buttons[i].callSwitchOff();
+                if (buttons[i].class!="PushButton") 
+                    buttons[i].callSwitchOff();
             }
             k_monitor.callSwitchOff();
             powerState="off";
@@ -129,17 +192,25 @@ class IndicatorLed extends Button {
         }
     }
 }
-class FindButton extends Button {
+class FindButton extends PushButton {
     constructor(pX,pY,pW,pH,pLabel,pType) {
         super(ctx,pX,pY,pW,pH,pLabel,pType);
         findState="off";
+        this.illum=false;
     }
     clickXY(x,y) {
-        if (b_power.state==1) {
-            super.clickXY(x,y);
-            if (this.state==1) { findState="search"; findValue=1.0; setTimeout(setFind,5); }
-            else if (this.state==0) findState="off";
-            // findState: "search"/"found"/"off", y/findValue displayed
+        findState="off";
+        this.state=0;
+    }
+    showPushed() {
+        if (b_power.state==0) {
+            super.showPushed("push");
+        }
+        else if (b_power.state==1) {
+            super.showPushed("push");
+            this.state=1;
+            findState="search"; findValue=1.0; setTimeout(setFind,5);
+            // findState: "search","found","off", dispch/findValue displayed
         }
     }
 }
@@ -156,6 +227,13 @@ function reset() {
         if (!isNaN(uictx[i].ticks)) {
             uictx[i].reset();
         }
+    }
+    if (b_auto.state==0) b_auto.clickXY(0,0);
+    if (b_readout.state==1) b_readout.clickXY(0,0);
+    if (k_cursor.k.pulled) {
+        presetManager.reset();
+        presetManager.add(1,"mousedown",k_cursor.k_,0,0,350);
+        presetManager.add(1,"mouseup",k_cursor.k_,0,0);
     }
 }
 class PresetManager {
@@ -306,10 +384,11 @@ class DebugButton extends Button {
                     presetManager.add(1,"wheel",scope.ch[1].k_volts.k,0,1);
                     presetManager.add(3,"wheel",k_mode,0,-1);
                 }
-                else if (pri==6) { // Wave (Sinc, Range, ADD, Trigger/Mode)
+                else if (pri==7) { // Wave (Sinc, Range, ADD, Trigger/Mode)
                     presetManager.reset();
                     presetManager.add(7,"wheel",siggen[0].k_func.k,0,1);
                     presetManager.add(1,"wheel",siggen[0].k_scale,0,-1);
+                    presetManager.add(2,"wheel",siggen[1].k_func.k,0,1);
                     presetManager.add(1,"wheel",siggen[1].k_scale,0,1);
                     presetManager.add(16,"wheel",siggen[0].k_func.k_,0,1);
                     presetManager.add(1,"wheel",k_mode,0,1);
@@ -343,13 +422,13 @@ class AutotestButton extends Button {
         if (this.state==1) attimer=setTimeout(autotest,100);
     }
 }
-class MicButton extends Button {
+class MicButton extends PushButton {
     constructor(pX,pY,pW,pH,pLabel,pType) {
         super(ctx,pX,pY,pW,pH,pLabel,pType);
     }
     clickXY(x,y) {
+        super.clickXY(x,y);
         if (b_power.state==1) {
-            super.clickXY(x,y);
             if (this.state==1) {
                 clearTimeout(micTimeout);
                 recordAudio();
@@ -374,7 +453,7 @@ class MicButton extends Button {
         draw(ctx);
     }
 }
-class PresetButton extends Button {
+class PresetButton extends PushButton {
     constructor(pX,pY,pW,pH,pLabel,pType) {
         super(ctx,pX,pY,pW,pH,pLabel,pType);
     }
@@ -422,5 +501,10 @@ class Radio extends pObject {
         for (let i=0; i<this.b.length; i++) {
                 this.b[i].state=0;
         }
+    }
+    showNoPush(pPushButton) {
+        for (let i=0; i<this.b.length; i++)
+            if (this.b[i]!=pPushButton)
+                this.b[i].showPushed("offnoillum");
     }
 }
