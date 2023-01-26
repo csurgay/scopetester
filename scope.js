@@ -61,8 +61,8 @@ class Scope extends pObject {
         k_xpos=new Knob(ctx,24,655,180,20,49,0,"Pos X","knob");
         b_xcal=new IndicatorLed(660,245,24,16,"Cal","on");
         b_ycal=new IndicatorLed(660,430,24,16,"Cal","on");
-        k_trig=new DoubleKnob(ctx,830,520,50,50,"Level","double_s",30,15);
-        k_trig.k.defaultFastRate=1;
+        k_trigger=new DoubleKnob(ctx,830,520,50,50,"Level","double_s",30,15);
+        k_trigger.k.defaultFastRate=1;
 //        k_hold=new DoubleKnob(880,520,50,50,"HoldOff","double_s",30,15);
         k_slope=new Knob(ctx,-1,830,590,17,2,0,"Slope","knob");
         k_slope.value0=false;
@@ -74,7 +74,7 @@ class Scope extends pObject {
         b_readout=new ChOnButton(745,590,24,16,"Readout","readout");
         b_debug=new DebugButton(20,100,24,16,"Debug","small");
         b_reset=new DebugButton(20,140,24,16,"Reset","small");
-        for (let i=0; i<6; i++)
+        for (let i=0; i<7; i++)
         b_presets.push(new DebugButton(20,180+i*40,24,16,"Preset"+i,"small"));
         k_cursor=new DoubleKnob(ctx,870,75,51,201,"Cursor","cursor",36,23);
         k_cursor.setPullable("cursor");
@@ -215,7 +215,7 @@ class Scope extends pObject {
     // trigger condition seeking
     triggerSeek() {
         slope=k_slope.getValue();
-        tlevel=10*k_trig.k.getValue()+k_trig.k_.getValue();
+        tlevel=10*k_trigger.k.getValue()+k_trigger.k_.getValue();
         for (let c=1; c>=0; c--) {
             tcond=false; // trigger condition
             prevValue=dispch[c][0];
@@ -371,7 +371,7 @@ class Scope extends pObject {
             sumdelta[2]/=(L*4); if (findState!="off") sumdelta[2]/=(findValue*findValue);
             this.stroke(2);
         }
-        // Beam for Mode (Add, AM)
+        // Beam for Mode (ADD, AM)
         else {
             ctx.beginPath();
             sumdelta[2]=0;

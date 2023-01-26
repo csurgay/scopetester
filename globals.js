@@ -27,7 +27,7 @@ var sumdelta=[0,0,0]; // third for Mode(Add,AM) beam length
 var scales=[0,0], freqs=[0,0], freqs_=[0,0], phases=[0,0], dcs=[0,0], dcs_=[0,0];
 var uictx=[], uidebugctx=[]; // for hit, click, turn
 var buttons=[]; // for switch off at power off
-var b_chon, k_time, k_timebase, k_delay, k_delaybase, k_trig, k_hold, k_slope;
+var b_chon, k_time, k_timebase, k_delay, k_delaybase, k_trigger, k_hold, k_slope;
 var radio_mode, b_ch1, b_ch2, b_dual, b_add, b_mod, b_xy;
 var radio_trig, b_limit, b_auto, b_ch1tr, b_ch2tr, b_mode, b_chtr;
 var b_find, b_preset, b_mic, lastPreset=0;
@@ -108,7 +108,7 @@ const letters={ " ":[],
 };
 const imprint=`KETTO AZ EGYBEN ANALOG OSZCILLOSZKOP TRENER
 
-CHROME-BAN TESZTELT
+CHROME-BAN TESZTELT, MOBILON IS MUKODIK
 LAMPACSKAK RAKLIKKELESSEL KAPCSOLHATOK
 TEKEROGOMBOK EGER GORGOVEL VAGY KLIKK+FEL/LE
 DUPLA TEKEROK KET RESZ KULON
