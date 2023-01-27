@@ -28,8 +28,8 @@ function initBufgen() {
     bufgen.push(new BufferGenerator("MORSE",f_morse,'fullIcon'));
     // Menomano (LaLinea) eredeti plotter rajz -> buffer function buffer
     initMenomano();
-    bufgen.push(new BufferGenerator("MENOX",f_menomanoX,"halfIcon"));
-    bufgen.push(new BufferGenerator("MANOY",f_menomanoY,"halfIcon"));
+    bufgen.push(new BufferGenerator("MENO",f_menomanoX,"halfIcon"));
+    bufgen.push(new BufferGenerator("MANO",f_menomanoY,"halfIcon"));
 //    bufgen.push(new BufferGenerator("Sawtooth",f_sawtooth,'fullIcon'));
 //    bufgen.push(new BufferGenerator("HarmTri",f_triangle_harmonic,'fullIcon'));
 }

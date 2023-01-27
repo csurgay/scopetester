@@ -1,6 +1,6 @@
 var d, dd; // for UI layout geometry calculations
 var ast, asl, asx, asy; // astigm control value, line multiplication, x,y direction
-var illum, int1, int2, int3, blur1, alpha1; // for scale grid illumination, inensity and focus blur value
+var illum, int={}, blur1, alpha1; // for scale grid illumination, inensity and focus blur value
 var Q,QI; // for frequency calculations
 var tptr=[0,0], lastTptr=[0,0], tcond; // trigger pointer, last valid tptr, trigger condition
 var currValue, prevValue; // curr and prev y value for trigger condition calc
@@ -31,18 +31,18 @@ class Scope extends pObject {
         b_mod=new ChOnButton(795,1000,24,16,"AM","on",false);
         b_xy=new ChOnButton(795,1000,24,16,"X-Y","on",false);
         radio_mode=new Radio(795,1000,[b_ch1,b_ch2,b_dual,b_add,b_mod,b_xy],false);
-        b_auto=new PushButton(ctx,895,530,27,18,"Auto","on");
+        b_auto=new PushButton(ctx,892,530,pbw,pbh,"Auto","on");
         b_auto.state=1;
-        b_ch1tr=new PushButton(ctx,895,530,27,18,"CH1","on");
-        b_ch2tr=new PushButton(ctx,895,530,27,18,"CH2","on");
-        b_mode=new PushButton(ctx,895,530,27,18,"Mode","on");
+        b_ch1tr=new PushButton(ctx,892,530,pbw,pbh,"CH1","on");
+        b_ch2tr=new PushButton(ctx,892,530,pbw,pbh,"CH2","on");
+        b_mode=new PushButton(ctx,892,530,pbw,pbh,"Mode","on");
         b_chtr=[b_ch1tr,b_ch2tr];
-        radio_trig=new Radio(895,530,[b_auto,b_ch1tr,b_ch2tr,b_mode]);
+        radio_trig=new Radio(892,530,[b_auto,b_ch1tr,b_ch2tr,b_mode]);
         b_limit=new IndicatorLed(895,480,24,16,"Limit","on");
-        b_find=new FindButton(20,360,27,18,"Find","small");
-        b_preset=new PresetButton(20,395,27,18,"Preset","small");
+        b_find=new FindButton(17,360,pbw,pbh,"Find","small");
+        b_preset=new PresetButton(17,395,pbw,pbh,"Preset","small");
         b_preset.illum=false;
-        b_mic=new MicButton(20,430,27,18,"Mic","small");
+        b_mic=new MicButton(17,430,pbw,pbh,"Mic","small");
         this.ch=[new ScopeChannel(685,80), new ScopeChannel(825,80)];
         k_intensity=new Knob(ctx,8,30,105,15,17,0,"Intensity","knob");
         k_focus=new Knob(ctx,8,30,160,15,17,0,"Focus","knob");
@@ -69,15 +69,16 @@ class Scope extends pObject {
         k_slope=new Knob(ctx,-1,830,590,17,2,0,"Slope","knob");
         k_slope.value0=false;
         k_mode=new ModeKnob(735,535);
-        b_fft=new PushButton(ctx,760,740,27,18,"FFT","on");
+        b_fft=new PushButton(ctx,755,740,pbw,pbh,"FFT","on");
         k_ffty=new Knob(ctx,39,730,700,20,40,0,"On / Ymag","double_s");
         k_ffty.value0=false;
         k_fftx=new Knob(ctx,10,800,700,20,21,0,"Xmag","double_s");
-        b_readout=new PushButton(ctx,745,590,27,18,"Readout","readout");
-        b_debug=new DebugButton(20,100,24,16,"Debug","small");
-        b_reset=new DebugButton(20,140,24,16,"Reset","small");
+        b_readout=new PushButton(ctx,745,588,pbw,pbh,"Readout","readout");
+        b_debug=new DebugButton(20,20,24,16,"Debug","small");
+        b_reset=new DebugButton(20,55,24,16,"Reset","small");
+        b_autotest=new AutotestButton(20,90,24,16,"Test","small");
         for (let i=0; i<8; i++)
-            b_presets.push(new DebugButton(20,180+i*40,24,16,"Preset"+i,"small"));
+            b_presets.push(new DebugButton(70,20+i*35,24,16,"Preset"+i,"small"));
         k_cursor=new DoubleKnob(ctx,870,75,51,201,"Cursor","cursor",36,23);
         k_cursor.setPullable("cursor");
     }
@@ -94,48 +95,53 @@ class Scope extends pObject {
         roundRect(ctx, this.x, this.y, this.w, this.h, 20);
         ctx.stroke();
         ctx.fill();
+    }
+    drawGrid(ctx,illumgrid) {
         ctx.beginPath();
-        ctx.strokeStyle = "rgb(0, 25, 0)";
+        if (illumgrid=="grid") 
+            ctx.strokeStyle = "rgba(0,25,0,1.0)";
         ctx.lineWidth=1;
         // draw grid
         d=this.d;
         dd=this.dd;
         illum=Math.floor(127*k_illum.getValue()/k_illum.ticks);
         if (illum>0)
-            ctx.strokeStyle = "rgb("+(128+illum)+", "+(128+illum)+", "+(128+illum)+")";
-        for (let i=dd; i<=this.w-dd+1; i+=d) {
-            ctx.moveTo(this.x+i,this.y+dd);
-            ctx.lineTo(this.x+i,this.y+this.h-dd);
-        }
-        for (let i=dd; i<=this.h-dd+1; i+=d) {
-            ctx.moveTo(this.x+dd,this.y+i);
-            ctx.lineTo(this.x+this.w-dd,this.y+i);
-        }
-        // draw hair
-        for (let i=dd; i<=this.w-dd+1; i+=d/5) {
-            ctx.moveTo(this.x+i,this.y+this.h/2-dd/4);
-            ctx.lineTo(this.x+i,this.y+this.h/2+dd/4);
-        }
-        for (let i=dd; i<=this.h-dd+1; i+=d/5) {
-            ctx.moveTo(this.x+this.w/2-dd/4,this.y+i);
-            ctx.lineTo(this.x+this.w/2+dd/4,this.y+i);
-        }
-        for (let i=dd; i<=this.w-dd+1; i+=d/5) {
-            ctx.moveTo(this.x+i,this.y+dd+2*d-dd/8);
-            ctx.lineTo(this.x+i,this.y+dd+2*d+dd/8);
-        }
-        for (let i=dd; i<=this.w-dd+1; i+=d/5) {
-            ctx.moveTo(this.x+i,this.y+dd+6*d-dd/8);
-            ctx.lineTo(this.x+i,this.y+dd+6*d+dd/8);
-        }
-        // draw dots
-        for (let i=dd; i<=this.w-dd+1; i+=d/5) {
-            ctx.moveTo(this.x+i,this.y+dd+6*d+d/2);
-            ctx.lineTo(this.x+i,this.y+dd+6*d+d/2+1);
-        }
-        for (let i=dd; i<=this.w-dd+1; i+=d/5) {
-            ctx.moveTo(this.x+i,this.y+dd+d+d/2);
-            ctx.lineTo(this.x+i,this.y+dd+d+d/2+1);
+            ctx.strokeStyle = "rgba("+(138+illum)+", "+(138+illum)+", "+(138+illum)+",0.75)";
+        if (illumgrid=="grid" || illumgrid=="illum" && illum>0) {
+            for (let i=dd; i<=this.w-dd+1; i+=d) {
+                ctx.moveTo(this.x+i,this.y+dd);
+                ctx.lineTo(this.x+i,this.y+this.h-dd);
+            }
+            for (let i=dd; i<=this.h-dd+1; i+=d) {
+                ctx.moveTo(this.x+dd,this.y+i);
+                ctx.lineTo(this.x+this.w-dd,this.y+i);
+            }
+            // draw hair
+            for (let i=dd; i<=this.w-dd+1; i+=d/5) {
+                ctx.moveTo(this.x+i,this.y+this.h/2-dd/4);
+                ctx.lineTo(this.x+i,this.y+this.h/2+dd/4);
+            }
+            for (let i=dd; i<=this.h-dd+1; i+=d/5) {
+                ctx.moveTo(this.x+this.w/2-dd/4,this.y+i);
+                ctx.lineTo(this.x+this.w/2+dd/4,this.y+i);
+            }
+            for (let i=dd; i<=this.w-dd+1; i+=d/5) {
+                ctx.moveTo(this.x+i,this.y+dd+2*d-dd/8);
+                ctx.lineTo(this.x+i,this.y+dd+2*d+dd/8);
+            }
+            for (let i=dd; i<=this.w-dd+1; i+=d/5) {
+                ctx.moveTo(this.x+i,this.y+dd+6*d-dd/8);
+                ctx.lineTo(this.x+i,this.y+dd+6*d+dd/8);
+            }
+            // draw dots
+            for (let i=dd; i<=this.w-dd+1; i+=d/5) {
+                ctx.moveTo(this.x+i,this.y+dd+6*d+d/2);
+                ctx.lineTo(this.x+i,this.y+dd+6*d+d/2+1);
+            }
+            for (let i=dd; i<=this.w-dd+1; i+=d/5) {
+                ctx.moveTo(this.x+i,this.y+dd+d+d/2);
+                ctx.lineTo(this.x+i,this.y+dd+d+d/2+1);
+            }
         }
         ctx.stroke();
     }
@@ -251,26 +257,40 @@ class Scope extends pObject {
     }
     beamControl(beamLength) {
         // beam intensity, focus blur and astigm
-        int2=Math.floor(160+160*(int1+8-ast*ast/20)/16); // 160..320
-        if (findState!="off") int2+=20;
+        int["astigm"]=1-Math.abs(ast)*2/k_astigm.ticks; // 0..1
         if (!isNaN(beamLength)) {
-            int3=Math.sqrt(beamLength);
-            int2-=(10*int3);
+            int["beamlength"]=beamLength; // 0 40 2000 2000000
+            int["beam"]=8000/(beamLength+5000);
+            if (b_xy.state==1) int["beam"]*=1.5;
+            if (int["beam"]<0) int["beam"]=0;
         }
-        if (powerState=="start") int2=powerValue;
+        int["timebase"]=(Math.log(timebase)+40)/49; // 0..1
         expdays=(new Date()-new Date(expdate))/1000/3600/24;
+        int["expdays"]=1;
         if (expdays>7) {
-            int2-=(30*(expdays-7));
+            int["expdays"]=(10-expdays)/10;
+            if (int["expdays"]<0) int["expdays"]=0; // .3 .2 .1 0...
         }
-        if (int2<128) int2=128;
-        alpha1=Math.round(100*int2/255)/100;
+        int["power"]=1;
+        if (powerState=="start") int["power"]=powerValue/230;
+        int["screen"]=Math.round(128+222
+            *int["knob"]
+            *int["power"]
+            *int["expdays"]
+            *int["astigm"]
+            *int["beam"]
+            *int["timebase"]
+            );
+        if (findState!="off") 
+            int["screen"]+=20*Math.log(findValue);
+        alpha1=Math.round(100*int["screen"]/255)/100;
         if (alpha1>1) alpha1=1; if (alpha1<0.05) alpha1=0.05;
-        lineWidth=int2/120+Math.abs(blur1/2);
-        if (int2>200) lineWidth+=((int2-200)/50);
-        if (findState!="off") lineWidth+=1;
+        alpha1=1;
+        lineWidth=int["screen"]/100+Math.abs(blur1/2);
+        if (int["screen"]>200) lineWidth+=((int["screen"]-200)/50);
         lineWidth=Math.round(100*lineWidth)/100;
         blurWidth=Math.abs(blur1/2);
-        strokeStyle="rgba(0,"+Math.round(int2)+",0,"+alpha1+")";
+        strokeStyle="rgba(0,"+int["screen"]+",0,"+alpha1+")";
 //        if (b_debug.state==1) log(strokeStyle+" "+lineWidth+" "+blurWidth);
     }
     setStroke() {
@@ -282,22 +302,19 @@ class Scope extends pObject {
     stroke(c) {
         this.beamControl(sumdelta[c]);
         this.setStroke();
-        if (int2>250) {
-            for (let i=8; i>0; i--) {
-                ctx.lineWidth=(int2-250)/6*i;
-                ctx.strokeStyle="rgba("+(int2-150)/4+","+(int2-150)+","+(int2-150)/4+",0.1)";
+        if (int["screen"]>250) {
+            for (let i=7; i>0; i--) {
+                var glareq=175;
+                ctx.lineWidth=(int["screen"]-250)/10*i;
+                ctx.strokeStyle="rgba("+(int["screen"]-glareq)/8+","+(int["screen"]-glareq)+","+(int["screen"]-glareq)/8+",0.07)";
                 ctx.stroke();
             }
         }
         this.setStroke();
         ctx.stroke();
-        if (int2>310) {
-            ctx.lineWidth=2;
-            ctx.strokeStyle="rgb(255,255,255)";
-            ctx.stroke();
-        }
-        else if (int2>300) {
+        if (int["screen"]>=300) {
             ctx.lineWidth=1;
+            if (int["screen"]>=310) this.ctx.lineWidth=2;
             ctx.strokeStyle="rgb(255,255,255)";
             ctx.stroke();
         }
@@ -309,10 +326,11 @@ class Scope extends pObject {
         this.calcY();
         this.triggerSeek();
         // intensity and focus
-        int1=k_intensity.getValue();
+        int["knob"]=(k_intensity.getValue()+8)/16; // 0..1
         blur1=k_focus.getValue();
         // draw beams
         this.drawScreen(ctx);
+        this.drawGrid(ctx,"grid");
         ctx.save();
         roundRect(ctx, this.x+3, this.y+3, this.w-6, this.h-6, 20);
         ctx.clip();
@@ -341,7 +359,7 @@ class Scope extends pObject {
                             if (k==0) sumdelta[c]+=Math.abs(dispch[c][i+tptr[0]]-dispch[c][i-1+tptr[0]]);
                         }
                     }
-                    sumdelta[c]/=L; if (findState!="off") sumdelta[c]/=findValue*findValue;
+                    sumdelta[c]/=1; if (findState!="off") sumdelta[c]/=findValue;
                     this.stroke(c);
                 }
             }
@@ -372,7 +390,7 @@ class Scope extends pObject {
                 }
                 ctx.lineTo(px+dispch[0][0]+k*asx,pyx-dispch[1][0]+k*asy);
             }
-            sumdelta[2]/=(L*4); if (findState!="off") sumdelta[2]/=(findValue*findValue);
+            sumdelta[2]/=1; if (findState!="off") sumdelta[2]/=findValue;
             this.stroke(2);
         }
         // Beam for Mode (ADD, AM)
@@ -391,7 +409,7 @@ class Scope extends pObject {
                         dispch[1][i-1+tptr[0]])-this.calcModeY(-1,dispch[0][i+tptr[0]],dispch[1][i+tptr[0]]));
                 }
             }
-            sumdelta[2]/=L; if (findState!="off") sumdelta[2]/=(findValue*findValue);
+            sumdelta[2]/=1; if (findState!="off") sumdelta[2]/=findValue;
             this.stroke(2);
         }
         // FFT draw
@@ -490,6 +508,7 @@ class Scope extends pObject {
             ctx.fill();
         }
         ctx.restore();
+        this.drawGrid(ctx,"illum");
     }
     calcModeY(c,ych0,ych1) {
         if (b_ch1.state==1) return ych0;
@@ -505,10 +524,10 @@ class ScopeChannel {
         this.k_volts=new VoltsKnob(pX,pY+275);
         this.k_volts.k.value0=false;
         this.k_volts.k_.value0=false;
-        this.b_ac=new PushButton(ctx,pX+70,pY+312,27,18,"AC",'on');
-        this.b_gnd=new PushButton(ctx,pX+70,pY+312,27,18,"Gnd",'on');
-        this.b_dc=new PushButton(ctx,pX+70,pY+312,27,18,"DC",'on');
+        this.b_ac=new PushButton(ctx,pX+65,pY+310,pbw,pbh,"AC",'on');
+        this.b_gnd=new PushButton(ctx,pX+65,pY+310,pbw,pbh,"Gnd",'on');
+        this.b_dc=new PushButton(ctx,pX+65,pY+310,pbw,pbh,"DC",'on');
         this.b_dc.state=1;
-        this.acdc=new Radio(pX+70,pY+312,[this.b_ac,this.b_gnd,this.b_dc]);
+        this.acdc=new Radio(pX+65,pY+310,[this.b_ac,this.b_gnd,this.b_dc]);
     }
 }

@@ -1,5 +1,5 @@
-const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.30";
-const expdate="Jan, 25, 2023";
+const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.32";
+const expdate="Jan, 27, 2023";
 var canvas, ctx, debugcanvas, debugctx, logWindow, traceString="", now;
 var scope, siggen, presetManager; // global objects
 var no_images_to_load, vfd, vfd_, led_on_powers, led_on, led_off_powers, led_off, led_red; // canvas images
@@ -52,7 +52,7 @@ var b_readout;
 const ROXSIG=100, ROXVOLTS=300, ROYSIG=[15,431], ROXTB=400, ROYTB=431;
 const ROXDB=500, ROYDB=431, ROXDLY=400, ROYDLY=15;
 var NaNerror; // jump loops if NaN error happens for easier testing
-var b_debug, b_reset, b_presets=[];
+var b_debug, b_reset, b_autotest, b_presets=[];
 var k_cursor, xCur;
 const letters={ " ":[], 
 	",":[2,10,2,8, 3,10,3,8, 4,10,4,8, 3,10,1,12,4,10,1,13], 
@@ -107,27 +107,27 @@ const letters={ " ":[],
 	"Y":[0,0,0,2,0,2,3,6,3,6,6,2,6,2,6,0,3,6,3,10,], 
 	"Z":[0,0,6,0,6,0,6,2,6,2,0,8,0,8,0,10,0,10,6,10,],  
 };
-const imprint=`KETTO AZ EGYBEN ANALOG OSZCILLOSZKOP TRENER
+const imprint=`JELGENERATOROS OSZCILLOSZKOP TRENER/TESTER
 
 CHROME-BAN TESZTELT, MOBILON IS MUKODIK
-LAMPACSKAK RAKLIKKELESSEL KAPCSOLHATOK
-TEKEROGOMBOK EGER GORGOVEL VAGY KLIKK+FEL/LE
-DUPLA TEKEROK KET RESZ KULON
-RAKLIKKELES ALAPHELYZETBE ALLITJA
-PULL HOSSZU KLIKKELESSEL
+TEKEROK: EGER GORGO VAGY KLIKK+FEL/LE
+DUPLA TEKEROK: KET RESZ KULON
+KLIKK: RESET TEKERO
+HOSSZU KLIKK: PULL
 
 JELLEMZOK:
 MIKROFON BEMENET
 KETCSATORNAS JELGENERATOR
-PARAMETEREZETT FUGGVENYEK
-GAUSS, PULSE, SINC, ECG, NTSC, MORSE
+16 PARAMETEREZHETO FUGGVENY
+GAUSS, PULSE, SINC, ECG, NTSC, MORSE...
 MODULACIO
-SZTEREO KIMENET, EZZEL IGAZI SCOPE IS TESZTELHETO!
+SZTEREO KIMENET, AMIVEL IGAZI SCOPE IS TESZTELHETO!
 XY LISSAJOUS
 TRIGGER
 DELAY
 READOUT
 CURSOR
+FFT SPECTRUM
 ANIMATED PRESETS
 VFD DISPLAYS
 AND MANY MORE...

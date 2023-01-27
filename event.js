@@ -1,4 +1,4 @@
-var e=[], evt, evtState="idle", objectUI, eN=0;
+var e=[], epreset=[], evt, evtState="idle", objectUI, eN=0;
 var mouseDownObject=null, mouseDownX, mouseDownY, mouseMoved, mouseDownTime;
 var turnSensitity=240; // move if deltaY >= turnSensitivity/knob.ticks
 
@@ -11,6 +11,13 @@ class EventUI {
         this.x=pX;
         this.y=pY;
         e.push(this);
+    }
+}
+class EventPreset extends EventUI {
+    constructor(pName,pTime,pObjectUI,pX,pY) {
+        super(pName,pTime,pObjectUI,pX,pY);
+        e.splice(-1);
+        epreset.push(this);
     }
 }
 
@@ -126,103 +133,112 @@ function processEvent() {
         trace("processEvent");
         evt=e.shift();
         while(Date.now()<evt.time) ;
-        if (evt.name=="keypress") {
-            if (evt.x=="d") { b_debug.clickXY(0,0); draw(ctx); }
-            else if (evt.x=="0") { b_reset.clickXY(0,0); draw(ctx); }
-            else if (evt.x=="1") { b_presets[0].clickXY(0,0); draw(ctx); }
-            else if (evt.x=="2") { b_presets[1].clickXY(0,0); draw(ctx); }
-            else if (evt.x=="3") { b_presets[2].clickXY(0,0); draw(ctx); }
-            else if (evt.x=="4") { b_presets[3].clickXY(0,0); draw(ctx); }
-            else if (evt.x=="5") { b_presets[4].clickXY(0,0); draw(ctx); }
-            else if (evt.x=="6") { b_presets[5].clickXY(0,0); draw(ctx); }
-            else if (evt.x=="7") { b_presets[6].clickXY(0,0); draw(ctx); }
-            else if (evt.x=="8") { b_presets[7].clickXY(0,0); draw(ctx); }
-//            alert(`Key pressed ${evt.x} \r\n Key code value: ${evt.y}`);
-        }
-        else if (evt.name=="wheel") {
-            evt.objectUI.turnY(evt.y);
-            if (evt.objectUI.initChannelsNeeded) initChannels();
-            draw(ctx);
-        }
-        else if (evt.name=="mousedown") {
-            mouseDownObject=evt.objectUI;
-            mouseDownTime=evt.time;
-            mouseDownY=evt.y;
-            mouseMoved=false;
-            if (mouseDownObject.class=="PushButton") {
-                mouseDownObject.showPushed("pushillum");
-                if (mouseDownObject.radio!=null)
-                    mouseDownObject.radio.showNoPush(mouseDownObject);
-            }
-        }
-        else if (evt.name=="touchstart") {
-            mouseDownObject=evt.objectUI;
-            mouseDownTime=evt.time;
-            mouseDownY=evt.y;
-            mouseMoved=false;
-            if (mouseDownObject.class=="PushButton") {
-                mouseDownObject.showPushed("pushillum");
-            }
-        }
-        else if (evt.name=="mousemove") {
-            if (mouseDownObject!=null && mouseDownObject.class!="Button" && mouseDownObject.class!="PushButton") {
-                mouseDownObject.turnY(mouseDownY-evt.y);
-                mouseDownY=evt.y;
-                mouseMoved=true;
-                if (mouseDownObject.initChannelsNeeded) initChannels();
-                draw(ctx);
-            }
-        }
-        else if (evt.name=="touchmove") {
-            if (mouseDownObject!=null && mouseDownObject.class!="Button" && mouseDownObject.class!="PushButton") {
-                mouseDownObject.turnY(mouseDownY-evt.y);
-                mouseDownY=evt.y;
-                mouseMoved=true;
-                if (mouseDownObject.initChannelsNeeded) initChannels();
-                draw(ctx);
-            }
-        }
-        else if (evt.name=="mouseup") {
-            if (mouseDownObject!=null) {
-                if (mouseDownObject==evt.objectUI && 
-                    (!mouseMoved || mouseDownObject.class=="Button" || mouseDownObject.class=="PushButton")) {
-                    if (mouseDownObject.class=="Knob"
-                        && evt.objectUI.pullable
-                        && evt.time-mouseDownTime>300) {
-                        evt.objectUI.pullpush();
-                    } 
-                    else {
-                        evt.objectUI.clickXY(evt.x,evt.y);
-                    }
-                    if (mouseDownObject.initChannelsNeeded) initChannels();
-                    draw(ctx);
-                }
-            }
-            mouseDownObject=null;
-        }
-        else if (evt.name=="touchend") {
-            if (mouseDownObject!=null) {
-                log("deltaT:"+(evt.time-mouseDownTime));
-                if (mouseDownObject==evt.objectUI && 
-                    (!mouseMoved || mouseDownObject.class=="Button" || mouseDownObject.class=="PushButton" || 
-                    mouseDownObject.class=="Knob" && evt.time-mouseDownTime<200 )) {
-                    if (mouseDownObject.class=="Knob"
-                        && evt.objectUI.pullable
-                        && evt.time-mouseDownTime>300) {
-                        evt.objectUI.pullpush();
-                    }
-                    else {
-                        mouseDownObject.clickXY(evt.x,evt.y);
-                    }
-                    if (mouseDownObject.initChannelsNeeded) initChannels();
-                    draw(ctx);
-                }
-            }
-            mouseDownObject=null;
-        }
-        objectUI=evt.objectUI;
-        // if (objectUI==null) log("ctx:"+evt.name);
-        // else log(evt.name+":"+objectUI.name+":"+objectUI.getValue());
+        actionEvent(evt);
+    }
+    else if (epreset.length>0) {
+        evt=epreset.shift();
+        while(Date.now()<evt.time) ;
+        actionEvent(evt);
     }
     setTimeout(processEvent,10);
+}
+
+function actionEvent(evt) {
+    if (evt.name=="keypress") {
+        if (evt.x=="d") { b_debug.clickXY(0,0); draw(ctx); }
+        else if (evt.x=="0") { b_reset.clickXY(0,0); draw(ctx); }
+        else if (evt.x=="1") { b_presets[0].clickXY(0,0); draw(ctx); }
+        else if (evt.x=="2") { b_presets[1].clickXY(0,0); draw(ctx); }
+        else if (evt.x=="3") { b_presets[2].clickXY(0,0); draw(ctx); }
+        else if (evt.x=="4") { b_presets[3].clickXY(0,0); draw(ctx); }
+        else if (evt.x=="5") { b_presets[4].clickXY(0,0); draw(ctx); }
+        else if (evt.x=="6") { b_presets[5].clickXY(0,0); draw(ctx); }
+        else if (evt.x=="7") { b_presets[6].clickXY(0,0); draw(ctx); }
+        else if (evt.x=="8") { b_presets[7].clickXY(0,0); draw(ctx); }
+//            alert(`Key pressed ${evt.x} \r\n Key code value: ${evt.y}`);
+    }
+    else if (evt.name=="wheel") {
+        evt.objectUI.turnY(evt.y);
+        if (evt.objectUI.initChannelsNeeded) initChannels();
+        draw(ctx);
+    }
+    else if (evt.name=="mousedown") {
+        mouseDownObject=evt.objectUI;
+        mouseDownTime=evt.time;
+        mouseDownY=evt.y;
+        mouseMoved=false;
+        if (mouseDownObject.class=="PushButton") {
+            mouseDownObject.showPushed("pushillum");
+            if (mouseDownObject.radio!=null)
+                mouseDownObject.radio.showNoPush(mouseDownObject);
+        }
+    }
+    else if (evt.name=="touchstart") {
+        mouseDownObject=evt.objectUI;
+        mouseDownTime=evt.time;
+        mouseDownY=evt.y;
+        mouseMoved=false;
+        if (mouseDownObject.class=="PushButton") {
+            mouseDownObject.showPushed("pushillum");
+        }
+    }
+    else if (evt.name=="mousemove") {
+        if (mouseDownObject!=null && mouseDownObject.class!="Button" && mouseDownObject.class!="PushButton") {
+            mouseDownObject.turnY(mouseDownY-evt.y);
+            mouseDownY=evt.y;
+            mouseMoved=true;
+            if (mouseDownObject.initChannelsNeeded) initChannels();
+            draw(ctx);
+        }
+    }
+    else if (evt.name=="touchmove") {
+        if (mouseDownObject!=null && mouseDownObject.class!="Button" && mouseDownObject.class!="PushButton") {
+            mouseDownObject.turnY(mouseDownY-evt.y);
+            mouseDownY=evt.y;
+            mouseMoved=true;
+            if (mouseDownObject.initChannelsNeeded) initChannels();
+            draw(ctx);
+        }
+    }
+    else if (evt.name=="mouseup") {
+        if (mouseDownObject!=null) {
+            if (mouseDownObject==evt.objectUI && 
+                (!mouseMoved || mouseDownObject.class=="Button" || mouseDownObject.class=="PushButton")) {
+                if (mouseDownObject.class=="Knob"
+                    && evt.objectUI.pullable
+                    && evt.time-mouseDownTime>300) {
+                    evt.objectUI.pullpush();
+                } 
+                else {
+                    evt.objectUI.clickXY(evt.x,evt.y);
+                }
+                if (mouseDownObject.initChannelsNeeded) initChannels();
+                draw(ctx);
+            }
+        }
+        mouseDownObject=null;
+    }
+    else if (evt.name=="touchend") {
+        if (mouseDownObject!=null) {
+            log("deltaT:"+(evt.time-mouseDownTime));
+            if (mouseDownObject==evt.objectUI && 
+                (!mouseMoved || mouseDownObject.class=="Button" || mouseDownObject.class=="PushButton" || 
+                mouseDownObject.class=="Knob" && evt.time-mouseDownTime<200 )) {
+                if (mouseDownObject.class=="Knob"
+                    && evt.objectUI.pullable
+                    && evt.time-mouseDownTime>300) {
+                    evt.objectUI.pullpush();
+                }
+                else {
+                    mouseDownObject.clickXY(evt.x,evt.y);
+                }
+                if (mouseDownObject.initChannelsNeeded) initChannels();
+                draw(ctx);
+            }
+        }
+        mouseDownObject=null;
+    }
+    objectUI=evt.objectUI;
+    // if (objectUI==null) log("ctx:"+evt.name);
+    // else log(evt.name+":"+objectUI.name+":"+objectUI.getValue());
 }

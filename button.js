@@ -51,8 +51,8 @@ class Button extends pObject {
             roundRect(ctx,this.x-1,this.y-1,this.w+1,this.h+1,2);
         ctx.fill();
         ctx.beginPath();
-        var shadowD=this.type=="power"?5:3;
-        var shadowR=this.type=="power"?1:3;
+        var shadowD=this.type=="power"?3:2;
+        var shadowR=this.type=="power"?1:2;
         ctx.fillStyle = shadowcolor;
             roundRect(ctx,this.x,this.y,this.w+shadowD-1,this.h+shadowD,shadowR);
         ctx.fill();
@@ -65,7 +65,7 @@ class Button extends pObject {
         super.draw(ctx);
     }
 }
-var pbl1=2, pbl2=1, pbq=1;
+var pbl1=1, pbl2=1, pbq=1, pbw=28, pbh=19;
 class PushButton extends Button {
     constructor(ctx,pX,pY,pW,pH,pLabel,pType,pShow) {
         super(ctx,pX,pY,pW,pH,pLabel,pType,pShow);
@@ -73,56 +73,56 @@ class PushButton extends Button {
         this.illum=true;
     }
     showPushed(offpushon) {
-        if (offpushon=="off") this.draw(this.ctx,3);
-        else if (offpushon=="offnoillum") this.draw(this.ctx,3,"noillum");
-        else if (offpushon=="push") this.draw(this.ctx,0);
-        else if (offpushon=="pushillum") this.draw(this.ctx,0,"illum");
-        else if (offpushon=="on") this.draw(this.ctx,1);
+        if (offpushon=="off") this.draw(this.ctx,[3,2]);
+        else if (offpushon=="offnoillum") this.draw(this.ctx,[3,2],"noillum");
+        else if (offpushon=="push") this.draw(this.ctx,[0,0]);
+        else if (offpushon=="pushillum") this.draw(this.ctx,[0,0],"illum");
+        else if (offpushon=="on") this.draw(this.ctx,[1,1]);
     }
-    draw(ctx, offd=-17, pIllum="none") {
-        if (offd==-17) {
-            offd=this.state==1?1:3;
+    draw(ctx, outxy=[-17,-17], pIllum="none") {
+        if (outxy[0]==-17) {
+            outxy=this.state==1?[1,1]:[3,2];
         }
         var pbx=this.x, pby=this.y, pbdx=this.w, pbdy=this.h;
         ctx.beginPath(); // gray border
-        ctx.fillStyle="rgb(100,100,100)";
+        ctx.fillStyle="rgb(135,135,135)";
         // ctx.fillRect(pbx,pby,pbdx,pbdy);
         roundRect(ctx,pbx,pby,pbdx,pbdy,3);
         ctx.fill();
         ctx.beginPath(); // black hole
-        ctx.fillStyle="rgb(0,0,0)";
+        ctx.fillStyle="rgb(35,35,35)";
         ctx.fillRect(pbx+pbl1,pby+pbl1,pbdx-2*pbl1,pbdy-2*pbl1);
         ctx.fill();
         ctx.beginPath(); // front plane
         ctx.fillStyle="rgb(120,120,120)";
-        roundRect(ctx,pbx +offd +pbl1+pbl2 +pbq, pby +offd +pbl1+pbl2 +pbq, 
+        roundRect(ctx,pbx +outxy[0] +pbl1+pbl2 +pbq, pby +outxy[1] +pbl1+pbl2 +pbq, 
             pbdx -2*(pbl1+pbl2+pbq), pbdy-2*(pbl1+pbl2+pbq),1);
         ctx.fill();
         ctx.beginPath(); // left plane
         ctx.fillStyle="rgb(90,90,90)";
         ctx.moveTo(pbx +pbl1+pbl2, pby +pbl1+pbl2);
-        ctx.lineTo(pbx +offd +pbl1+pbl2 +pbq, pby +offd +pbl1+pbl2 +pbq);
-        ctx.lineTo(pbx +offd +pbl1+pbl2 +pbq, pby +offd +pbl1+pbl2 +pbq +pbdy-2*(pbl1+pbl2+pbq));
+        ctx.lineTo(pbx +outxy[0] +pbl1+pbl2 +pbq, pby +outxy[1] +pbl1+pbl2 +pbq);
+        ctx.lineTo(pbx +outxy[0] +pbl1+pbl2 +pbq, pby +outxy[1] +pbl1+pbl2 +pbq +pbdy-2*(pbl1+pbl2+pbq));
         ctx.lineTo(pbx +pbl1+pbl2, pby +pbl1+pbl2 +pbdy-2*(pbl1+pbl2));
         ctx.lineTo(pbx+pbl1+pbl2,pby+pbl1+pbl2 +pbq);
         ctx.fill();
         ctx.beginPath(); // top plane
         ctx.fillStyle="rgb(150,150,150)";
         ctx.moveTo(pbx +pbl1+pbl2, pby +pbl1+pbl2);
-        ctx.lineTo(pbx +offd +pbl1+pbl2 +pbq, pby +offd +pbl1+pbl2 +pbq);
-        ctx.lineTo(pbx +offd +pbl1+pbl2 +pbq +pbdx -2*(pbl1+pbl2 +pbq), pby +offd +pbl1+pbl2 +pbq);
+        ctx.lineTo(pbx +outxy[0] +pbl1+pbl2 +pbq, pby +outxy[1] +pbl1+pbl2 +pbq);
+        ctx.lineTo(pbx +outxy[0] +pbl1+pbl2 +pbq +pbdx -2*(pbl1+pbl2 +pbq), pby +outxy[1] +pbl1+pbl2 +pbq);
         ctx.lineTo(pbx +pbl1+pbl2 +pbdx -2*(pbl1+pbl2), pby +pbl1+pbl2);
         ctx.lineTo(pbx +pbl1+pbl2, pby +pbl1+pbl2);
         ctx.fill();
         if (this.illum) {
             if (pIllum=="illum" && b_power.state==1)
-                ctx.drawImage(this.img_on,pbx +offd +pbl1+pbl2+pbq, pby +offd +pbl1+pbl2+pbq, 
+                ctx.drawImage(this.img_on,pbx +outxy[0] +pbl1+pbl2+pbq, pby +outxy[1] +pbl1+pbl2+pbq, 
                     pbdx -2*(pbl1+pbl2+pbq), pbdy-2*(pbl1+pbl2+pbq));    
             else if (pIllum=="noillum" || b_power.state==0)
-            ctx.drawImage(this.img_off,pbx +offd +pbl1+pbl2+pbq, pby +offd +pbl1+pbl2+pbq, 
+            ctx.drawImage(this.img_off,pbx +outxy[0] +pbl1+pbl2+pbq, pby +outxy[1] +pbl1+pbl2+pbq, 
                 pbdx -2*(pbl1+pbl2+pbq), pbdy-2*(pbl1+pbl2+pbq));    
             else
-                ctx.drawImage(this.state==1?this.img_on:this.img_off,pbx +offd +pbl1+pbl2+pbq, pby +offd +pbl1+pbl2+pbq, 
+                ctx.drawImage(this.state==1?this.img_on:this.img_off,pbx +outxy[0] +pbl1+pbl2+pbq, pby +outxy[1] +pbl1+pbl2+pbq, 
                     pbdx -2*(pbl1+pbl2+pbq), pbdy-2*(pbl1+pbl2+pbq));    
         }
     }
@@ -138,7 +138,7 @@ class PowerButton extends Button {
         // power switch-on event
         if (this.state==0) {
             k_monitor.callSwitchOff();
-            powerState="start"; powerValue=80.0; setTimeout(setPower,10);
+            powerState="start"; powerValue=0; setTimeout(setPower,10);
         }
         // power switch-off event
         if (this.state==1) {
@@ -158,10 +158,10 @@ class PowerButton extends Button {
 function setPower() {
     trace("setPower");
     if (powerState=="start") {
-        powerValue+=10;
+        powerValue+=3;
         draw(ctx);
         if (powerValue>=230) { powerState="off"; draw(ctx); }
-        else setTimeout(setPower,100);
+        else setTimeout(setPower,10);
     }
 }
 class ChOnButton extends Button {
@@ -242,11 +242,12 @@ class PresetManager {
         this.timeCursor;
     }
     reset() {
+        epreset=[];
         this.timeCursor=Date.now();
     }
     add(pNo,pEvent,pObject,pX,pY,pDelay=-1) {
         for (let i=0; i<pNo; i++) {
-            new EventUI(pEvent,this.timeCursor,pObject,pX,pY);
+            new EventPreset(pEvent,this.timeCursor,pObject,pX,pY);
             this.timeCursor+=pDelay==-1?this.presetDelay:pDelay;
         }
     }
@@ -301,7 +302,7 @@ class DebugButton extends Button {
                     presetManager.add(7,"wheel",k_time.k,0,-1,7);
                     initChannels();
                     presetManager.add(1,"wheel",k_monitor,0,-1);
-		    presetManager.add(100,"wheel",k_delay.k_,0,1,7);
+	                presetManager.add(100,"wheel",k_delay.k_,0,1,7);
                 }
                 else if (pri==2) { // La Linea Menomano (XY, Rotate, Pos+, DC, Intensity)
                     presetManager.reset();
@@ -321,7 +322,7 @@ class DebugButton extends Button {
                     presetManager.add(48,"wheel",siggen[1].k_dc.k,0,1,7);
                     presetManager.add(1,"mousedown",siggen[1].b_phalf,0,0);
                     presetManager.add(1,"mouseup",siggen[1].b_phalf,0,0);
-		    presetManager.add(8,"wheel",k_intensity,0,1,7);
+		            presetManager.add(8,"wheel",k_intensity,0,1,7);
                 }
                 else if (pri==3) { // NTSC (Scale, CH1, Delaybase, Delay)
                     presetManager.reset();
@@ -332,8 +333,8 @@ class DebugButton extends Button {
                     presetManager.add(7,"wheel",k_delaybase.k,0,1,7);
                     presetManager.add(1,"wheel",scope.ch[0].k_volts.k,0,1);
                     presetManager.add(5,"wheel",scope.ch[0].k_volts.k_,0,1);
-		    presetManager.add(100,"wheel",k_delay.k,0,1,7);
-		    presetManager.add(100,"wheel",k_delay.k_,0,1,7);
+		            presetManager.add(100,"wheel",k_delay.k,0,1,7);
+		            presetManager.add(100,"wheel",k_delay.k_,0,1,7);
                 }
                 else if (pri==4) { // Lissajous (XY, Freq, Delaybase, Delay)
                     presetManager.reset();
@@ -345,7 +346,7 @@ class DebugButton extends Button {
                     presetManager.add(2,"wheel",scope.ch[1].k_volts.k_,0,-1);
                     presetManager.add(3,"wheel",k_mode,0,-1);
                     presetManager.add(135,"wheel",siggen[0].k_phase.k_,0,1,10);
-		    presetManager.add(60,"wheel",siggen[1].k_phase.k_,0,-1,50);
+		            presetManager.add(60,"wheel",siggen[1].k_phase.k_,0,-1,50);
                 }
                 else if (pri==5) { // Lissajous flowers (XY)
                     presetManager.reset();
@@ -366,11 +367,11 @@ class DebugButton extends Button {
                     presetManager.add(1,"wheel",k_delay,0,1,500); // delay
                     presetManager.add(2,"wheel",siggen[0].k_func.k_,0,-1,1);
                     presetManager.add(2,"wheel",siggen[1].k_func.k_,0,-1,1);
-		    presetManager.add(15,"wheel",k_rot,0,-1,30);
-		    presetManager.add(8,"wheel",k_focus,0,-1,30);
-		    presetManager.add(30,"wheel",k_rot,0,1,30);
-		    presetManager.add(8,"wheel",k_focus,0,1,30);
-		    presetManager.add(8,"wheel",k_intensity,0,1,30);
+                    presetManager.add(15,"wheel",k_rot,0,-1,30);
+                    presetManager.add(8,"wheel",k_focus,0,-1,30);
+                    presetManager.add(30,"wheel",k_rot,0,1,30);
+                    presetManager.add(8,"wheel",k_focus,0,1,30);
+                    presetManager.add(8,"wheel",k_intensity,0,1,30);
                 }
                 else if (pri==6) { // Heart (XY)
                     presetManager.reset();

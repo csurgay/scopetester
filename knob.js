@@ -6,7 +6,7 @@ class Knob extends pObject {
     constructor(ctx,pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos,pMarker="marker") {
         const pos={"none":[0,0],"knob":[0,-27],"double":[0,-44],"sweep":[0,80], 
         "double_s":[0,-40], "delay":[0,78], "func":[0,-57], "range":[0,-55], 
-        "volts":[0,-55], "sigdouble":[70,-30], "cursor":[0,-46]};
+        "volts":[0,-55], "sigdouble":[63,-31], "cursor":[0,-46]};
         super(ctx,pX-pR,pY-pR,2*pR,2*pR);
         this.class="Knob";
         this.name=pLabel;
@@ -312,7 +312,7 @@ class FuncKnob extends DoubleKnob {
 class ScaleKnob extends Knob {
     constructor(pX,pY) {
         super(ctx,3,pX,pY,25,scale.length,0,"Range","range");
-        this.iconCircle(pX,pY+4,40,scale);
+        this.iconCircle(pX+1,pY+2,40,scale);
     }
     iconCircle(x,y,r,scale) {
         var n=scale.length;
