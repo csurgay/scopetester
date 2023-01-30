@@ -367,7 +367,7 @@ class Scope extends pObject {
         else {
             var deltaT=Date.now()-time;
             DL1+=Math.round(50*deltaT/timebase);
-            if (DL1>=mag*DL) DL1=0;
+            if (DL1>=mag*DL) DL1=-Math.round(50*DL/timebase);
             DL2=DL1+Math.round(50*DL/timebase);
             if (DL2<DL1+1) DL2=DL1+1;
             if (DL2>mag*DL) DL2=mag*DL;
