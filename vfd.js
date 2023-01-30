@@ -6,6 +6,7 @@ class Vfd extends pObject {
         this.getOffCond=pOffCondCallback;
         uipush(this);
         this.absValue;
+        this.drawDigit=drawVfdDigit;
     }
     draw(ctx) {
         this.absValue=Math.abs(this.getValue());
@@ -30,15 +31,18 @@ class Vfd extends pObject {
         ctx.fillStyle = grd;
         ctx.fillRect(this.x-dVfd/2,this.y-dVfd/2,this.w+dVfd,this.h+dVfd);
         ctx.fill();
-        if (this.getOffCond()) s="888888888888".substring(0,this.digits);
+        if (this.getOffCond()) { 
+            s="8.8.8.8.8.8.8.8.8.8.8.8.".substring(0,2*this.digits);
+            l*=2;
+        }
         for (let i=0; i<l; i++) {
             var digit = s[i];
             var decimal = " ";
             if (i<s.length-1) if (s[i+1]=='.') { decimal='.'; i++; }
-            drawVfdDigit(ctx,digit,decimal,this.x+(dx++)*dVfd,this.y,dVfd);
+            this.drawDigit(ctx,digit,decimal,this.x+(dx++)*dVfd,this.y,dVfd);
         }
         if (this.getOffCond()) {
-            ctx.fillStyle="rgba(10,30,30,0.7)";
+            ctx.fillStyle="rgba(10,30,30,0.85)";
             ctx.fillRect(this.x,this.y,this.w,this.h);
         }
         ctx.stroke();
@@ -68,15 +72,18 @@ class Vfd extends pObject {
         ctx.fillStyle = grd;
         ctx.fillRect(this.x-dVfd/2,this.y-dVfd/2,this.w+dVfd,this.h+dVfd);
         ctx.fill();
-        if (this.getOffCond()) s="888888888888".substring(0,this.digits);
+        if (this.getOffCond()) { 
+            s="8.8.8.8.8.8.8.8.8.8.8.8.".substring(0,2*this.digits);
+            l*=2;
+        }
         for (let i=0; i<l; i++) {
             var digit = s[i];
             var decimal = " ";
             if (i<s.length-1) if (s[i+1]=='.') { decimal='.'; i++; }
-            drawVfdDigit(ctx,digit,decimal,this.x+(dx++)*dVfd,this.y,dVfd);
+            this.drawDigit(ctx,digit,decimal,this.x+(dx++)*dVfd,this.y,dVfd);
         }
         if (this.getOffCond()) {
-            ctx.fillStyle="rgba(10,30,30,0.7)";
+            ctx.fillStyle="rgba(10,30,30,0.85)";
             ctx.fillRect(this.x,this.y,this.w,this.h);
         }
         ctx.stroke();
@@ -90,6 +97,13 @@ class Vfd extends pObject {
     }
 }
 
+class Vfdred extends Vfd {
+    constructor(pX,pY,pDigits,pGetValueCallback,pOffCondCallback) {
+        super(pX,pY,pDigits,pGetValueCallback,pOffCondCallback);
+        this.drawDigit=drawVfdredDigit;
+    }   
+}
+
 function drawVfdDigit(ctx,digit,dec,pX,pY,pD) {
     if (digit=='-') {
         ctx.drawImage(vfd_, 3,4, 16,32, pX,pY, dVfd,dVfd*2);
@@ -97,11 +111,23 @@ function drawVfdDigit(ctx,digit,dec,pX,pY,pD) {
     else {
         var num=parseInt(digit);
         if (dec=='.') {
-//            ctx.drawImage(vfd, num*160+80,0, 80,160, pX,pY, dVfd,dVfd*2);
             ctx.drawImage(vfd, num*32+16,0, 16,32, pX,pY, dVfd,dVfd*2);
         } else {
-//            ctx.drawImage(vfd, num*160,0, 80,160, pX,pY, dVfd,dVfd*2);
             ctx.drawImage(vfd, num*32,0, 16,32, pX,pY, dVfd,dVfd*2);
+        }
+    }
+}
+
+function drawVfdredDigit(ctx,digit,dec,pX,pY,pD) {
+    if (digit=='-') {
+        ctx.drawImage(vfdred, 0,0, 15,30, pX,pY, dVfd,dVfd*2);
+    }
+    else {
+        var num=parseInt(digit);
+        if (dec=='.') {
+            ctx.drawImage(vfdred, 15+num*30+15,0, 15,30, pX,pY, dVfd,dVfd*2);
+        } else {
+            ctx.drawImage(vfdred, 15+num*30,0, 15,30, pX,pY, dVfd,dVfd*2);
         }
     }
 }

@@ -66,15 +66,26 @@ class Knob extends pObject {
     }
     pullpush() {
         this.pulled=!this.pulled;
-        this.pulledTogether.pulled=!this.pulledTogether.pulled;
+        if (this.pulledTogether!=null)
+            this.pulledTogether.pulled=!this.pulledTogether.pulled;
         if (this.pulled) {
             this.x+=pullDx; this.y+=pullDy;
-            this.pulledTogether.x+=pullDx; this.pulledTogether.y+=pullDy;
+            if (this.pulledTogether!=null) {
+                this.pulledTogether.x+=pullDx; 
+                this.pulledTogether.y+=pullDy;
+            }
         }
         else {
             this.x-=pullDx; this.y-=pullDy;
-            this.pulledTogether.x-=pullDx; this.pulledTogether.y-=pullDy;
+            if (this.pulledTogether!=null) {
+                this.pulledTogether.x-=pullDx; 
+                this.pulledTogether.y-=pullDy;
+            }
         }
+    }
+    setPullable() {
+        this.pullable=true;
+        this.pullShadow=true;
     }
     draw(ctx) {
         xd=this.x+this.r;
@@ -125,7 +136,7 @@ class Knob extends pObject {
             }
             else if (this.pullDekorType=="cursor") {
                 ctx.fillStyle="black";
-                ctx.font="10px Arial";
+                ctx.font="9px Arial";
                 ctx.fillText("PULL",0,0);
             }
             ctx.fill();

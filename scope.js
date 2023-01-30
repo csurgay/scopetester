@@ -7,10 +7,14 @@ var currValue, prevValue; // curr and prev y value for trigger condition calc
 var slope, tlevel; // trigger level
 var px0,px,py0,py=[0,0]; // screen center lines for channels and dual
 var lineWidth, strokeStyle, blurWidth, expdays;
+var drawInProgress=false, drawInTimeout=false;
+var time; // running clock time for slow sweep calc
+var mag; // x10 mag multiplier (3.333 for dipsch, 3 for beamdraw)
 
 class Scope extends pObject {
     constructor(pX,pY,pD,pDD) {
         super(ctx,pX,pY,10*pD+2*pDD,8*pD+2*pDD);
+        this.class="Scope";
         this.d=pD;
         this.dd=pDD;
         uipush(this);
@@ -55,12 +59,13 @@ class Scope extends pObject {
         k_time=new TimeKnob(775,180);
         new Vfd(710,75,4,()=>{return 10*k_delay.k.getValue()+k_delay.k_.getValue()/10;},()=>{
             return b_power.state==0 || 10*k_delay.k.getValue()+k_delay.k_.getValue()==0;});
-        k_delay=new DoubleKnob(ctx,665,75,100,100,"Delay Mult","cursor",36,20);
+        k_delay=new DoubleKnob(ctx,665,75,100,100,"Delay Mult","cursor",36,23);
         k_delay.k.value0=false;
         k_delay.k_.value0=false;
         k_delay.k.limit=k_delay.k.ticks-1;
         k_delay.k_.limit=k_delay.k_.ticks-1;
-        k_xpos=new Knob(ctx,24,655,180,20,49,0,"Pos X","knob");
+        k_xpos=new DoubleKnob(ctx,665,180,201,201,"Pos (x10)","cursor",36,20);
+        k_xpos.setPullable("cursor");
         b_xcal=new IndicatorLed(660,245,24,16,"Cal","on");
         b_ycal=new IndicatorLed(660,430,24,16,"Cal","on");
         k_trigger=new DoubleKnob(ctx,830,520,50,50,"Level","double_s",30,15);
@@ -81,16 +86,25 @@ class Scope extends pObject {
             b_presets.push(new DebugButton(70,20+i*35,24,16,"Preset"+i,"small"));
         k_cursor=new DoubleKnob(ctx,870,75,51,201,"Cursor","cursor",36,23);
         k_cursor.setPullable("cursor");
+        b_storage=new PushButton(ctx,892,120,pbw,pbh,"Storage","readout");
     }
-    drawScreen(ctx) {
-        // draw screen
-        ctx.beginPath();
-        ctx.fillStyle = shadowcolor;
-        roundRect(ctx, this.x+5, this.y+5, this.w+15, this.h+15, 20);
-        ctx.fill();
+    drawFrame(ctx) {
         ctx.beginPath();
         ctx.strokeStyle = "rgb(25, 50, 25)";
-        ctx.lineWidth=20;
+        ctx.lineWidth=10;
+        roundRect(ctx, this.x-5, this.y-5, this.w+10, this.h+10, 20);
+        ctx.stroke();
+    }
+    drawScreen(ctx,drawShadow="drawShadow") {
+        // draw screen
+        if (drawShadow=="drawShadow") {
+            ctx.beginPath();
+            ctx.fillStyle = shadowcolor;
+            roundRect(ctx, this.x+5, this.y+5, this.w+15, this.h+15, 20);
+            ctx.fill();
+        }
+        this.drawFrame(ctx);
+        ctx.beginPath();
         ctx.fillStyle = "rgba(50, 100, 50, 1)";
         roundRect(ctx, this.x, this.y, this.w, this.h, 20);
         ctx.stroke();
@@ -104,9 +118,11 @@ class Scope extends pObject {
         // draw grid
         d=this.d;
         dd=this.dd;
-        illum=Math.floor(127*k_illum.getValue()/k_illum.ticks);
-        if (illum>0)
-            ctx.strokeStyle = "rgba("+(138+illum)+", "+(138+illum)+", "+(138+illum)+",0.75)";
+        illum=Math.floor(155*k_illum.getValue()/(k_illum.ticks-1));
+        if (illum>0) {
+            illum=100+illum;
+            ctx.strokeStyle = "rgba("+illum+", "+illum+", "+illum+",0.75)";
+        }
         if (illumgrid=="grid" || illumgrid=="illum" && illum>0) {
             for (let i=dd; i<=this.w-dd+1; i+=d) {
                 ctx.moveTo(this.x+i,this.y+dd);
@@ -146,12 +162,9 @@ class Scope extends pObject {
         ctx.stroke();
     }
     // channel data calc into dispch[c], findValue calc
-    calcY() {
+    calcDispch(mag) {
         var minY=1000000, maxY=-1000000; // for find
-        // timebase
-        timebase=tb[k_time.k.getValue()+Math.floor(k_time.k.ticks/2-1)]*
-            tb_[k_time.k_.getValue()+Math.floor(k_time.k_.ticks/2)];
-        Q=timebase*L/DL;
+        Q=timebase*L/DL/mag;
         // delay
         delaybase=tb[k_delaybase.k.getValue()+Math.floor(k_delaybase.k.ticks/2-1)]*
             tb_[k_delaybase.k_.getValue()+Math.floor(k_delaybase.k_.ticks/2)];
@@ -166,7 +179,7 @@ class Scope extends pObject {
             // x and y pos
             py[c]=-this.ch[c].k_ypos.getValue();
             px0=this.x+dd;
-            px=px0+10*k_xpos.getValue();
+            px=px0+50*k_xpos.k.getValue()+k_xpos.k_.getValue();
             // find value one adjust at a time
             if (findState!="off") py[c]/=findValue;
             // gnd lines position
@@ -283,6 +296,7 @@ class Scope extends pObject {
             );
         if (findState!="off") 
             int["screen"]+=20*Math.log(findValue);
+        if (int["screen"]>350) int["screen"]=350;
         alpha1=Math.round(100*int["screen"]/255)/100;
         if (alpha1>1) alpha1=1; if (alpha1<0.05) alpha1=0.05;
         alpha1=1;
@@ -320,16 +334,21 @@ class Scope extends pObject {
         }
         ctx.lineWidth=1;
     }
-    draw(ctx) {
+    draw(ctx,drawShadow) {
+        if (drawInProgress || drawInTimeout) { return; }
+//        console.log("draw "+Date.now());
+        drawInProgress=true;
         d=this.d;
         dd=this.dd;
-        this.calcY();
+        // x10 mag: 10/3x in dispch, 3x in beamdraw
+        this.calcDispch(k_xpos.k.pulled&&findState=="off"?10/3:1);
+        mag=k_xpos.k.pulled&&findState=="off"?3:1;
         this.triggerSeek();
         // intensity and focus
         int["knob"]=(k_intensity.getValue()+8)/16; // 0..1
         blur1=k_focus.getValue();
         // draw beams
-        this.drawScreen(ctx);
+        this.drawScreen(ctx,drawShadow);
         this.drawGrid(ctx,"grid");
         ctx.save();
         roundRect(ctx, this.x+3, this.y+3, this.w-6, this.h-6, 20);
@@ -339,7 +358,19 @@ class Scope extends pObject {
         if (imprintY!=1000) {
             drawText(imprint,px,imprintY--);
             ctx.restore();
+            drawInProgress=false;
             return;
+        }
+        if (timebase<100 || b_storage.state==1) {
+            DL1=0, DL2=mag*DL;
+        }
+        else {
+            var deltaT=Date.now()-time;
+            DL1+=Math.round(50*deltaT/timebase);
+            if (DL1>=mag*DL) DL1=0;
+            DL2=DL1+Math.round(50*DL/timebase);
+            if (DL2<DL1+1) DL2=DL1+1;
+            if (DL2>mag*DL) DL2=mag*DL;
         }
         // Actual beam drawing for Dual, Ch1, Ch2
         if (b_dual.state==1 || b_ch1.state==1 || b_ch2.state==1) {
@@ -349,12 +380,13 @@ class Scope extends pObject {
                     ctx.beginPath();
                     // beam length for beam intensity calcukation
                     sumdelta[c]=0;
+                    // astigm multiline
                     for (let k=0; k<asl; k++) {
-                        var ii=findState=="off"?i:((i+findValue*(DL/4+px0-px))/(findValue+1));
-                        ctx.moveTo(px+ii+k*asx,py[c]-dispch[c][0+tptr[0]]-k_rot.getValue()*DL/500+k*asy);
-                        for (let i=1; i<DL; i++) {
+                        var ii=findState=="off"?DL1:((DL1+findValue*(DL/2+(DL1-DL/2)/2+px0-px))/(findValue+1));
+                        ctx.moveTo(px+ii*mag+k*asx,py[c]-dispch[c][ii+tptr[0]]-k_rot.getValue()*DL/500+k*asy);
+                        for (let i=DL1+1; i<=DL2; i++) {
                             ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
-                            ctx.lineTo(px+ii+k*asx,py[c]-dispch[c][i+tptr[0]]
+                            ctx.lineTo(px+ii*mag+k*asx,py[c]-dispch[c][i+tptr[0]]
                                 -k_rot.getValue()*(DL/2-ii)/250+k*asy);
                             if (k==0) sumdelta[c]+=Math.abs(dispch[c][i+tptr[0]]-dispch[c][i-1+tptr[0]]);
                         }
@@ -367,11 +399,13 @@ class Scope extends pObject {
         // Beam for Lissajous XY
         else if (b_xy.state==1) {
             // rotation
-            var fi=k_rot.getValue()*1*Math.PI/30;
-            for (let i=0; i<L; i++) {
-                var x1=dispch[0][i], y1=dispch[1][i];
-                dispch[0][i]=x1*Math.cos(fi)+y1*Math.sin(fi);
-                dispch[1][i]=-x1*Math.sin(fi)+y1*Math.cos(fi);
+            if (k_rot.getValue()!=0) {
+                var fi=k_rot.getValue()*1*Math.PI/30;
+                for (let i=0; i<L; i++) {
+                    var x1=dispch[0][i], y1=dispch[1][i];
+                    dispch[0][i]=x1*Math.cos(fi)+y1*Math.sin(fi);
+                    dispch[1][i]=-x1*Math.sin(fi)+y1*Math.cos(fi);
+                }
             }
             // screen center
             px+=5*d;
@@ -380,8 +414,10 @@ class Scope extends pObject {
             ctx.beginPath();
             sumdelta[2]=0;
             for (let k=0; k<asl; k++) {
+//                ctx.moveTo(px+dispch[0][DL1]+k*asx,pyx-dispch[1][DL1]+k*asy);
                 ctx.moveTo(px+dispch[0][0]+k*asx,pyx-dispch[1][0]+k*asy);
-                for (let i=1; i<DL; i++) {
+//                for (let i=DL1+1; i<DL2; i++) {
+                for (let i=1; i<=DL; i++) {
                     ctx.lineTo(px+dispch[0][i]+k*asx,pyx-dispch[1][i]+k*asy);
                     if (k==0) sumdelta[2]+=Math.sqrt((dispch[0][i]-dispch[0][i-1])
                         *(dispch[0][i]-dispch[0][i-1])
@@ -398,10 +434,10 @@ class Scope extends pObject {
             ctx.beginPath();
             sumdelta[2]=0;
             for (let k=0; k<asl; k++) {
-                var ii=findState=="off"?i:((i+findValue*(DL/4+px0-px))/(findValue+1));
-                ctx.moveTo(px+ii+k*asx,py0-this.calcModeY(-1,dispch[0][0+tptr[0]],
-                    dispch[1][0+tptr[0]])-k_rot.getValue()*DL/500+k*asy);
-                for (let i=1; i<DL; i++) {
+                var ii=findState=="off"?DL1:((DL1+findValue*(DL/2+(DL1-DL/2)/2+px0-px))/(findValue+1));
+                ctx.moveTo(px+ii+k*asx,py0-this.calcModeY(-1,dispch[0][ii+tptr[0]],
+                    dispch[1][ii+tptr[0]])-k_rot.getValue()*DL/500+k*asy);
+                for (let i=DL1+1; i<DL2; i++) {
                     ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
                     ctx.lineTo(px+ii+k*asx,py0-this.calcModeY(-1,dispch[0][i+tptr[0]],
                         dispch[1][i+tptr[0]])-k_rot.getValue()*(DL/2-ii)/250+k*asy);
@@ -451,7 +487,7 @@ class Scope extends pObject {
             ctx.stroke();
         }
         // Readout
-        if (b_readout.state==1) {
+        if (b_power.state==1 && b_readout.state==1) {
             ctx.beginPath();
             ctx.fillStyle="rgba(0,240,0,0.9)";
             ctx.font="bold 16px Arial";
@@ -509,14 +545,24 @@ class Scope extends pObject {
         }
         ctx.restore();
         this.drawGrid(ctx,"illum");
+        if (!drawInTimeout && timebase>=100) { 
+            drawInTimeout=true;
+            setTimeout(()=>callDraw(ctx,"noShadow"),100);
+        }
+        time=Date.now();
+        drawInProgress=false;
     }
     calcModeY(c,ych0,ych1) {
         if (b_ch1.state==1) return ych0;
         else if (b_ch2.state==1) return ych1;
         else if (b_add.state==1) return ych0+ych1;
-        else if (b_mod.state==1) return ych0*ych1/ampls[0];
+        else if (b_mod.state==1) return (ampls[0]+ampls[1])*ych0*ych1/ampls[0]/ampls[1];
         else if (b_dual.state==1) return [ych0,ych1][c];
     }
+}
+function callDraw(ctx,drawShadow) {
+    drawInTimeout=false;
+    scope.draw(ctx,drawShadow);
 }
 class ScopeChannel {
     constructor(pX,pY) {

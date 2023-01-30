@@ -75,13 +75,13 @@ class PushButton extends Button {
     showPushed(offpushon) {
         if (offpushon=="off") this.draw(this.ctx,[3,2]);
         else if (offpushon=="offnoillum") this.draw(this.ctx,[3,2],"noillum");
-        else if (offpushon=="push") this.draw(this.ctx,[0,0]);
-        else if (offpushon=="pushillum") this.draw(this.ctx,[0,0],"illum");
-        else if (offpushon=="on") this.draw(this.ctx,[1,1]);
+        else if (offpushon=="push") this.draw(this.ctx,[-1,-1]);
+        else if (offpushon=="pushillum") this.draw(this.ctx,[-1,-1],"illum");
+        else if (offpushon=="on") this.draw(this.ctx,[0,0]);
     }
     draw(ctx, outxy=[-17,-17], pIllum="none") {
         if (outxy[0]==-17) {
-            outxy=this.state==1?[1,1]:[3,2];
+            outxy=this.state==1?[0,0]:[3,2];
         }
         var pbx=this.x, pby=this.y, pbdx=this.w, pbdy=this.h;
         ctx.beginPath(); // gray border
@@ -115,16 +115,25 @@ class PushButton extends Button {
         ctx.lineTo(pbx +pbl1+pbl2, pby +pbl1+pbl2);
         ctx.fill();
         if (this.illum) {
-            if (pIllum=="illum" && b_power.state==1)
+            if (pIllum=="illum" && b_power.state==1) {
                 ctx.drawImage(this.img_on,pbx +outxy[0] +pbl1+pbl2+pbq, pby +outxy[1] +pbl1+pbl2+pbq, 
                     pbdx -2*(pbl1+pbl2+pbq), pbdy-2*(pbl1+pbl2+pbq));    
-            else if (pIllum=="noillum" || b_power.state==0)
+            }
+            else if (pIllum=="noillum" || b_power.state==0) {
             ctx.drawImage(this.img_off,pbx +outxy[0] +pbl1+pbl2+pbq, pby +outxy[1] +pbl1+pbl2+pbq, 
                 pbdx -2*(pbl1+pbl2+pbq), pbdy-2*(pbl1+pbl2+pbq));    
-            else
+            }
+            else {
                 ctx.drawImage(this.state==1?this.img_on:this.img_off,pbx +outxy[0] +pbl1+pbl2+pbq, pby +outxy[1] +pbl1+pbl2+pbq, 
-                    pbdx -2*(pbl1+pbl2+pbq), pbdy-2*(pbl1+pbl2+pbq));    
-        }
+                    pbdx -2*(pbl1+pbl2+pbq), pbdy-2*(pbl1+pbl2+pbq));
+            }
+            ctx.beginPath(); // front frame
+            ctx.strokeStyle="rgb(120,120,120)";
+            ctx.lineWidth=2;
+            roundRect(ctx,pbx +outxy[0] +pbl1+pbl2 +pbq, pby +outxy[1] +pbl1+pbl2 +pbq, 
+                pbdx -2*(pbl1+pbl2+pbq), pbdy-2*(pbl1+pbl2+pbq),1);
+            ctx.stroke();
+            }
     }
 }
 class PowerButton extends Button {
@@ -408,7 +417,7 @@ class DebugButton extends Button {
                 }
                 initChannels();
                 draw(ctx);
-                setTimeout(()=>{b_presets[pri].callSwitchOff();},500);
+                setTimeout(()=>{b_presets[pri].callSwitchOff();},200);
             }
         }
     }

@@ -1,10 +1,11 @@
-const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.32";
-const expdate="Jan, 27, 2023";
+const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.33";
+const expdate="Jan, 30, 2023";
 var canvas, ctx, debugcanvas, debugctx, logWindow, traceString="", now;
 var scope, siggen, presetManager; // global objects
-var no_images_to_load, vfd, vfd_, led_on_powers, led_on, led_off_powers, led_off, led_red; // canvas images
+var no_images_to_load, vfdred, vfd, vfd_, led_on_powers, led_on, led_off_powers, led_off, led_red; // canvas images
 const L=2048, L2=L/2, L4=L/4, L8=L/8; // buffer length
 const DL=500; // Display length
+var DL1, DL2; // from-to at slow sweep
 const A = 127; // default amplitude (on integer scale, A -> 1.0)
 const FFTN=2048;
 const f=new FFT(FFTN); // buffer for FFT spectrum data
@@ -52,7 +53,7 @@ var b_readout;
 const ROXSIG=100, ROXVOLTS=300, ROYSIG=[15,431], ROXTB=400, ROYTB=431;
 const ROXDB=500, ROYDB=431, ROXDLY=400, ROYDLY=15;
 var NaNerror; // jump loops if NaN error happens for easier testing
-var b_debug, b_reset, b_autotest, b_presets=[];
+var b_debug, b_reset, b_autotest, b_presets=[], b_storage;
 var k_cursor, xCur;
 const letters={ " ":[], 
 	",":[2,10,2,8, 3,10,3,8, 4,10,4,8, 3,10,1,12,4,10,1,13], 

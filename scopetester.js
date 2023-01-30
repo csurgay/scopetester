@@ -12,7 +12,8 @@ function init() {
         "heap:"+window.performance.memory.totalJSHeapSize/1000000+
         " used:"+window.performance.memory.usedJSHeapSize/1000000+
         " limit:"+window.performance.memory.jsHeapSizeLimit/1000000;});
-    no_images_to_load=7;
+    no_images_to_load=8;
+    vfdred=new Image(); vfdred.src='./images/vfdred.jpg'; vfdred.onload=()=>wait();
     vfd=new Image(); vfd.src='./images/vfds.jpg'; vfd.onload=()=>wait();
     vfd_=new Image(); vfd_.src='./images/vfd-s.jpg'; vfd_.onload=()=>wait();
     led_on=new Image(); led_on.src='./images/led_on_2416.jpg'; led_on.onload=()=>wait();
@@ -52,11 +53,20 @@ function wait() {
 }
 
 function clearCanvas(ctx) {
+    ctx.beginPath();
     ctx.fillStyle=bgcolor;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0,0,canvas.width,10);
+    ctx.fillRect(0,0,scope.x,scope.y+scope.h);
+    ctx.fillRect(0,scope.y+scope.h,scope.x+scope.w,canvas.height-(scope.y+scope.h));
+    ctx.fillRect(scope.x+scope.w,0,canvas.width-(scope.x+scope.w),canvas.height);
+    ctx.fill();
+    scope.drawFrame(ctx);
 }
 
 function draw(ctx) {
+    // timebase
+    timebase=tb[k_time.k.getValue()+Math.floor(k_time.k.ticks/2-1)]*
+        tb_[k_time.k_.getValue()+Math.floor(k_time.k_.ticks/2)];
     // Cal LEDs
     b_xcal.state=0;
     if (k_time.k_.getValue()!=0) b_xcal.showRed();
@@ -66,7 +76,8 @@ function draw(ctx) {
     // draw
     clearCanvas(ctx);
     clearCanvas(debugctx);
-    for (let i=0; i<uictx.length; i++) uictx[i].draw(ctx);
+    for (let i=0; i<uictx.length; i++) 
+        uictx[i].draw(ctx);
     for (let i=0; i<uidebugctx.length; i++) uidebugctx[i].draw(debugctx);
 }
 
@@ -111,28 +122,4 @@ function myRoundRect(ctx,x,y,w,h,r) {
 function roundRect(ctx,x,y,w,h,r) {
     if (typeof InstallTrigger !== 'undefined') myRoundRect(ctx,x,y,w,h,r);
     else ctx.roundRect(x,y,w,h,r);
-}
-
-function run() {
-    draw(ctx);
-    if (b_power.state==1) setTimeout(run,1000);
-}
-
-var i=0, prevX=70, prevY=250;
-function run1() {
-    scope.drawScreen(ctx);
-    ctx.beginPath();
-    ctx.lineWidth=6;
-    ctx.strokeStyle="rgb(200,200,200)"
-    ctx.moveTo(prevX,prevY);
-    prevX=i; prevY=220-ch[0][i++]; if (i>=L) i=0;
-    prevX+=20; if (prevX>600) prevX=70; 
-    prevY+=Math.floor(3*Math.random())-1;
-    if (prevX!=70) ctx.lineTo(prevX,prevY);
-    ctx.stroke();
-    ctx.lineWidth=1;
-    var kt=k_time.k.getValue();
-    var kt_=k_time.k_.getValue();
-    timebase=tb[kt+9]*tb_[kt_+10];
-    if (b_power.state==1) setTimeout(run,timebase);
 }
