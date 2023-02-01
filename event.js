@@ -155,6 +155,7 @@ function actionEvent(evt) {
         else if (evt.x=="6") { b_presets[5].clickXY(0,0); draw(ctx); }
         else if (evt.x=="7") { b_presets[6].clickXY(0,0); draw(ctx); }
         else if (evt.x=="8") { b_presets[7].clickXY(0,0); draw(ctx); }
+        else if (evt.x=="9") { b_presets[8].clickXY(0,0); draw(ctx); }
 //            alert(`Key pressed ${evt.x} \r\n Key code value: ${evt.y}`);
     }
     else if (evt.name=="wheel") {

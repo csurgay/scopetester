@@ -39,6 +39,7 @@ var angle_rad; // for 2*PI calcultions
 
 function initChannels() {
     trace("initChannels");
+    tailParts=[];
     for (let c=0; c<2; c++) {
         // amplitude
         ampls[c]=siggen[c].k_ampl.k.getValue();

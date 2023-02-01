@@ -1,12 +1,12 @@
 var pDelta; // for holding -event.delta
 var xd, yd, rd, nd, kd; // for x,y for drawing
-const pullDx=-1, pullDy=1;
+const pullDx=1, pullDy=1;
 
 class Knob extends pObject {
     constructor(ctx,pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos,pMarker="marker") {
-        const pos={"none":[0,0],"knob":[0,-27],"double":[0,-44],"sweep":[0,80], 
+        const pos={"none":[0,0],"knob":[0,-27],"smallknob":[0,-22],"pot":[-22,1],"double":[0,-44],"sweep":[0,80], 
         "double_s":[0,-40], "delay":[0,78], "func":[0,-57], "range":[0,-55], 
-        "volts":[0,-55], "sigdouble":[63,-31], "cursor":[0,-46]};
+        "volts":[0,-55], "sigdouble":[63,-31], "cursor":[0,-46], "xpos":[0,-46]};
         super(ctx,pX-pR,pY-pR,2*pR,2*pR);
         this.class="Knob";
         this.name=pLabel;
@@ -58,9 +58,12 @@ class Knob extends pObject {
                 else if (this.value>this.ticks-1) this.value-=this.ticks;
             }
         }
-        if (this.turnedTogether!=null) {
-            this.turnedTogether.value=this.value;
-//            if (this.pulled) this.value=savedValue;
+        if (!this.pulled && this.turnedTogetherIn!=null) {
+            this.turnedTogetherIn.value=this.value;
+            this.turnedTogetherPulled.value=this.value;
+        }
+        if (this.pulled && this.turnedTogetherPulled!=null) {
+            this.turnedTogetherPulled.value=this.value;
         }
         super.turnY(pDelta);
     }
@@ -80,6 +83,12 @@ class Knob extends pObject {
             if (this.pulledTogether!=null) {
                 this.pulledTogether.x-=pullDx; 
                 this.pulledTogether.y-=pullDy;
+            }
+            if (this.turnedTogetherIn!=null) {
+                this.turnedTogetherIn.value=this.value;
+                if (this.pulledTogether!=null) {
+                    this.pulledTogether.turnedTogetherIn.value=this.pulledTogether.value;
+                }
             }
         }
     }
@@ -136,8 +145,15 @@ class Knob extends pObject {
             }
             else if (this.pullDekorType=="cursor") {
                 ctx.fillStyle="black";
-                ctx.font="9px Arial";
-                ctx.fillText("PULL",0,0);
+                ctx.font="9.5px Arial";
+                ctx.fillText("PULL",0,-3);
+                ctx.fillText("ON",0,6);
+            }
+            else if (this.pullDekorType=="xpos") {
+                ctx.fillStyle="black";
+                ctx.font="9.5px Arial";
+                ctx.fillText("PULL",0,-3);
+                ctx.fillText("x10",0,6);
             }
             ctx.fill();
             ctx.restore();
@@ -145,6 +161,28 @@ class Knob extends pObject {
         ctx.lineWidth=1;
         super.draw(ctx);
     }
+}
+
+class CalibPot extends Knob {
+    constructor(ctx,pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos) {
+        super(ctx,pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos,"nomarker");
+    }
+    draw(ctx) {
+        ctx.beginPath();
+        ctx.fillStyle="rgb(30,30,30)";
+        ctx.arc(this.x+this.r,this.y+this.r,10,0,2*Math.PI);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.fillStyle="rgb(120,120,120)";
+        ctx.arc(this.x+this.r,this.y+this.r,6,0,2*Math.PI);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.lineWidth=3;
+        ctx.strokeStyle="rgb(60,60,60)";
+        ctx.moveTo(this.x+this.r+5*Math.sin(2*Math.PI*this.value/this.ticks),this.y+this.r-5*Math.cos(2*Math.PI*this.value/this.ticks));
+        ctx.lineTo(this.x+this.r-5*Math.sin(2*Math.PI*this.value/this.ticks),this.y+this.r+5*Math.cos(2*Math.PI*this.value/this.ticks));
+        ctx.stroke();
+}
 }
 
 class DoubleKnob extends pObject {
@@ -167,16 +205,20 @@ class DoubleKnob extends pObject {
         this.k.initChannelsNeeded=true;
         this.k_.initChannelsNeeded=true;
     }
-    setPullable(pDekorType,pTurnedTogether=null) {
+    setPullable(pDekorType,pTurnedTogetherIn=null,pTurnedTogetherPulled=null) {
         this.k.pullable=true;
         this.k.pullShadow=true;
         this.k.pulledTogether=this.k_;
         this.k_.pullDekorType=pDekorType;
         this.k_.pullable=true;
         this.k_.pulledTogether=this.k;
-        if (pTurnedTogether!=null) {
-            this.k.turnedTogether=pTurnedTogether.k;
-            this.k_.turnedTogether=pTurnedTogether.k_;
+        if (pTurnedTogetherIn!=null) {
+            this.k.turnedTogetherIn=pTurnedTogetherIn.k;
+            this.k_.turnedTogetherIn=pTurnedTogetherIn.k_;
+        }
+        if (pTurnedTogetherPulled!=null) {
+            this.k.turnedTogetherPulled=pTurnedTogetherPulled.k;
+            this.k_.turnedTogetherPulled=pTurnedTogetherPulled.k_;
         }
     }
 }
@@ -208,7 +250,7 @@ class TimeDekorKnob extends DekorKnob {
             kd=i; if (kd>this.k.ticks/2) kd-=this.k.ticks;
             var sv=tb[kd+11]; var su="ms"; // value and unit
             if (sv>=100) { sv/=1000; su="s"; }
-            else if (sv<=0.05) { sv*=1000; su="us"; }
+            else if (sv<=0.05) { sv*=1000; su="\u03bcs"; }
             var sl=""+sv; sl=sl.replace("0.",".");
             new Label(this.ctx,x+r*Math.sin(2*Math.PI*i/nd),
                 y-r*Math.cos(2*Math.PI*i/nd),sl,12);
@@ -216,21 +258,21 @@ class TimeDekorKnob extends DekorKnob {
     }
     captionCircle(x,y,r) {
         new Label(this.ctx,x-r-4,y-r+12,"ms",12);
-        new Label(this.ctx,x+r+1,y+r-7,"us",12);
-        new Label(this.ctx,x-r-1,y+r-7,"sec",12);
+        new Label(this.ctx,x+r-5,y+r-7,"\u03bcs",12);
+        new Label(this.ctx,x-r+6,y+r-7,"sec",12);
     }
 }
 
 class TimeKnob extends TimeDekorKnob {
     constructor(pX,pY) {
-        super(ctx,pX,pY,"A B TIME and DLYD","sweep",50,25,62);
-        this.setPullable("timer",k_delaybase);
+        super(ctx,pX,pY,"A timebase and B DLYD","sweep",50,25,62);
+        this.setPullable("timer",k_timebase,k_delaybase);
     }
 }
 
 class DelaybaseKnob extends TimeDekorKnob {
-    constructor(pX,pY) {
-        super(debugctx,pX,pY,"Delayed B Timebase","delay",40,20,52);
+    constructor(pX,pY,pLabel) {
+        super(debugctx,pX,pY,pLabel,"delay",40,20,52);
     }
 }
 

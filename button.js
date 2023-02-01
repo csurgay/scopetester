@@ -237,12 +237,21 @@ function reset() {
             uictx[i].reset();
         }
     }
+    for (let i=0; i<uidebugctx.length; i++) {
+        if (!isNaN(uidebugctx[i].ticks)) {
+            uidebugctx[i].reset();
+        }
+    }
     if (b_auto.state==0) b_auto.clickXY(0,0);
     if (b_readout.state==1) b_readout.clickXY(0,0);
+    presetManager.reset();
     if (k_cursor.k.pulled) {
-        presetManager.reset();
         presetManager.add(1,"mousedown",k_cursor.k_,0,0,350);
         presetManager.add(1,"mouseup",k_cursor.k_,0,0);
+    }
+    if (k_xpos.k.pulled) {
+        presetManager.add(1,"mousedown",k_xpos.k_,0,0,350);
+        presetManager.add(1,"mouseup",k_xpos.k_,0,0);
     }
 }
 class PresetManager {
@@ -282,14 +291,6 @@ class DebugButton extends Button {
             else if (this.state==0) {
                 logWindow.setAttribute("hidden","hidden");
                 debugcanvas.setAttribute("hidden","hidden");
-            }
-        }
-        else if (this.name=="Reset") {
-            if (this.state==1) { 
-                reset();
-                initChannels();
-                draw(ctx);
-                setTimeout(()=>{b_reset.callSwitchOff();},500);
             }
         }
         else if (this.name.substring(0,6)=="Preset") {
@@ -415,6 +416,19 @@ class DebugButton extends Button {
                     presetManager.add(10,"wheel",k_cursor.k,0,-1,);
                     presetManager.add(20,"wheel",k_cursor.k_,0,-1,);
                 }
+                else if (pri==8) { // ECG slow sweep double in phaseshift
+                    presetManager.reset();
+                    presetManager.add(5,"wheel",siggen[0].k_func.k,0,-1);
+                    presetManager.add(5,"wheel",siggen[1].k_func.k,0,-1);
+                    presetManager.add(3,"wheel",siggen[0].k_scale,0,-1);
+                    presetManager.add(3,"wheel",siggen[1].k_scale,0,-1);
+                    presetManager.add(12,"wheel",siggen[1].k_phase.k,0,1);
+                    presetManager.add(5,"wheel",scope.ch[0].k_ypos,0,1);
+                    presetManager.add(5,"wheel",scope.ch[1].k_ypos,0,-1);
+                    presetManager.add(1,"wheel",scope.ch[0].k_volts.k,0,1);
+                    presetManager.add(1,"wheel",scope.ch[1].k_volts.k,0,1);
+                    presetManager.add(7,"wheel",k_time.k,0,-1);
+                }
                 initChannels();
                 draw(ctx);
                 setTimeout(()=>{b_presets[pri].callSwitchOff();},200);
@@ -463,32 +477,26 @@ class MicButton extends PushButton {
         draw(ctx);
     }
 }
+class ResetButton extends PushButton {
+    constructor(pX,pY,pW,pH,pLabel,pType) {
+        super(ctx,pX,pY,pW,pH,pLabel,pType);
+    }
+    clickXY(x,y) {
+        if (b_power.state==1) {
+            reset();
+            initChannels();
+            draw(ctx);
+        }
+    }
+}
 class PresetButton extends PushButton {
     constructor(pX,pY,pW,pH,pLabel,pType) {
         super(ctx,pX,pY,pW,pH,pLabel,pType);
     }
     clickXY(x,y) {
         if (b_power.state==1) {
-            super.clickXY(x,y);
-            if (this.state==1) {
-                // for(var i=0; i<uictx.length; i++) {
-                //     if (!isNaN(uictx[i].ticks)) {
-                //         uictx[i].value=Math.floor(Math.random()*uictx[i].ticks);
-                //     }
-                // }
-                // initChannels();
-                // draw(ctx);
-                b_presets[lastPreset++].clickXY(0,0);
-                if (lastPreset>=b_presets.length) lastPreset=0;
-                setTimeout(()=>{b_preset.callSwitchOff();},500);
-            }
-            else if (this.state==0) this.callSwitchOff();
-        }
-    }
-    callSwitchOff() {
-        if (this.state==1) {
-            super.clickXY(0,0);
-            draw(ctx);
+            b_presets[lastPreset++].clickXY(0,0);
+            if (lastPreset>=b_presets.length) lastPreset=0;
         }
     }
 }

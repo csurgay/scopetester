@@ -10,6 +10,7 @@ var lineWidth, strokeStyle, blurWidth, expdays;
 var drawInProgress=false, drawInTimeout=false;
 var time; // running clock time for slow sweep calc
 var mag; // x10 mag multiplier (3.333 for dipsch, 3 for beamdraw)
+var tailParts=[];
 
 class Scope extends pObject {
     constructor(pX,pY,pD,pDD) {
@@ -43,20 +44,22 @@ class Scope extends pObject {
         b_chtr=[b_ch1tr,b_ch2tr];
         radio_trig=new Radio(892,530,[b_auto,b_ch1tr,b_ch2tr,b_mode]);
         b_limit=new IndicatorLed(895,480,24,16,"Limit","on");
-        b_find=new FindButton(17,360,pbw,pbh,"Find","small");
+        b_find=new FindButton(17,305,pbw,pbh,"Find","small");
+        b_reset=new ResetButton(17,360,pbw,pbh,"Reset","small");
+        b_reset.illum=false;
         b_preset=new PresetButton(17,395,pbw,pbh,"Preset","small");
         b_preset.illum=false;
         b_mic=new MicButton(17,430,pbw,pbh,"Mic","small");
         this.ch=[new ScopeChannel(685,80), new ScopeChannel(825,80)];
-        k_intensity=new Knob(ctx,8,30,105,15,17,0,"Intensity","knob");
-        k_focus=new Knob(ctx,8,30,160,15,17,0,"Focus","knob");
-        k_astigm=new Knob(ctx,8,30,215,15,17,0,"Astigm","knob");
-        k_illum=new Knob(ctx,16,30,270,15,17,0,"Illum","knob");
+        k_intensity=new Knob(ctx,8,30,100,15,17,0,"Intensity","smallknob");
+        k_focus=new Knob(ctx,8,30,150,15,17,0,"Focus","smallknob");
+        k_illum=new Knob(ctx,16,30,200,15,17,0,"Illum","smallknob");
         k_illum.value0=false;
-        k_rot=new Knob(ctx,15,30,325,15,31,0,"Rotation","knob");
-        k_delaybase=new DelaybaseKnob(200,100);
-        k_timebase=new DelaybaseKnob(400,100);
-        k_time=new TimeKnob(775,180);
+        k_astigm=new CalibPot(ctx,8,40,240,15,17,0,"Ast","pot");
+        k_rot=new CalibPot(ctx,15,40,270,15,31,0,"Rot","pot");
+        k_timebase=new DelaybaseKnob(200,100,"Main A Timebase");
+        k_delaybase=new DelaybaseKnob(350,100,"Delayed B Timebase");
+        k_time=new TimeKnob(783,180);
         new Vfd(710,75,4,()=>{return 10*k_delay.k.getValue()+k_delay.k_.getValue()/10;},()=>{
             return b_power.state==0 || 10*k_delay.k.getValue()+k_delay.k_.getValue()==0;});
         k_delay=new DoubleKnob(ctx,665,75,100,100,"Delay Mult","cursor",36,23);
@@ -64,8 +67,8 @@ class Scope extends pObject {
         k_delay.k_.value0=false;
         k_delay.k.limit=k_delay.k.ticks-1;
         k_delay.k_.limit=k_delay.k_.ticks-1;
-        k_xpos=new DoubleKnob(ctx,665,180,201,201,"Pos (x10)","cursor",36,20);
-        k_xpos.setPullable("cursor");
+        k_xpos=new DoubleKnob(ctx,665,180,201,201,"X Pos","xpos",36,20);
+        k_xpos.setPullable("xpos");
         b_xcal=new IndicatorLed(660,245,24,16,"Cal","on");
         b_ycal=new IndicatorLed(660,430,24,16,"Cal","on");
         k_trigger=new DoubleKnob(ctx,830,520,50,50,"Level","double_s",30,15);
@@ -80,13 +83,17 @@ class Scope extends pObject {
         k_fftx=new Knob(ctx,10,800,700,20,21,0,"Xmag","double_s");
         b_readout=new PushButton(ctx,745,588,pbw,pbh,"Readout","readout");
         b_debug=new DebugButton(20,20,24,16,"Debug","small");
-        b_reset=new DebugButton(20,55,24,16,"Reset","small");
         b_autotest=new AutotestButton(20,90,24,16,"Test","small");
-        for (let i=0; i<8; i++)
+        for (let i=0; i<9; i++)
             b_presets.push(new DebugButton(70,20+i*35,24,16,"Preset"+i,"small"));
         k_cursor=new DoubleKnob(ctx,870,75,51,201,"Cursor","cursor",36,23);
         k_cursor.setPullable("cursor");
         b_storage=new PushButton(ctx,892,120,pbw,pbh,"Storage","readout");
+        b_a=new PushButton(ctx,892,185,pbw,pbh,"  A  ","on");
+        b_ainten=new PushButton(ctx,892,185,pbw,pbh,"Inten","on");
+        b_b=new PushButton(ctx,892,185,pbw,pbh,"DLYD ","on");
+        b_aandb=new PushButton(ctx,892,185,pbw,pbh,"ALT","on");
+        dualtb_mode=new Radio(892,185,[b_a,b_ainten,b_b,b_aandb]);
     }
     drawFrame(ctx) {
         ctx.beginPath();
@@ -95,7 +102,7 @@ class Scope extends pObject {
         roundRect(ctx, this.x-5, this.y-5, this.w+10, this.h+10, 20);
         ctx.stroke();
     }
-    drawScreen(ctx,drawShadow="drawShadow") {
+    drawScreen(ctx,drawShadow="No-drawShadow") { // egyelőre nincs árnyék, mert slow sweep-nél eltűnik
         // draw screen
         if (drawShadow=="drawShadow") {
             ctx.beginPath();
@@ -363,12 +370,13 @@ class Scope extends pObject {
         }
         if (timebase<100 || b_storage.state==1) {
             DL1=0, DL2=mag*DL;
+            tailParts=[[DL1,DL2]];
         }
         else {
             var deltaT=Date.now()-time;
-            DL1+=Math.round(50*deltaT/timebase);
-            if (DL1>=mag*DL) DL1=-Math.round(50*DL/timebase);
-            DL2=DL1+Math.round(50*DL/timebase);
+            DL1+=Math.ceil(10*deltaT/timebase);
+            if (DL1>=mag*DL) DL1=-Math.ceil(10*DL/timebase);
+            DL2=DL1+Math.ceil(10*DL/timebase);
             if (DL2<DL1+1) DL2=DL1+1;
             if (DL2>mag*DL) DL2=mag*DL;
         }

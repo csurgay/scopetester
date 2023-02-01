@@ -55,6 +55,12 @@ function wait() {
 function clearCanvas(ctx) {
     ctx.beginPath();
     ctx.fillStyle=bgcolor;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fill();
+}
+function clearCanvasNoScreen(ctx) {
+    ctx.beginPath();
+    ctx.fillStyle=bgcolor;
     ctx.fillRect(0,0,canvas.width,10);
     ctx.fillRect(0,0,scope.x,scope.y+scope.h);
     ctx.fillRect(0,scope.y+scope.h,scope.x+scope.w,canvas.height-(scope.y+scope.h));
@@ -65,20 +71,22 @@ function clearCanvas(ctx) {
 
 function draw(ctx) {
     // timebase
-    timebase=tb[k_time.k.getValue()+Math.floor(k_time.k.ticks/2-1)]*
-        tb_[k_time.k_.getValue()+Math.floor(k_time.k_.ticks/2)];
+    timebase=tb[k_timebase.k.getValue()+Math.floor(k_timebase.k.ticks/2-1)]*
+        tb_[k_timebase.k_.getValue()+Math.floor(k_timebase.k_.ticks/2)];
     // Cal LEDs
     b_xcal.state=0;
-    if (k_time.k_.getValue()!=0) b_xcal.showRed();
+    if (k_timebase.k_.getValue()!=0) b_xcal.showRed();
     b_ycal.state=0;
     if (scope.ch[0].k_volts.k_.getValue()!=0) b_ycal.showRed();
     if (scope.ch[1].k_volts.k_.getValue()!=0) b_ycal.showRed();
     // draw
-    clearCanvas(ctx);
-    clearCanvas(debugctx);
+    clearCanvasNoScreen(ctx);
     for (let i=0; i<uictx.length; i++) 
         uictx[i].draw(ctx);
-    for (let i=0; i<uidebugctx.length; i++) uidebugctx[i].draw(debugctx);
+    if (b_debug.state==1) {
+        clearCanvas(debugctx);
+        for (let i=0; i<uidebugctx.length; i++) uidebugctx[i].draw(debugctx);
+    }
 }
 
 function start() {
