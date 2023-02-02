@@ -32,11 +32,11 @@ class Scope extends pObject {
         b_ch1=new ChOnButton(795,1000,24,16,"CH1","on",false);
         b_ch2=new ChOnButton(795,1000,24,16,"CH2","on",false);
         b_chon=[b_ch1,b_ch2];
-        b_dual=new ChOnButton(795,1000,24,16,"ALT","on",false);
+        b_dual=new ChOnButton(795,1000,24,16,"CHOP","on",false);
         b_add=new ChOnButton(795,1000,24,16,"ADD","on",false);
         b_mod=new ChOnButton(795,1000,24,16,"AM","on",false);
         b_xy=new ChOnButton(795,1000,24,16,"X-Y","on",false);
-        radio_mode=new Radio(795,1000,[b_ch1,b_ch2,b_dual,b_add,b_mod,b_xy],false);
+        radio_mode=new Radio(795,1000,[b_dual,b_ch1,b_ch2,b_add,b_mod,b_xy],false);
         b_auto=new PushButton(ctx,892,530,pbw,pbh,"Auto","on");
         b_auto.state=1;
         b_ch1tr=new PushButton(ctx,892,530,pbw,pbh,"CH1","on");
@@ -365,7 +365,7 @@ class Scope extends pObject {
         ctx.clip();
         this.astigmCalc();
         // imprint text rolling
-        if (imprintY!=1000) {
+        if (b_power.state==1 && imprintY!=1000) {
             drawText(imprint,px,imprintY--);
             ctx.restore();
             drawInProgress=false;
@@ -396,8 +396,8 @@ class Scope extends pObject {
             }
             DL1=Math.ceil(50*(runningTime-triggerTime)/timebase);
             if (DL1>=mag*DL) {
-                DL1=-Math.ceil(10*DL/timebase);
-                triggerTime=runningTime;
+                DL1=-Math.ceil(50*DL/timebase);
+                triggerTime=runningTime+DL/5;
             }
             DL2=DL1+Math.ceil(10*DL/timebase);
             if (DL2<DL1+1) DL2=DL1+1;

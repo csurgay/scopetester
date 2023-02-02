@@ -41,9 +41,16 @@ class Knob extends pObject {
     }
     reset() {
         this.value=this.defaultValue;
-    }
+        if (!this.pulled && this.turnedTogetherIn!=null) {
+            this.turnedTogetherIn.value=this.value;
+            this.turnedTogetherPulled.value=this.value;
+        }
+        if (this.pulled && this.turnedTogetherPulled!=null) {
+            this.turnedTogetherPulled.value=this.value;
+        }
+     }
     clickXY(x,y) {
-        this.value=this.defaultValue;
+        this.reset();
         super.clickXY(x,y);
     }
     turnY(pDelta) {
@@ -184,7 +191,7 @@ class CalibPot extends Knob {
         ctx.moveTo(this.x+this.r+5*Math.sin(2*Math.PI*this.value/this.ticks),this.y+this.r-5*Math.cos(2*Math.PI*this.value/this.ticks));
         ctx.lineTo(this.x+this.r-5*Math.sin(2*Math.PI*this.value/this.ticks),this.y+this.r+5*Math.cos(2*Math.PI*this.value/this.ticks));
         ctx.stroke();
-}
+    }
 }
 
 class DoubleKnob extends pObject {
@@ -430,7 +437,7 @@ class ModeKnob extends Knob {
     constructor(pX,pY) {
         for (let i=0; i<radio_mode.b.length; i++)
             a_mode.push(radio_mode.b[i].name);
-        super(ctx,-1,pX,pY,21,a_mode.length,2,"none","none");
+        super(ctx,-1,pX,pY,21,a_mode.length,0,"none","none");
         this.value0=false;
         this.iconCircle(pX,pY+2,34,a_mode);
     }

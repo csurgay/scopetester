@@ -53,12 +53,14 @@ function eventInit(canvas) {
         }
     }, false);
     canvas.addEventListener('mousedown', function(event) {
-        mouseDownX=event.clientX; mouseDownY=event.clientY;
-        objectUI=hitXY(mouseDownX,mouseDownY);
-        if (objectUI!=null) {
-            event.preventDefault();
-            new EventUI("mousedown",Date.now(),objectUI,mouseDownX,mouseDownY);
-            evtState="mousedown";
+        if (event.which==1) {
+            mouseDownX=event.clientX; mouseDownY=event.clientY;
+            objectUI=hitXY(mouseDownX,mouseDownY);
+            if (objectUI!=null) {
+                event.preventDefault();
+                new EventUI("mousedown",Date.now(),objectUI,mouseDownX,mouseDownY);
+                evtState="mousedown";
+            }
         }
     }, false);
     canvas.addEventListener('touchstart', function(event) {
