@@ -71,6 +71,10 @@ class PushButton extends Button {
         super(ctx,pX,pY,pW,pH,pLabel,pType,pShow);
         this.class="PushButton";
         this.illum=true;
+        this.otherIllumCondition=()=>true;
+    }
+    setOtherIllumCondition(condition) {
+        this.otherIllumCondition=condition;
     }
     showPushed(offpushon) {
         if (offpushon=="off") this.draw(this.ctx,[3,2]);
@@ -115,11 +119,11 @@ class PushButton extends Button {
         ctx.lineTo(pbx +pbl1+pbl2, pby +pbl1+pbl2);
         ctx.fill();
         if (this.illum) {
-            if (pIllum=="illum" && b_power.state==1) {
+            if (pIllum=="illum" && b_power.state==1 && this.otherIllumCondition()) {
                 ctx.drawImage(this.img_on,pbx +outxy[0] +pbl1+pbl2+pbq, pby +outxy[1] +pbl1+pbl2+pbq, 
                     pbdx -2*(pbl1+pbl2+pbq), pbdy-2*(pbl1+pbl2+pbq));    
             }
-            else if (pIllum=="noillum" || b_power.state==0) {
+            else if (pIllum=="noillum" || b_power.state==0 || !this.otherIllumCondition()) {
             ctx.drawImage(this.img_off,pbx +outxy[0] +pbl1+pbl2+pbq, pby +outxy[1] +pbl1+pbl2+pbq, 
                 pbdx -2*(pbl1+pbl2+pbq), pbdy-2*(pbl1+pbl2+pbq));    
             }
@@ -245,6 +249,16 @@ function reset() {
     if (b_a.state==0) b_a.clickXY(0,0);
     if (b_auto.state==0) b_auto.clickXY(0,0);
     if (b_readout.state==1) b_readout.clickXY(0,0);
+    if (b_fft.state==1) b_fft.clickXY(0,0);
+    if (b_storage.state==1) b_storage.clickXY(0,0);
+    for (let c=0; c<2; c++) {
+        if (scope.ch[c].b_dc.state==0) scope.ch[c].b_dc.clickXY(0,0);
+        if (siggen[c].b_ch.state==0) siggen[c].b_ch.clickXY(0,0);
+        if (siggen[c].b_nhalf.state==1) siggen[c].b_nhalf.clickXY(0,0);
+        if (siggen[c].b_phalf.state==1) siggen[c].b_phalf.clickXY(0,0);
+        if (siggen[c].b_abs.state==1) siggen[c].b_abs.clickXY(0,0);
+        if (siggen[c].b_inv.state==1) siggen[c].b_inv.clickXY(0,0);
+    }
     presetManager.reset();
     if (k_cursor.k.pulled) {
         presetManager.add(1,"mousedown",k_cursor.k_,0,0,350);

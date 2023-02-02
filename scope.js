@@ -8,9 +8,10 @@ var slope, tlevel; // trigger level
 var px0,px,py0,py=[0,0]; // screen center lines for channels and dual
 var lineWidth, strokeStyle, blurWidth, expdays;
 var drawInProgress=false, drawInTimeout=false;
-var time; // running clock time for slow sweep calc
 var mag; // x10 mag multiplier (3.333 for dipsch, 3 for beamdraw)
 var tailParts=[];
+var slowLimitMeasure=true, slowLimit=-1;
+var runningTime=Date.now(), sweepDuration, sweepCount=0, elapsedTime=0, triggerTime=0;
 
 class Scope extends pObject {
     constructor(pX,pY,pD,pDD) {
@@ -370,14 +371,34 @@ class Scope extends pObject {
             drawInProgress=false;
             return;
         }
-        if (timebase<100 || b_storage.state==1) {
+        // tuning for fastest timing
+        sweepCount++;
+        sweepDuration=Date.now()-runningTime;
+        elapsedTime+=sweepDuration;
+        runningTime=Date.now();
+        if (timebase<slowLimit || b_storage.state==1) {
             DL1=0, DL2=mag*DL;
             tailParts=[[DL1,DL2]];
         }
+        // timing of sweeps
         else {
-            var deltaT=Date.now()-time;
-            DL1+=Math.ceil(10*deltaT/timebase);
-            if (DL1>=mag*DL) DL1=-Math.ceil(10*DL/timebase);
+//            measuring and setting slowLimit only once
+            if (slowLimitMeasure) {
+                slowLimitMeasure=false;
+            }
+            else if (slowLimit==-1) {
+                if (sweepDuration<2) slowLimit=2;
+                else if (sweepDuration<5) slowLimit=5;
+                else if (sweepDuration<10) slowLimit=10;
+                else if (sweepDuration<20) slowLimit=20;
+                else if (sweepDuration<50) slowLimit=50;
+                else slowLimit=100;
+            }
+            DL1=Math.ceil(50*(runningTime-triggerTime)/timebase);
+            if (DL1>=mag*DL) {
+                DL1=-Math.ceil(10*DL/timebase);
+                triggerTime=runningTime;
+            }
             DL2=DL1+Math.ceil(10*DL/timebase);
             if (DL2<DL1+1) DL2=DL1+1;
             if (DL2>mag*DL) DL2=mag*DL;
@@ -555,11 +576,10 @@ class Scope extends pObject {
         }
         ctx.restore();
         this.drawGrid(ctx,"illum");
-        if (!drawInTimeout && timebase>=100) { 
+        if (!drawInTimeout && timebase>=slowLimit) { 
             drawInTimeout=true;
-            setTimeout(()=>callDraw(ctx,"noShadow"),100);
+            setTimeout(()=>callDraw(ctx,"noShadow"),1);
         }
-        time=Date.now();
         drawInProgress=false;
     }
     calcModeY(c,ych0,ych1) {

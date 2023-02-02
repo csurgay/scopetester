@@ -38,12 +38,16 @@ class Siggen extends pObject {
         new Vfd(pX3-5,pY4,6,()=>{return dcs[0+pNo-1];},()=>{return b_power.state==0 || this.b_ch.state==0;});
         this.b_phalf=new PushButton(ctx,pX-22,pY4-14,pbw,pbh,"Pos+","on");
         this.b_phalf.setInitChannelsNeeded();
+        this.b_phalf.setOtherIllumCondition(()=>{return this.b_ch.state==1;});
         this.b_nhalf=new PushButton(ctx,pX-22,pY4+6,pbw,pbh,"Neg-","on");
         this.b_nhalf.setInitChannelsNeeded();
+        this.b_nhalf.setOtherIllumCondition(()=>{return this.b_ch.state==1;});
         this.b_inv=new PushButton(ctx,pX+36,pY4-14,pbw,pbh,"Inv","on");
         this.b_inv.setInitChannelsNeeded();
+        this.b_inv.setOtherIllumCondition(()=>{return this.b_ch.state==1;});
         this.b_abs=new PushButton(ctx,pX+36,pY4+6,pbw,pbh,"Abs","on");
         this.b_abs.setInitChannelsNeeded();
+        this.b_abs.setOtherIllumCondition(()=>{return this.b_ch.state==1;});
         this.display=new DebugIcon(0,100*pNo,100,20,(x)=>{if (x==-17) return schlen[pNo-1]; else return sch[pNo-1][x];});
         this.display.ChOnType=true;
         this.display.parent=this;
