@@ -242,6 +242,7 @@ function reset() {
             uidebugctx[i].reset();
         }
     }
+    if (b_a.state==0) b_a.clickXY(0,0);
     if (b_auto.state==0) b_auto.clickXY(0,0);
     if (b_readout.state==1) b_readout.clickXY(0,0);
     presetManager.reset();

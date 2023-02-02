@@ -89,11 +89,13 @@ class Scope extends pObject {
         k_cursor=new DoubleKnob(ctx,870,75,51,201,"Cursor","cursor",36,23);
         k_cursor.setPullable("cursor");
         b_storage=new PushButton(ctx,892,120,pbw,pbh,"Storage","readout");
-        b_a=new PushButton(ctx,892,185,pbw,pbh,"  A  ","on");
-        b_ainten=new PushButton(ctx,892,185,pbw,pbh,"Inten","on");
-        b_b=new PushButton(ctx,892,185,pbw,pbh,"DLYD ","on");
-        b_aandb=new PushButton(ctx,892,185,pbw,pbh,"ALT","on");
-        dualtb_mode=new Radio(892,185,[b_a,b_ainten,b_b,b_aandb]);
+        b_a=new PushButton(ctx,892,165,pbw,pbh,"  A  ","on");
+        b_a.state=1;
+        b_ainten=new PushButton(ctx,892,165,pbw,pbh,"Inten","on");
+        b_b=new PushButton(ctx,892,165,pbw,pbh,"DLYD ","on");
+        b_aandb=new PushButton(ctx,892,165,pbw,pbh,"ALT","on");
+        b_mixed=new PushButton(ctx,892,165,pbw,pbh,"Mixed  ","on");
+        dualtb_mode=new Radio(892,165,[b_a,b_ainten,b_b,b_aandb,b_mixed]);
     }
     drawFrame(ctx) {
         ctx.beginPath();

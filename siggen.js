@@ -14,7 +14,7 @@ class Siggen extends pObject {
         this.k_scale.setSwitchBufferNeeded();
         this.k_scale.value0=false;
         this.k_scale.initChannelsNeeded=true;
-        this.k_func=new FuncKnob(pX,pY+130);
+        this.k_func=new FuncKnob(pX+5,pY+130);
         this.k_func.setSwitchBufferNeeded();
         this.k_func.setInitChannelsNeeded();
         this.k_freq=new DoubleKnob(ctx,pX2,pY1,201,101,"Freq (kHz)       ","sigdouble",30,15);

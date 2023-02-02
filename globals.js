@@ -55,7 +55,7 @@ const ROXDB=500, ROYDB=431, ROXDLY=400, ROYDLY=15;
 var NaNerror; // jump loops if NaN error happens for easier testing
 var b_debug, b_reset, b_autotest, b_presets=[], b_storage;
 var k_cursor, xCur;
-var b_a, b_ainten, b_b, b_aandb, dualtb_mode;
+var b_a, b_ainten, b_b, b_aandb, b_mixed, dualtb_mode;
 const letters={ " ":[], 
 	",":[2,10,2,8, 3,10,3,8, 4,10,4,8, 3,10,1,12,4,10,1,13], 
 	".":[2,10,2,8, 3,10,3,8, 4,10,4,8], "'":[3,0,3,2],

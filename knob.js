@@ -1,11 +1,11 @@
 var pDelta; // for holding -event.delta
 var xd, yd, rd, nd, kd; // for x,y for drawing
-const pullDx=1, pullDy=1;
+const pullDx=1, pullDy=1, pullDr=1;
 
 class Knob extends pObject {
     constructor(ctx,pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos,pMarker="marker") {
         const pos={"none":[0,0],"knob":[0,-27],"smallknob":[0,-22],"pot":[-22,1],"double":[0,-44],"sweep":[0,80], 
-        "double_s":[0,-40], "delay":[0,78], "func":[0,-57], "range":[0,-55], 
+        "double_s":[0,-40], "delay":[0,78], "func":[0,-62], "range":[0,-55], 
         "volts":[0,-55], "sigdouble":[63,-31], "cursor":[0,-46], "xpos":[0,-46]};
         super(ctx,pX-pR,pY-pR,2*pR,2*pR);
         this.class="Knob";
@@ -72,17 +72,19 @@ class Knob extends pObject {
         if (this.pulledTogether!=null)
             this.pulledTogether.pulled=!this.pulledTogether.pulled;
         if (this.pulled) {
-            this.x+=pullDx; this.y+=pullDy;
+            this.x+=pullDx; this.y+=pullDy; this.r+=pullDr;
             if (this.pulledTogether!=null) {
                 this.pulledTogether.x+=pullDx; 
                 this.pulledTogether.y+=pullDy;
+                this.pulledTogether.r+=pullDr; 
             }
         }
         else {
-            this.x-=pullDx; this.y-=pullDy;
+            this.x-=pullDx; this.y-=pullDy; this.r-=pullDr;
             if (this.pulledTogether!=null) {
                 this.pulledTogether.x-=pullDx; 
                 this.pulledTogether.y-=pullDy;
+                this.pulledTogether.r-=pullDr; 
             }
             if (this.turnedTogetherIn!=null) {
                 this.turnedTogetherIn.value=this.value;
@@ -339,8 +341,8 @@ class UiVoltDekor extends pObject {
 
 class FuncKnob extends DoubleKnob {
     constructor(pX,pY) {
-        super(ctx,pX,pY,bufgen.length,33,"Func                         ","func",35,19);
-        this.dutyLabel=new Label(ctx,pX+40,pY-55,"Param",12);
+        super(ctx,pX,pY,bufgen.length,33,"Func                         ","func",42,25);
+        this.dutyLabel=new Label(ctx,pX+40,pY-61,"Param",12);
         this.dutyLabel.bgcolor=hl_gray;
         this.dutyLabel.background=true;
         this.k.value=0;
@@ -350,7 +352,7 @@ class FuncKnob extends DoubleKnob {
         this.k_.value0=false;
         this.k.limit=-1;
         this.k_.limit=-1;
-        this.iconCircle(pX-8,pY,50,bufgen);
+        this.iconCircle(pX-8,pY,55,bufgen);
     }
     iconCircle(x,y,r,bufgen) {
         var n=bufgen.length;
