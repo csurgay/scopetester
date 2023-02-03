@@ -1,5 +1,5 @@
-const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.35";
-const expdate="Feb, 2, 2023";
+const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.36";
+const expdate="Feb, 3, 2023";
 var canvas, ctx, debugcanvas, debugctx, logWindow, traceString="", now;
 var scope, siggen, presetManager; // global objects
 var no_images_to_load, vfdred, vfd, vfd_, led_on_powers, led_on, led_off_powers, led_off, led_red; // canvas images

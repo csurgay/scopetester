@@ -179,11 +179,11 @@ class CalibPot extends Knob {
     draw(ctx) {
         ctx.beginPath();
         ctx.fillStyle="rgb(30,30,30)";
-        ctx.arc(this.x+this.r,this.y+this.r,10,0,2*Math.PI);
+        ctx.arc(this.x+this.r,this.y+this.r,8,0,2*Math.PI);
         ctx.fill();
         ctx.beginPath();
         ctx.fillStyle="rgb(120,120,120)";
-        ctx.arc(this.x+this.r,this.y+this.r,6,0,2*Math.PI);
+        ctx.arc(this.x+this.r,this.y+this.r,5,0,2*Math.PI);
         ctx.fill();
         ctx.beginPath();
         ctx.lineWidth=3;

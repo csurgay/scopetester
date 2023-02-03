@@ -1,6 +1,6 @@
 var d, dd; // for UI layout geometry calculations
 var ast, asl, asx, asy; // astigm control value, line multiplication, x,y direction
-var illum, int={}, blur1, alpha1; // for scale grid illumination, inensity and focus blur value
+var illum, int={}, blur={}, alpha1; // for scale grid illumination, inensity and focus blur value
 var Q,QI; // for frequency calculations
 var tptr=[0,0], lastTptr=[0,0], tcond; // trigger pointer, last valid tptr, trigger condition
 var currValue, prevValue; // curr and prev y value for trigger condition calc
@@ -121,6 +121,21 @@ class Scope extends pObject {
         ctx.fill();
     }
     drawGrid(ctx,illumgrid) {
+        if (b_power.state==1 && illum>0) {
+            var d1=50, d2=65;
+            var ax=[this.x-d1,this.x-d1,this.x+this.w+d1,this.x+this.w+d1];
+            var ay=[this.y+d2,this.y+this.h-d2,this.y+d2,this.y+this.h-d2];
+            for (let i=0; i<4; i++) {
+                var x=ax[i]; var y=ay[i];
+                ctx.beginPath();
+                var grd = ctx.createRadialGradient(x,y,d1,x,y,d2);
+                grd.addColorStop(0,"rgba("+illum+", "+illum+", "+illum+",0.5)");
+                grd.addColorStop(1, "rgba(50, 100, 50, 0)");
+                ctx.arc(x,y,d2,0,2*Math.PI);
+                ctx.fillStyle=grd;
+                ctx.fill();
+            }
+        }
         ctx.beginPath();
         if (illumgrid=="grid") 
             ctx.strokeStyle = "rgba(0,25,0,1.0)";
@@ -129,11 +144,11 @@ class Scope extends pObject {
         d=this.d;
         dd=this.dd;
         illum=Math.floor(155*k_illum.getValue()/(k_illum.ticks-1));
-        if (illum>0) {
+        if (b_power.state==1 && illum>0) {
             illum=100+illum;
             ctx.strokeStyle = "rgba("+illum+", "+illum+", "+illum+",0.75)";
         }
-        if (illumgrid=="grid" || illumgrid=="illum" && illum>0) {
+        if (illumgrid=="grid" || illumgrid=="illum" && b_power.state==1 && illum>0) {
             for (let i=dd; i<=this.w-dd+1; i+=d) {
                 ctx.moveTo(this.x+i,this.y+dd);
                 ctx.lineTo(this.x+i,this.y+this.h-dd);
@@ -273,14 +288,14 @@ class Scope extends pObject {
         else if (b_ch2tr.state==1) tptr[0]=tptr[1];
     }
     astigmCalc() {
-        ast=k_astigm.getValue(); asl=2*Math.abs(ast)+1;
-        asx=ast*Math.sin(Math.PI*ast/k_astigm.ticks/2)/k_astigm.ticks;
-        asy=ast*Math.cos(Math.PI*ast/k_astigm.ticks/2)/k_astigm.ticks;
-        if (ast==0) { asx=0; asy=0; }
+        ast=k_astigm.getValue();
+        asl=Math.abs(ast);
+        asx=0; asy=0;
+        if (ast>0) asx=asl/3+1; else if (ast<0) asy=asl/3+1;
     }
     beamControl(beamLength) {
         // beam intensity, focus blur and astigm
-        int["astigm"]=1-Math.abs(ast)*2/k_astigm.ticks; // 0..1
+        int["astigm"]=2*Math.abs(ast)/k_astigm.ticks; // 0..1
         if (!isNaN(beamLength)) {
             int["beamlength"]=beamLength; // 0 40 2000 2000000
             int["beam"]=8000/(beamLength+5000);
@@ -300,7 +315,7 @@ class Scope extends pObject {
             *int["knob"]
             *int["power"]
             *int["expdays"]
-            *int["astigm"]
+//            *int["astigm"]
             *int["beam"]
             *int["timebase"]
             );
@@ -309,13 +324,13 @@ class Scope extends pObject {
         if (int["screen"]>350) int["screen"]=350;
         alpha1=Math.round(100*int["screen"]/255)/100;
         if (alpha1>1) alpha1=1; if (alpha1<0.05) alpha1=0.05;
-        alpha1=1;
-        lineWidth=int["screen"]/100+Math.abs(blur1/2);
+        blur["screen"]=Math.round(3*(int["astigm"]+2*blur["knob"]));
+        alpha1=1-blur["screen"]/10;
+        lineWidth=int["screen"]/100+blur["screen"];
         if (int["screen"]>200) lineWidth+=((int["screen"]-200)/50);
         lineWidth=Math.round(100*lineWidth)/100;
-        blurWidth=Math.abs(blur1/2);
+        blurWidth=Math.abs(blur["screen"]/2);
         strokeStyle="rgba(0,"+int["screen"]+",0,"+alpha1+")";
-//        if (b_debug.state==1) log(strokeStyle+" "+lineWidth+" "+blurWidth);
     }
     setStroke() {
         ctx.strokeStyle=strokeStyle;
@@ -356,13 +371,13 @@ class Scope extends pObject {
         this.triggerSeek();
         // intensity and focus
         int["knob"]=(k_intensity.getValue()+8)/16; // 0..1
-        blur1=k_focus.getValue();
+        blur["knob"]=Math.abs(k_focus.getValue()/8); // 0..1
         // draw beams
         this.drawScreen(ctx,drawShadow);
-        this.drawGrid(ctx,"grid");
         ctx.save();
         roundRect(ctx, this.x+3, this.y+3, this.w-6, this.h-6, 20);
         ctx.clip();
+        this.drawGrid(ctx,"grid");
         this.astigmCalc();
         // imprint text rolling
         if (b_power.state==1 && imprintY!=1000) {
@@ -412,17 +427,18 @@ class Scope extends pObject {
                     // beam length for beam intensity calcukation
                     sumdelta[c]=0;
                     // astigm multiline
-                    for (let k=0; k<asl; k++) {
+                    var ro=Math.sign(asl);
+                    for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
                         var ii=findState=="off"?DL1:((DL1+findValue*(DL/2+(DL1-DL/2)/2+px0-px))/(findValue+1));
                         ctx.moveTo(px+ii*mag+k*asx,py[c]-dispch[c][ii+tptr[0]]-k_rot.getValue()*DL/500+k*asy);
                         for (let i=DL1+1; i<=DL2; i++) {
                             ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
                             ctx.lineTo(px+ii*mag+k*asx,py[c]-dispch[c][i+tptr[0]]
                                 -k_rot.getValue()*(DL/2-ii)/250+k*asy);
-                            if (k==0) sumdelta[c]+=Math.abs(dispch[c][i+tptr[0]]-dispch[c][i-1+tptr[0]]);
+                            sumdelta[c]+=Math.abs(dispch[c][i+tptr[0]]-dispch[c][i-1+tptr[0]]);
                         }
                     }
-                    sumdelta[c]/=1; if (findState!="off") sumdelta[c]/=findValue;
+                    if (findState!="off") sumdelta[c]/=findValue;
                     this.stroke(c);
                 }
             }
@@ -444,27 +460,29 @@ class Scope extends pObject {
             // actual beem drawing
             ctx.beginPath();
             sumdelta[2]=0;
-            for (let k=0; k<asl; k++) {
+            var ro=Math.sign(asl);
+            for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
 //                ctx.moveTo(px+dispch[0][DL1]+k*asx,pyx-dispch[1][DL1]+k*asy);
                 ctx.moveTo(px+dispch[0][0]+k*asx,pyx-dispch[1][0]+k*asy);
 //                for (let i=DL1+1; i<DL2; i++) {
                 for (let i=1; i<=DL; i++) {
                     ctx.lineTo(px+dispch[0][i]+k*asx,pyx-dispch[1][i]+k*asy);
-                    if (k==0) sumdelta[2]+=Math.sqrt((dispch[0][i]-dispch[0][i-1])
+                    sumdelta[2]+=Math.sqrt((dispch[0][i]-dispch[0][i-1])
                         *(dispch[0][i]-dispch[0][i-1])
                         +(dispch[1][i]-dispch[1][i-1])*(dispch[1][i]-dispch[1][i-1]));
                     if (isNaN(sumdelta[2])) console.error("sumdelta[2] NaN i="+i);
                 }
                 ctx.lineTo(px+dispch[0][0]+k*asx,pyx-dispch[1][0]+k*asy);
             }
-            sumdelta[2]/=1; if (findState!="off") sumdelta[2]/=findValue;
+            if (findState!="off") sumdelta[2]/=findValue;
             this.stroke(2);
         }
         // Beam for Mode (ADD, AM)
         else {
             ctx.beginPath();
             sumdelta[2]=0;
-            for (let k=0; k<asl; k++) {
+            var ro=Math.sign(asl);
+            for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
                 var ii=findState=="off"?DL1:((DL1+findValue*(DL/2+(DL1-DL/2)/2+px0-px))/(findValue+1));
                 ctx.moveTo(px+ii+k*asx,py0-this.calcModeY(-1,dispch[0][ii+tptr[0]],
                     dispch[1][ii+tptr[0]])-k_rot.getValue()*DL/500+k*asy);
@@ -472,11 +490,11 @@ class Scope extends pObject {
                     ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
                     ctx.lineTo(px+ii+k*asx,py0-this.calcModeY(-1,dispch[0][i+tptr[0]],
                         dispch[1][i+tptr[0]])-k_rot.getValue()*(DL/2-ii)/250+k*asy);
-                    if (k==0) sumdelta[2]+=Math.abs(this.calcModeY(-1,dispch[0][i-1+tptr[0]],
+                    sumdelta[2]+=Math.abs(this.calcModeY(-1,dispch[0][i-1+tptr[0]],
                         dispch[1][i-1+tptr[0]])-this.calcModeY(-1,dispch[0][i+tptr[0]],dispch[1][i+tptr[0]]));
                 }
             }
-            sumdelta[2]/=1; if (findState!="off") sumdelta[2]/=findValue;
+            if (findState!="off") sumdelta[2]/=findValue;
             this.stroke(2);
         }
         // FFT draw
@@ -574,8 +592,8 @@ class Scope extends pObject {
             }
             ctx.fill();
         }
-        ctx.restore();
         this.drawGrid(ctx,"illum");
+        ctx.restore();
         if (!drawInTimeout && timebase>=slowLimit) { 
             drawInTimeout=true;
             setTimeout(()=>callDraw(ctx,"noShadow"),1);
