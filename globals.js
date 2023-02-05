@@ -1,4 +1,4 @@
-const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.37";
+const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.38";
 const expdate="Feb, 5, 2023";
 var canvas, ctx, debugcanvas, debugctx, logWindow, traceString="", now;
 var scope, siggen, presetManager; // global objects
@@ -128,6 +128,7 @@ KETCSATORNAS JELGENERATOR
 GAUSS, PULSE, SINC, ECG, NTSC, MORSE...
 MODULACIO
 SZTEREO KIMENET, AMIVEL IGAZI SCOPE IS TESZTELHETO!
+ALT/CHOP MODE
 XY LISSAJOUS
 TRIGGER
 DELAY
@@ -144,7 +145,6 @@ DELTA READING
 ADDING NOISE
 EYE PATTERN
 SAVE PRESET
-SLOW SWEEPS AND CHOP MODE
 ADSR ENVELOPES`;
 var imprintY=1000; // 1000 is not drawing imprint text
 var imprintTimer;

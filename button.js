@@ -455,12 +455,12 @@ class DebugButton extends Button {
                     presetManager.add(5,"wheel",siggen[1].k_func.k,0,-1);
                     presetManager.add(3,"wheel",siggen[0].k_scale,0,-1);
                     presetManager.add(3,"wheel",siggen[1].k_scale,0,-1);
+                    presetManager.add(7,"wheel",k_time.k,0,-1);
                     presetManager.add(12,"wheel",siggen[1].k_phase.k,0,1);
                     presetManager.add(10,"wheel",scope.ch[0].k_ypos.k,0,1);
                     presetManager.add(10,"wheel",scope.ch[1].k_ypos.k,0,-1);
                     presetManager.add(1,"wheel",scope.ch[0].k_volts.k,0,1);
                     presetManager.add(1,"wheel",scope.ch[1].k_volts.k,0,1);
-                    presetManager.add(7,"wheel",k_time.k,0,-1);
                 }
                 initChannels();
                 draw(ctx);

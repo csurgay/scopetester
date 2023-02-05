@@ -104,265 +104,6 @@ class Scope extends pObject {
         b_mixed=new PushButton(ctx,892,165,pbw,pbh,"Mixed  ","on");
         dualtb_mode=new Radio(892,165,[b_a,b_ainten,b_b,b_aandb,b_mixed]);
     }
-    drawFrame(ctx) {
-        ctx.beginPath();
-        ctx.strokeStyle = "rgb(25, 50, 25)";
-        ctx.lineWidth=10;
-        roundRect(ctx, this.x-5, this.y-5, this.w+10, this.h+10, 20);
-        ctx.stroke();
-    }
-    drawScreen(ctx,drawShadow="No-drawShadow") { // egyelőre nincs árnyék, mert slow sweep-nél eltűnik
-        // draw screen
-        if (drawShadow=="drawShadow") {
-            ctx.beginPath();
-            ctx.fillStyle = shadowcolor;
-            roundRect(ctx, this.x+5, this.y+5, this.w+15, this.h+15, 20);
-            ctx.fill();
-        }
-        this.drawFrame(ctx);
-        ctx.beginPath();
-        ctx.fillStyle = "rgba(50, 100, 50, 1)";
-        roundRect(ctx, this.x, this.y, this.w, this.h, 20);
-        ctx.stroke();
-        ctx.fill();
-    }
-    drawGrid(ctx,illumgrid) {
-        if (b_power.state==1 && illum>0) {
-            var d1=50, d2=65;
-            var ax=[this.x-d1,this.x-d1,this.x+this.w+d1,this.x+this.w+d1];
-            var ay=[this.y+d2,this.y+this.h-d2,this.y+d2,this.y+this.h-d2];
-            for (let i=0; i<4; i++) {
-                var x=ax[i]; var y=ay[i];
-                ctx.beginPath();
-                var grd = ctx.createRadialGradient(x,y,d1,x,y,d2);
-                grd.addColorStop(0,"rgba("+illum+", "+illum+", "+illum+",0.5)");
-                grd.addColorStop(1, "rgba(50, 100, 50, 0)");
-                ctx.arc(x,y,d2,0,2*Math.PI);
-                ctx.fillStyle=grd;
-                ctx.fill();
-            }
-        }
-        ctx.beginPath();
-        if (illumgrid=="grid") 
-            ctx.strokeStyle = "rgba(0,25,0,1.0)";
-        ctx.lineWidth=1;
-        // draw grid
-        d=this.d;
-        dd=this.dd;
-        illum=Math.floor(155*k_illum.getValue()/(k_illum.ticks-1));
-        if (b_power.state==1 && illum>0) {
-            illum=100+illum;
-            ctx.strokeStyle = "rgba("+illum+", "+illum+", "+illum+",0.75)";
-        }
-        if (illumgrid=="grid" || illumgrid=="illum" && b_power.state==1 && illum>0) {
-            for (let i=dd; i<=this.w-dd+1; i+=d) {
-                ctx.moveTo(this.x+i,this.y+dd);
-                ctx.lineTo(this.x+i,this.y+this.h-dd);
-            }
-            for (let i=dd; i<=this.h-dd+1; i+=d) {
-                ctx.moveTo(this.x+dd,this.y+i);
-                ctx.lineTo(this.x+this.w-dd,this.y+i);
-            }
-            // draw hair
-            for (let i=dd; i<=this.w-dd+1; i+=d/5) {
-                ctx.moveTo(this.x+i,this.y+this.h/2-dd/4);
-                ctx.lineTo(this.x+i,this.y+this.h/2+dd/4);
-            }
-            for (let i=dd; i<=this.h-dd+1; i+=d/5) {
-                ctx.moveTo(this.x+this.w/2-dd/4,this.y+i);
-                ctx.lineTo(this.x+this.w/2+dd/4,this.y+i);
-            }
-            for (let i=dd; i<=this.w-dd+1; i+=d/5) {
-                ctx.moveTo(this.x+i,this.y+dd+2*d-dd/8);
-                ctx.lineTo(this.x+i,this.y+dd+2*d+dd/8);
-            }
-            for (let i=dd; i<=this.w-dd+1; i+=d/5) {
-                ctx.moveTo(this.x+i,this.y+dd+6*d-dd/8);
-                ctx.lineTo(this.x+i,this.y+dd+6*d+dd/8);
-            }
-            // draw dots
-            for (let i=dd; i<=this.w-dd+1; i+=d/5) {
-                ctx.moveTo(this.x+i,this.y+dd+6*d+d/2);
-                ctx.lineTo(this.x+i,this.y+dd+6*d+d/2+1);
-            }
-            for (let i=dd; i<=this.w-dd+1; i+=d/5) {
-                ctx.moveTo(this.x+i,this.y+dd+d+d/2);
-                ctx.lineTo(this.x+i,this.y+dd+d+d/2+1);
-            }
-        }
-        ctx.stroke();
-    }
-    // channel data calc into dispch[c], findValue calc
-    calcDispch(mag) {
-        var minY=1000000, maxY=-1000000; // for find
-        Q=timebase*L/DL/mag;
-        // delay
-        delaybase=tb[k_time.k.getValueB()+Math.floor(k_time.k.ticks/2-1)]*
-            tb_[k_time.k_.getValue()+Math.floor(k_time.k_.ticks/2)];
-        delay=(10*k_delay.k.getValue()+k_delay.k_.getValue()/10)*delaybase;
-        delay=delay;
-        // loop of channels: second channel first!
-        for (let c=1; c>=0; c--) {
-            // Volts/Div
-            var l=this.ch[c].k_volts.k.getValue(); l=(l+Math.floor(vpd.length/2))%vpd.length;
-            var l_=this.ch[c].k_volts.k_.getValue(); l_=(l_+Math.floor(vpd_.length/2))%vpd_.length;
-            volts[c]=vpd[l]*vpd_[l_];
-            // x and y pos
-            py0=this.y+dd+4*d;
-            py[c]=-10*this.ch[c].k_ypos.k.getValue()-this.ch[c].k_ypos.k_.getValue();
-            if (findState!="off") py[c]/=findValue;
-            py[c]+=py0;
-            px0=this.x+dd;
-            px=px0+50*k_xpos.k.getValue()+k_xpos.k_.getValue();
-            // averages for AC coupling
-            avgs[c]=0; var n=0;
-            for (let i=0; i<sch[c].length; i++) {
-                if (!isNaN(sch[c][i])) {
-                    n++;
-                    avgs[c]+=sch[c][i];
-                }
-            }
-            avgs[c]/=n;
-            if (this.ch[c].b_ac.state==0) avgs[c]=0;
-            // main y value buffer calculation
-            var minsch=Math.min(...sch[c]);
-            var maxsch=Math.max(...sch[c]);
-            NaNerror=false;
-            for (let i=0; i<L; i++) if (!NaNerror) {
-                // if CH is switched on
-                if (scope.ch[c].b_gnd.state==0 && siggen[c].b_ch.state==1) {
-                    // main y calculation
-                    QI=Math.floor(freqs[c]*(10.0*Q*i+delay*L)%(schlen[c]));
-                    if (freqs[c]*10*Q>=L/3) { 
-                        dispch[c][i]=i%2==0?(minsch-avgs[c])/volts[c]/2:(maxsch-avgs[c])/volts[c]/2;
-                    }
-                    // main formula for y calc
-                    else {
-//                        if (b_xy.state==1) QI=i%schlen[c];
-                        dispch[c][i]=(sch[c][QI]-avgs[c])/volts[c]/2;
-                        if (isNaN(dispch[c][i])) {
-                            error("NaN: QI="+QI);
-                        }
-                    }
-                    // find values calc
-                    if (findState!="off") dispch[c][i]/=findValue;
-                    if (dispch[c][i]<minY) minY=dispch[c][i];
-                    if (dispch[c][i]>maxY) maxY=dispch[c][i];
-                }
-                else {
-                    dispch[c][i]=0;
-                }
-                if (isNaN(dispch[c][i])) {
-                    error("NaN: dispch["+c+"]["+i+"]");
-                    NaNerror=true;
-                }
-            }
-        }
-        if (findState=="search" && minY>-4*dd && maxY<4*dd && findValue>20) {
-            findState="found";
-        }
-    }
-    // trigger condition seeking
-    triggerSeek() {
-        slope=k_slope.getValue();
-        tlevel=10*k_trigger.k.getValue()+k_trigger.k_.getValue();
-        b_limit.state=0;
-        for (let c=1; c>=0; c--) {
-            tcond=false; // trigger condition
-            prevValue=dispch[c][0];
-            if (b_mode.state==1) prevValue=this.calcModeY(c,dispch[0][0],dispch[1][0]);
-            tptr[c]=-1; // init trigger pointer
-            while (!tcond && tptr[c]<L) {
-                tptr[c]++;
-                currValue=dispch[c][tptr[c]];
-                if (b_mode.state==1) currValue=this.calcModeY(c,dispch[0][tptr[c]],dispch[1][tptr[c]]);
-                if (k_slope.getValue()==0 && prevValue<tlevel && currValue>=tlevel) tcond=true;
-                if (k_slope.getValue()==1 && prevValue>tlevel && currValue<=tlevel) tcond=true;
-                prevValue=currValue;
-            }
-            if (b_chtr[c].state==1 || b_mode.state==1) {
-                if (tptr[c]>=L) {
-                    tptr[c]=lastTptr[c];
-                    b_limit.state=1;
-                }
-            }
-            lastTptr[c]=tptr[c];
-        }
-        if (b_auto.state==1) tptr[0]=0;
-        else if (b_ch2tr.state==1) tptr[0]=tptr[1];
-    }
-    astigmCalc() {
-        ast=k_astigm.getValue();
-        asl=Math.abs(ast);
-        asx=0; asy=0;
-        if (ast>0) asx=asl/5+1; else if (ast<0) asy=asl/5+1;
-    }
-    beamControl(beamLength) {
-        // beam intensity, focus blur and astigm
-        int["astigm"]=2*Math.abs(ast)/k_astigm.ticks; // 0..1
-        if (!isNaN(beamLength)) {
-            int["beamlength"]=beamLength; // 0 40 2000 2000000
-            int["beam"]=8000/(beamLength+5000);
-            if (b_xy.state==1) int["beam"]*=1.5;
-            if (int["beam"]<0) int["beam"]=0;
-        }
-        int["timebase"]=(Math.log(timebase)+40)/49; // 0..1
-        expdays=(new Date()-new Date(expdate))/1000/3600/24;
-        int["expdays"]=1;
-        if (expdays>7) {
-            int["expdays"]=(10-expdays)/10;
-            if (int["expdays"]<0) int["expdays"]=0; // .3 .2 .1 0...
-        }
-        int["power"]=1;
-        if (powerState=="start") int["power"]=powerValue/230;
-        int["screen"]=Math.round(128+222
-            *int["knob"]
-            *int["power"]
-            *int["expdays"]
-//            *int["astigm"]
-            *int["beam"]
-            *int["timebase"]
-            );
-        if (findState!="off") 
-            int["screen"]+=20*Math.log(findValue);
-        if (int["screen"]>350) int["screen"]=350;
-        alpha1=Math.round(100*int["screen"]/255)/100;
-        if (alpha1>1) alpha1=1; if (alpha1<0.05) alpha1=0.05;
-        blur["screen"]=Math.round(3*(int["astigm"]+2*blur["knob"]));
-        alpha1=1-blur["screen"]/10;
-        lineWidth=int["screen"]/100+blur["screen"];
-        if (int["screen"]>200) lineWidth+=((int["screen"]-200)/50);
-        lineWidth=Math.round(100*lineWidth)/100;
-        blurWidth=Math.abs(blur["screen"]/2);
-        strokeStyle="rgba(0,"+int["screen"]+",0,"+alpha1+")";
-    }
-    setStroke() {
-        ctx.strokeStyle=strokeStyle;
-        ctx.lineWidth=lineWidth;
-        ctx.filter="blur("+blurWidth+"px)";
-        ctx.lineCap = "round";
-    }
-    stroke() {
-        this.beamControl(sumdelta);
-        this.setStroke();
-        if (int["screen"]>250) {
-            for (let i=7; i>0; i--) {
-                var glareq=175;
-                ctx.lineWidth=(int["screen"]-250)/10*i;
-                ctx.strokeStyle="rgba("+(int["screen"]-glareq)/8+","+(int["screen"]-glareq)+","+(int["screen"]-glareq)/8+",0.07)";
-                ctx.stroke();
-            }
-        }
-        this.setStroke();
-        ctx.stroke();
-        if (int["screen"]>=300) {
-            ctx.lineWidth=1;
-            if (int["screen"]>=310) this.ctx.lineWidth=2;
-            ctx.strokeStyle="rgb(255,255,255)";
-            ctx.stroke();
-        }
-        ctx.lineWidth=1;
-    }
     draw(ctx,drawShadow) {
         if (drawInProgress || drawInTimeout) { return; }
         drawInProgress=true;
@@ -429,32 +170,38 @@ class Scope extends pObject {
         }
         // Beam for Lissajous XY
         if (b_xy.state==1) {
-            // rotation
-            if (k_rot.getValue()!=0) {
-                var fi=k_rot.getValue()*1*Math.PI/30;
-                for (let i=0; i<L; i++) {
-                    var x1=dispch[0][i], y1=dispch[1][i];
-                    dispch[0][i]=x1*Math.cos(fi)+y1*Math.sin(fi);
-                    dispch[1][i]=-x1*Math.sin(fi)+y1*Math.cos(fi);
+            for (let c=0; c<2; c++) {
+                pyd=(py[0]+py[1])/2;
+                // calc pixelch
+                for (let i=0; i<DL; i++) {
+                    pixelch[0][0][i]=px+5*d+dispch[0][i];
+                    pixelch[0][1][i]=pyd-dispch[1][i]-k_skew.getValue()*(DL/2-i)/100;
+                }
+                // rotation
+                if (k_rot.getValue()!=0) {
+                    var fi=-k_rot.getValue()*1*Math.PI/30;
+                    for (let i=0; i<L; i++) {
+                        var x1=pixelch[0][0][i]-px0-5*d, y1=pixelch[0][1][i]-py0;
+                        pixelch[0][0][i]=px0+5*d+x1*Math.cos(fi)+y1*Math.sin(fi);
+                        pixelch[0][1][i]=py0-x1*Math.sin(fi)+y1*Math.cos(fi);
+                    }
                 }
             }
-            px+=5*d;
-            var pyx=(py[0]+py[1])/2;
             ctx.beginPath();
             sumdelta=0;
             var ro=Math.sign(asl);
             for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
 //                ctx.moveTo(px+dispch[0][DL1]+k*asx,pyx-dispch[1][DL1]+k*asy);
-                ctx.moveTo(px+dispch[0][0]+k*asx,pyx-dispch[1][0]+k*asy);
+                ctx.moveTo(pixelch[0][0][0]+k*asx,pixelch[0][1][0]+k*asy);
 //                for (let i=DL1+1; i<DL2; i++) {
-                for (let i=1; i<=DL; i++) {
-                    ctx.lineTo(px+dispch[0][i]+k*asx,pyx-dispch[1][i]+k*asy);
-                    sumdelta+=Math.sqrt((dispch[0][i]-dispch[0][i-1])
-                        *(dispch[0][i]-dispch[0][i-1])
-                        +(dispch[1][i]-dispch[1][i-1])*(dispch[1][i]-dispch[1][i-1]));
+                for (let i=1; i<DL; i++) {
+                    ctx.lineTo(pixelch[0][0][i]+k*asx,pixelch[0][1][i]+k*asy);
+                    sumdelta+=Math.sqrt((pixelch[0][0][i]-pixelch[0][0][i-1])
+                        *(pixelch[0][0][i]-pixelch[0][0][i-1])
+                        +(pixelch[0][1][i]-pixelch[0][1][i-1])*(pixelch[0][1][i]-pixelch[0][1][i-1]));
                     if (isNaN(sumdelta)) console.error("sumdelta NaN i="+i);
                 }
-                ctx.lineTo(px+dispch[0][0]+k*asx,pyx-dispch[1][0]+k*asy);
+                ctx.lineTo(pixelch[0][0][0]+k*asx,pixelch[0][1][0]+k*asy);
             }
             if (findState!="off") sumdelta/=findValue;
             this.stroke();
@@ -467,18 +214,19 @@ class Scope extends pObject {
                     pyd=(py[0]+py[1])/2;
                     c=1;
                 }
+                // calc pixelch
                 for (let i=DL1; i<=DL2; i++) {
                     ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
                     pixelch[c][0][i]=px+ii*mag;
                     pixelch[c][1][i]=pyd-this.calcModeY(c,dispch[0][i+tptr[0]],
                         dispch[1][i+tptr[0]])-k_skew.getValue()*(DL/2-ii)/100;
                 }
-            // rotation
+                // rotation
                 if (k_rot.getValue()!=0) {
                     var fi=-k_rot.getValue()*1*Math.PI/360;
                     for (let i=0; i<L; i++) {
-                        var x1=pixelch[c][0][i]-px-dd-5*d, y1=pixelch[c][1][i]-py0;
-                        pixelch[c][0][i]=px+dd+5*d+x1*Math.cos(fi)+y1*Math.sin(fi);
+                        var x1=pixelch[c][0][i]-px0-dd-5*d, y1=pixelch[c][1][i]-py0;
+                        pixelch[c][0][i]=px0+dd+5*d+x1*Math.cos(fi)+y1*Math.sin(fi);
                         pixelch[c][1][i]=py0-x1*Math.sin(fi)+y1*Math.cos(fi);
                     }
                 }
@@ -489,7 +237,7 @@ class Scope extends pObject {
                 if (b_ch1.state==1 && cc==1) continue;
                 else if (b_ch2.state==1 && cc==0) continue;
                 else if ((b_add.state==1 || b_mod.state==1) && cc==0) continue;
-                if (b_alt.state==1 && timebase>=slowLimit) c=altc;
+                if (b_alt.state==1 && timebase>=slowLimit && b_storage.state==0) c=altc;
                 ctx.beginPath();
                 sumdelta=0;
                 var ro=Math.sign(asl);
@@ -507,7 +255,7 @@ class Scope extends pObject {
             }
         }
         // FFT draw
-        if (b_fft.state==1 && b_xy.state!=1) {
+        if (b_fft.state==1 && b_xy.state!=1 && b_ch2.state!=1 && b_alt.state!=1 && b_chop.state!=1) {
             for (let i=0; i<FFTN; i++) {
                 var ii=Math.floor(DL*i/FFTN);
                 fftIn[i]=this.calcModeY(0,dispch[0][ii],dispch[1][ii])/127;
@@ -544,63 +292,7 @@ class Scope extends pObject {
             ctx.lineTo(yResult,ROYSIG[1]-9);
             ctx.stroke();
         }
-        // Readout
-        if (b_power.state==1 && b_readout.state==1) {
-            ctx.beginPath();
-            ctx.fillStyle="rgba(0,240,0,0.9)";
-            ctx.font="bold 16px Arial";
-            ctx.textAlign="left";
-            ctx.textBaseline="middle";
-            for (let c=0; c<2; c++) {
-                if (b_chon[c].state==1 || b_alt.state==1 || b_chop.state==1 || (c==0 && (b_add.state==1 || b_mod.state==1))) {
-                    var readoutText=["CH1: ","CH2: "][c]+bufgen[siggen[c].k_func.k.getValue()].name;
-                        if (siggen[c].k_func.k_.getValue()!=0) readoutText+=" ("+siggen[c].k_func.k_.getValue()+")";
-                    drawText(readoutText,ROXSIG,ROYSIG[c]);
-                    if (k_cursor.k.pulled) {
-                        readoutText="V";
-                        var ptr=5*d+xCur+tptr[0];
-                        if (ptr>L) {
-                            yResult=""; readoutText="TRIG!";
-                        }
-                        else {
-                            yResult=dispch[c][ptr]*volts[c]/50;
-                            if (b_add.state==1 || b_mod.state==1) {
-                                yResult=scope.calcModeY(0,dispch[0][5*d+xCur+tptr[0]]*volts[0]/50,
-                                    dispch[1][5*d+xCur+tptr[0]]*volts[1]/50);
-                            }
-                            if (Math.abs(yResult)<0.1) {
-                                yResult*=1000;
-                                readoutText="mV";
-                            }
-                            yResult=Math.round(yResult*100)/100;
-                        }
-                        drawText(""+yResult+readoutText,ROXVOLTS,ROYSIG[c]);
-                    }
-                }
-            }
-            yResult=Math.round(timebase*1000)/1000;
-            readoutText="ms";
-            if (yResult<=0.05) {yResult*=1000; readoutText="us";}
-            else if (yResult>=100) {yResult/=1000; readoutText="sec";}
-            drawText("A: "+yResult+readoutText,ROXTB,ROYTB);
-
-            yResult=Math.round(delaybase*100000)/100000;
-            readoutText="ms";
-            if (yResult<=0.05) {yResult*=1000; readoutText="us";}
-            else if (yResult>=100) {yResult/=1000; readoutText="sec";}
-            yResult=Math.round(yResult*1000)/1000;
-            drawText("B: "+yResult+readoutText,ROXDB,ROYDB);
-
-            if (delay!=0) {
-                yResult=Math.round(delay*1000000)/1000000;
-                readoutText="ms";
-                if (yResult<=0.05) {yResult*=1000; readoutText="us";}
-                else if (yResult>=100) {yResult/=1000; readoutText="sec";}
-                yResult=Math.round(yResult*10000)/10000;
-                drawText("DLY: "+yResult+readoutText,ROXDLY,ROYDLY);
-            }
-            ctx.fill();
-        }
+        this.readout();
         this.drawGrid(ctx,"illum");
         ctx.restore();
         if (!drawInTimeout && timebase>=slowLimit) { 
@@ -608,34 +300,6 @@ class Scope extends pObject {
             setTimeout(()=>callDraw(ctx,"noShadow"),1);
         }
         drawInProgress=false;
-    }
-    calcModeY(c,ych0,ych1) {
-        if (b_ch1.state==1) return ych0;
-        else if (b_ch2.state==1) return ych1;
-        else if (b_add.state==1) return ych0+ych1;
-        else if (b_mod.state==1) return (ampls[0]+ampls[1])*ych0*ych1/ampls[0]/ampls[1];
-        else if (b_alt.state==1) return [ych0,ych1][c];
-        else if (b_chop.state==1) return [ych0,ych1][c];
-    }
-}
-function callDraw(ctx,drawShadow) {
-    drawInTimeout=false;
-    scope.draw(ctx,drawShadow);
-}
-class ScopeChannel {
-    constructor(c,pX,pY) {
-//        this.k_ypos=new Knob(ctx,240,pX+65,pY+247,20,481,0,"Pos Y","knob");
-        this.k_ypos=new DoubleKnob(ctx,pX+60,pY+255,201,201,"Pos Y","posy",25,15);
-        if (c==0) this.k_ypos.k.value=10; else if (c==1) this.k_ypos.k.value=-10;
-        this.k_ypos.setResetTogether();
-        this.k_volts=new VoltsKnob(pX-10,pY+280);
-        this.k_volts.k.value0=false;
-        this.k_volts.k_.value0=false;
-        this.b_ac=new PushButton(ctx,pX+58,pY+309,pbw,pbh,"AC",'on');
-        this.b_gnd=new PushButton(ctx,pX+58,pY+309,pbw,pbh,"Gnd",'on');
-        this.b_dc=new PushButton(ctx,pX+58,pY+309,pbw,pbh,"DC",'on');
-        this.b_dc.state=1;
-        this.acdc=new Radio(pX+58,pY+309,[this.b_ac,this.b_gnd,this.b_dc]);
     }
 }
  
