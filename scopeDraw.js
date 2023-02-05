@@ -86,7 +86,7 @@ Scope.prototype.drawGrid=function(ctx,illumgrid) {
     }
     ctx.stroke();
 }
-callDraw=function(ctx,drawShadow) {
+function callDraw(ctx,drawShadow) {
     drawInTimeout=false;
     scope.draw(ctx,drawShadow);
 }

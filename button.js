@@ -517,6 +517,7 @@ class ResetButton extends PushButton {
     clickXY(x,y) {
         if (b_power.state==1) {
             reset();
+            siggen[0].k_scale.value=7;
             initChannels();
             draw(ctx);
         }

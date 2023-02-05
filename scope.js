@@ -173,7 +173,7 @@ class Scope extends pObject {
             for (let c=0; c<2; c++) {
                 pyd=(py[0]+py[1])/2;
                 // calc pixelch
-                for (let i=0; i<DL; i++) {
+                for (let i=0; i<L; i++) {
                     pixelch[0][0][i]=px+5*d+dispch[0][i];
                     pixelch[0][1][i]=pyd-dispch[1][i]-k_skew.getValue()*(DL/2-i)/100;
                 }
@@ -191,17 +191,14 @@ class Scope extends pObject {
             sumdelta=0;
             var ro=Math.sign(asl);
             for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
-//                ctx.moveTo(px+dispch[0][DL1]+k*asx,pyx-dispch[1][DL1]+k*asy);
-                ctx.moveTo(pixelch[0][0][0]+k*asx,pixelch[0][1][0]+k*asy);
-//                for (let i=DL1+1; i<DL2; i++) {
-                for (let i=1; i<DL; i++) {
+                ctx.moveTo(pixelch[0][0][DL1]+k*asx,pixelch[0][1][DL1]+k*asy);
+                for (let i=DL1+1; i<=DL2; i++) {
                     ctx.lineTo(pixelch[0][0][i]+k*asx,pixelch[0][1][i]+k*asy);
                     sumdelta+=Math.sqrt((pixelch[0][0][i]-pixelch[0][0][i-1])
                         *(pixelch[0][0][i]-pixelch[0][0][i-1])
                         +(pixelch[0][1][i]-pixelch[0][1][i-1])*(pixelch[0][1][i]-pixelch[0][1][i-1]));
                     if (isNaN(sumdelta)) console.error("sumdelta NaN i="+i);
                 }
-                ctx.lineTo(pixelch[0][0][0]+k*asx,pixelch[0][1][0]+k*asy);
             }
             if (findState!="off") sumdelta/=findValue;
             this.stroke();
@@ -217,7 +214,7 @@ class Scope extends pObject {
                 // calc pixelch
                 for (let i=DL1; i<=DL2; i++) {
                     ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
-                    pixelch[c][0][i]=px+ii*mag;
+                    pixelch[c][0][i]=px+ii*mag; if (mag>1) pixelch[c][0][i]-=5*DL-DL/2;
                     pixelch[c][1][i]=pyd-this.calcModeY(c,dispch[0][i+tptr[0]],
                         dispch[1][i+tptr[0]])-k_skew.getValue()*(DL/2-ii)/100;
                 }
