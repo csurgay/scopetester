@@ -5,7 +5,7 @@ var Q,QI; // for frequency calculations
 var tptr=[0,0], lastTptr=[0,0], tcond; // trigger pointer, last valid tptr, trigger condition
 var currValue, prevValue; // curr and prev y value for trigger condition calc
 var slope, tlevel; // trigger level
-var px0,px,py0,py=[0,0]; // screen center lines for channels and dual
+var px0,px,py0,py=[0,0],pyd; // screen center lines for channels and dual
 var lineWidth, strokeStyle, blurWidth, expdays;
 var drawInProgress=false, drawInTimeout=false;
 var mag; // x10 mag multiplier (3.333 for dipsch, 3 for beamdraw)
@@ -34,11 +34,12 @@ class Scope extends pObject {
         b_ch1=new ChOnButton(795,1000,24,16,"CH1","on",false);
         b_ch2=new ChOnButton(795,1000,24,16,"CH2","on",false);
         b_chon=[b_ch1,b_ch2];
-        b_dual=new ChOnButton(795,1000,24,16,"CHOP","on",false);
+        b_alt=new ChOnButton(795,1000,24,16,"ALT","on",false);
+        b_chop=new ChOnButton(795,1000,24,16,"CHOP","on",false);
         b_add=new ChOnButton(795,1000,24,16,"ADD","on",false);
         b_mod=new ChOnButton(795,1000,24,16,"AM","on",false);
         b_xy=new ChOnButton(795,1000,24,16,"X-Y","on",false);
-        radio_mode=new Radio(795,1000,[b_dual,b_ch1,b_ch2,b_add,b_mod,b_xy],false);
+        radio_mode=new Radio(795,1000,[b_chop,b_alt,b_ch1,b_ch2,b_add,b_mod,b_xy],false);
         b_auto=new PushButton(ctx,892,530,pbw,pbh,"Auto","on");
         b_auto.state=1;
         b_ch1tr=new PushButton(ctx,892,530,pbw,pbh,"CH1","on");
@@ -294,7 +295,7 @@ class Scope extends pObject {
         ast=k_astigm.getValue();
         asl=Math.abs(ast);
         asx=0; asy=0;
-        if (ast>0) asx=asl/3+1; else if (ast<0) asy=asl/3+1;
+        if (ast>0) asx=asl/5+1; else if (ast<0) asy=asl/5+1;
     }
     beamControl(beamLength) {
         // beam intensity, focus blur and astigm
@@ -341,8 +342,8 @@ class Scope extends pObject {
         ctx.filter="blur("+blurWidth+"px)";
         ctx.lineCap = "round";
     }
-    stroke(c) {
-        this.beamControl(sumdelta[c]);
+    stroke() {
+        this.beamControl(sumdelta);
         this.setStroke();
         if (int["screen"]>250) {
             for (let i=7; i>0; i--) {
@@ -364,7 +365,6 @@ class Scope extends pObject {
     }
     draw(ctx,drawShadow) {
         if (drawInProgress || drawInTimeout) { return; }
-//        console.log("draw "+Date.now());
         drawInProgress=true;
         d=this.d;
         dd=this.dd;
@@ -438,12 +438,10 @@ class Scope extends pObject {
                     dispch[1][i]=-x1*Math.sin(fi)+y1*Math.cos(fi);
                 }
             }
-            // screen center
             px+=5*d;
             var pyx=(py[0]+py[1])/2;
-            // actual beem drawing
             ctx.beginPath();
-            sumdelta[2]=0;
+            sumdelta=0;
             var ro=Math.sign(asl);
             for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
 //                ctx.moveTo(px+dispch[0][DL1]+k*asx,pyx-dispch[1][DL1]+k*asy);
@@ -451,24 +449,29 @@ class Scope extends pObject {
 //                for (let i=DL1+1; i<DL2; i++) {
                 for (let i=1; i<=DL; i++) {
                     ctx.lineTo(px+dispch[0][i]+k*asx,pyx-dispch[1][i]+k*asy);
-                    sumdelta[2]+=Math.sqrt((dispch[0][i]-dispch[0][i-1])
+                    sumdelta+=Math.sqrt((dispch[0][i]-dispch[0][i-1])
                         *(dispch[0][i]-dispch[0][i-1])
                         +(dispch[1][i]-dispch[1][i-1])*(dispch[1][i]-dispch[1][i-1]));
-                    if (isNaN(sumdelta[2])) console.error("sumdelta[2] NaN i="+i);
+                    if (isNaN(sumdelta)) console.error("sumdelta NaN i="+i);
                 }
                 ctx.lineTo(px+dispch[0][0]+k*asx,pyx-dispch[1][0]+k*asy);
             }
-            if (findState!="off") sumdelta[2]/=findValue;
-            this.stroke(2);
+            if (findState!="off") sumdelta/=findValue;
+            this.stroke();
         }
-        // Actual beam drawing for Dual, Ch1, Ch2
-        else if (b_dual.state==1 || b_ch1.state==1 || b_ch2.state==1) {
+        // Actual beam drawing for Dual, Ch1, Ch2, ADD, AM
+        else {
             for (let c=0; c<2; c++) {
-                var pyd=(py[c]+py[c])/2;
+                pyd=py[c];
+                if (b_add.state==1 || b_mod.state==1) {
+                    pyd=(py[0]+py[1])/2;
+                    c=1;
+                }
                 for (let i=DL1; i<=DL2; i++) {
                     ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
                     pixelch[c][0][i]=px+ii*mag;
-                    pixelch[c][1][i]=pyd-dispch[c][i+tptr[0]]-k_skew.getValue()*(DL/2-ii)/100;
+                    pixelch[c][1][i]=pyd-this.calcModeY(c,dispch[0][i+tptr[0]],
+                        dispch[1][i+tptr[0]])-k_skew.getValue()*(DL/2-ii)/100;
                 }
             // rotation
                 if (k_rot.getValue()!=0) {
@@ -480,43 +483,28 @@ class Scope extends pObject {
                     }
                 }
             }
-            for (let c=0; c<2; c++) if (c!=1 || b_dual.state!=1 || b_fft.state!=1) {
-                if (b_dual.state==1 || c==0 && b_ch1.state==1 || c==1 && b_ch2.state==1) {
-                    ctx.beginPath();
-                    sumdelta[c]=0;
-                    var ro=Math.sign(asl);
-                    for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
-                        ctx.moveTo(pixelch[c][0][DL1],pixelch[c][1][DL1]);
-                        for (let i=DL1+1; i<=DL2; i++) {
-                            ctx.lineTo(pixelch[c][0][i],pixelch[c][1][i]);
-                            sumdelta[c]+=Math.abs(dispch[c][i+tptr[0]]-dispch[c][i-1+tptr[0]]);
-                        }
+            // actual beam drawing
+            for (let cc=0; cc<2; cc++) {
+                var c=cc;
+                if (b_ch1.state==1 && cc==1) continue;
+                else if (b_ch2.state==1 && cc==0) continue;
+                else if ((b_add.state==1 || b_mod.state==1) && cc==0) continue;
+                if (b_alt.state==1 && timebase>=slowLimit) c=altc;
+                ctx.beginPath();
+                sumdelta=0;
+                var ro=Math.sign(asl);
+                for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
+                    ctx.moveTo(pixelch[c][0][DL1]+k*asx,pixelch[c][1][DL1]+k*asy);
+                    for (let i=DL1+1; i<=DL2; i++) {
+                        ctx.lineTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
+                        var deltaX=pixelch[c][0][i]-pixelch[c][0][i-1];
+                        var deltaY=pixelch[c][1][i]-pixelch[c][1][i-1];
+                        sumdelta+=Math.sqrt(deltaX*deltaX+deltaY*deltaY);
                     }
-                    if (findState!="off") sumdelta[c]/=findValue;
-                    this.stroke(c);
                 }
+                if (findState!="off") sumdelta/=findValue;
+                this.stroke();
             }
-        }
-        // Beam for Mode (ADD, AM)
-        else {
-            ctx.beginPath();
-            var pyd=(py[0]+py[1])/2;
-            sumdelta[2]=0;
-            var ro=Math.sign(asl);
-            for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
-                var ii=findState=="off"?DL1:((DL1+findValue*(DL/2+(DL1-DL/2)/2+px0-px))/(findValue+1));
-                ctx.moveTo(px+ii*mag+k*asx,pyd-this.calcModeY(-1,dispch[0][ii+tptr[0]],
-                    dispch[1][ii+tptr[0]])-k_rot.getValue()*DL/500+k*asy);
-                for (let i=DL1+1; i<DL2; i++) {
-                    ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
-                    ctx.lineTo(px+ii*mag+k*asx,pyd-this.calcModeY(-1,dispch[0][i+tptr[0]],
-                        dispch[1][i+tptr[0]])-k_rot.getValue()*(DL/2-ii)/250+k*asy);
-                    sumdelta[2]+=Math.abs(this.calcModeY(-1,dispch[0][i-1+tptr[0]],
-                        dispch[1][i-1+tptr[0]])-this.calcModeY(-1,dispch[0][i+tptr[0]],dispch[1][i+tptr[0]]));
-                }
-            }
-            if (findState!="off") sumdelta[2]/=findValue;
-            this.stroke(2);
         }
         // FFT draw
         if (b_fft.state==1 && b_xy.state!=1) {
@@ -564,7 +552,7 @@ class Scope extends pObject {
             ctx.textAlign="left";
             ctx.textBaseline="middle";
             for (let c=0; c<2; c++) {
-                if (b_chon[c].state==1 || b_dual.state==1 || (c==0 && (b_add.state==1 || b_mod.state==1))) {
+                if (b_chon[c].state==1 || b_alt.state==1 || b_chop.state==1 || (c==0 && (b_add.state==1 || b_mod.state==1))) {
                     var readoutText=["CH1: ","CH2: "][c]+bufgen[siggen[c].k_func.k.getValue()].name;
                         if (siggen[c].k_func.k_.getValue()!=0) readoutText+=" ("+siggen[c].k_func.k_.getValue()+")";
                     drawText(readoutText,ROXSIG,ROYSIG[c]);
@@ -626,7 +614,8 @@ class Scope extends pObject {
         else if (b_ch2.state==1) return ych1;
         else if (b_add.state==1) return ych0+ych1;
         else if (b_mod.state==1) return (ampls[0]+ampls[1])*ych0*ych1/ampls[0]/ampls[1];
-        else if (b_dual.state==1) return [ych0,ych1][c];
+        else if (b_alt.state==1) return [ych0,ych1][c];
+        else if (b_chop.state==1) return [ych0,ych1][c];
     }
 }
 function callDraw(ctx,drawShadow) {

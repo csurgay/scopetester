@@ -262,6 +262,7 @@ function reset() {
         if (siggen[c].b_inv.state==1) siggen[c].b_inv.clickXY(0,0);
     }
     presetManager.reset();
+//    presetManager.add(1,"wheel",siggen[0].k_scale,0,-1);
     if (k_cursor.k.pulled) {
         presetManager.add(1,"mousedown",k_cursor.k_,0,0,350);
         presetManager.add(1,"mouseup",k_cursor.k_,0,0);
@@ -331,7 +332,7 @@ class DebugButton extends Button {
                     presetManager.add(4,"wheel",siggen[0].k_scale,0,-1);
                     presetManager.add(3,"wheel",siggen[0].k_freq.k,0,-1);
                     presetManager.add(30,"wheel",siggen[1].k_freq.k,0,-1,7);
-                    presetManager.add(2,"wheel",k_mode,0,-1);
+                    presetManager.add(4,"wheel",k_mode,0,1);
                     presetManager.add(5,"wheel",k_time.k,0,-1,7);
                     initChannels();
                     presetManager.add(1,"wheel",k_monitor,0,-1);
@@ -342,7 +343,7 @@ class DebugButton extends Button {
                     presetManager.add(1,"wheel",siggen[1].k_func.k,0,-1);
                     presetManager.add(1,"wheel",siggen[0].k_scale,0,-1);
                     presetManager.add(1,"wheel",siggen[1].k_scale,0,-1);
-                    presetManager.add(1,"wheel",k_mode,0,-1);
+                    presetManager.add(5,"wheel",k_mode,0,1);
                     presetManager.add(15,"wheel",k_rot,0,1,20);
                     presetManager.add(30,"wheel",k_rot,0,-1,20);
                     presetManager.add(15,"wheel",k_rot,0,1,20);
@@ -376,7 +377,7 @@ class DebugButton extends Button {
                     presetManager.add(2,"wheel",scope.ch[0].k_volts.k,0,1);
                     presetManager.add(2,"wheel",scope.ch[1].k_volts.k,0,1);
                     presetManager.add(2,"wheel",scope.ch[1].k_volts.k_,0,-1);
-                    presetManager.add(1,"wheel",k_mode,0,-1);
+                    presetManager.add(5,"wheel",k_mode,0,1);
                     presetManager.add(135,"wheel",siggen[0].k_phase.k_,0,1,10);
 		            presetManager.add(60,"wheel",siggen[1].k_phase.k_,0,-1,50);
                 }
@@ -388,7 +389,7 @@ class DebugButton extends Button {
                     presetManager.add(6,"wheel",siggen[1].k_phase.k,0,1);
                     presetManager.add(1,"wheel",scope.ch[0].k_volts.k,0,1);
                     presetManager.add(1,"wheel",scope.ch[1].k_volts.k,0,1);
-                    presetManager.add(1,"wheel",k_mode,0,-1);
+                    presetManager.add(5,"wheel",k_mode,0,1);
                     presetManager.add(1,"wheel",k_delay,0,1,500); // delay
                     presetManager.add(2,"wheel",siggen[0].k_func.k_,0,1,100);
                     presetManager.add(2,"wheel",siggen[1].k_func.k_,0,1,100);
@@ -413,7 +414,8 @@ class DebugButton extends Button {
                     presetManager.add(1,"wheel",siggen[1].k_scale,0,-1);
                     presetManager.add(1,"wheel",scope.ch[0].k_volts.k,0,1);
                     presetManager.add(1,"wheel",scope.ch[1].k_volts.k,0,1);
-                    presetManager.add(1,"wheel",k_mode,0,-1,1000);
+                    presetManager.add(4,"wheel",k_mode,0,1);
+                    presetManager.add(1,"wheel",k_mode,0,1,1000);
                     presetManager.add(7,"wheel",siggen[0].k_func.k,0,-1);
                     presetManager.add(7,"wheel",siggen[0].k_func.k_,0,-1);
                     presetManager.add(7,"wheel",siggen[0].k_ampl.k,0,1);

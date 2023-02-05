@@ -94,6 +94,7 @@ function start() {
     log(credit);
     initBufgen();
     siggen=[new Siggen(75,530,"1"),new Siggen(415,530,"2")];
+    siggen[0].k_scale.value=7;
     scope=new Scope(70,10,DL/10,17);
     initChannels();
     initMonitor();

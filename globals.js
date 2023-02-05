@@ -1,5 +1,5 @@
-const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.36";
-const expdate="Feb, 3, 2023";
+const credit="LaLinea 2in1 Oscilloscope 2022-2023 Peter Csurgay Version 0.37";
+const expdate="Feb, 5, 2023";
 var canvas, ctx, debugcanvas, debugctx, logWindow, traceString="", now;
 var scope, siggen, presetManager; // global objects
 var no_images_to_load, vfdred, vfd, vfd_, led_on_powers, led_on, led_off_powers, led_off, led_red; // canvas images
@@ -27,12 +27,12 @@ var micch=[new Array(L),new Array(L)]; // mic channel buffer
 var dispch=[new Array(L), new Array(L)]; // display channel buffer
 var pixelch=[[new Array(L), new Array(L)],[new Array(L), new Array(L)]]; // actual pixel channel buffer x,y
 var order, ampl, freq, ampls=[0,0], ampls_=[0,0], avgs=[0,0];
-var sumdelta=[0,0,0]; // third for Mode(Add,AM) beam length
+var sumdelta; // beam length
 var scales=[0,0], freqs=[0,0], freqs_=[0,0], phases=[0,0], dcs=[0,0], dcs_=[0,0];
 var uictx=[], uidebugctx=[]; // for hit, click, turn
 var buttons=[]; // for switch off at power off
 var b_chon, k_time, k_delay, k_trigger, k_hold, k_slope;
-var radio_mode, b_ch1, b_ch2, b_dual, b_add, b_mod, b_xy;
+var radio_mode, b_ch1, b_ch2, b_alt, b_chop, b_add, b_mod, b_xy;
 var radio_trig, b_limit, b_auto, b_ch1tr, b_ch2tr, b_mode, b_chtr;
 var b_find, b_preset, b_mic, lastPreset=0;
 const dVfd=16, dButton=20;
