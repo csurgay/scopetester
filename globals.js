@@ -15,6 +15,8 @@ const bgcolor="#bbbbbb";
 const shadowcolor="rgba(70,70,70,0.3)";
 const hl_green="rgba(80,160,80,0.35)"; // knob and label highlight
 const hl_gray="rgba(100,100,100,0.35)";
+const hl_white="rgba(255,255,255,0.35)";
+const hl_plastic="rgba(110,110,70,0.45)";
 var k_intensity, k_focus, k_astigm, k_illum, k_rot, k_xpos, b_xcal, b_ycal, k_vol, k_monitor;
 var b_power;
 var bufgen=[];
@@ -23,12 +25,13 @@ var schlen=[0,0]; // length of signal buffer data for lower frequencies
 var gench=[new Array(L),new Array(L)]; // generated signal channel buffer
 var micch=[new Array(L),new Array(L)]; // mic channel buffer
 var dispch=[new Array(L), new Array(L)]; // display channel buffer
+var pixelch=[[new Array(L), new Array(L)],[new Array(L), new Array(L)]]; // actual pixel channel buffer x,y
 var order, ampl, freq, ampls=[0,0], ampls_=[0,0], avgs=[0,0];
 var sumdelta=[0,0,0]; // third for Mode(Add,AM) beam length
 var scales=[0,0], freqs=[0,0], freqs_=[0,0], phases=[0,0], dcs=[0,0], dcs_=[0,0];
 var uictx=[], uidebugctx=[]; // for hit, click, turn
 var buttons=[]; // for switch off at power off
-var b_chon, k_time, k_timebase, k_delay, k_delaybase, k_trigger, k_hold, k_slope;
+var b_chon, k_time, k_delay, k_trigger, k_hold, k_slope;
 var radio_mode, b_ch1, b_ch2, b_dual, b_add, b_mod, b_xy;
 var radio_trig, b_limit, b_auto, b_ch1tr, b_ch2tr, b_mode, b_chtr;
 var b_find, b_preset, b_mic, lastPreset=0;
@@ -56,6 +59,7 @@ var NaNerror; // jump loops if NaN error happens for easier testing
 var b_debug, b_reset, b_autotest, b_presets=[], b_storage;
 var k_cursor, xCur;
 var b_a, b_ainten, b_b, b_aandb, b_mixed, dualtb_mode;
+var k_skew;
 const letters={ " ":[], 
 	",":[2,10,2,8, 3,10,3,8, 4,10,4,8, 3,10,1,12,4,10,1,13], 
 	".":[2,10,2,8, 3,10,3,8, 4,10,4,8], "'":[3,0,3,2],

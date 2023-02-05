@@ -12,6 +12,8 @@ var mag; // x10 mag multiplier (3.333 for dipsch, 3 for beamdraw)
 var tailParts=[];
 var slowLimitMeasure=true, slowLimit=-1;
 var runningTime=Date.now(), sweepDuration, sweepCount=0, elapsedTime=0, triggerTime=0;
+var inten=[100,50];
+var altc=0;
 
 class Scope extends pObject {
     constructor(pX,pY,pD,pDD) {
@@ -51,15 +53,14 @@ class Scope extends pObject {
         b_preset=new PresetButton(17,395,pbw,pbh,"Preset","small");
         b_preset.illum=false;
         b_mic=new MicButton(17,430,pbw,pbh,"Mic","small");
-        this.ch=[new ScopeChannel(685,80), new ScopeChannel(825,80)];
+        this.ch=[new ScopeChannel(0,685,80), new ScopeChannel(1,835,80)];
         k_intensity=new Knob(ctx,8,30,100,15,17,0,"Intensity","smallknob");
         k_focus=new Knob(ctx,8,30,150,15,17,0,"Focus","smallknob");
         k_illum=new Knob(ctx,16,30,200,15,17,0,"Illum","smallknob");
         k_illum.value0=false;
         k_astigm=new CalibPot(ctx,8,40,240,15,17,0,"Ast","pot");
         k_rot=new CalibPot(ctx,15,40,270,15,31,0,"Rot","pot");
-        k_timebase=new DelaybaseKnob(200,100,"Main A Timebase");
-        k_delaybase=new DelaybaseKnob(350,100,"Delayed B Timebase");
+        k_skew=new CalibPot(debugctx,15,40,270,15,31,0,"Skew","pot2");
         k_time=new TimeKnob(783,180);
         new Vfd(710,75,4,()=>{return 10*k_delay.k.getValue()+k_delay.k_.getValue()/10;},()=>{
             return b_power.state==0 || 10*k_delay.k.getValue()+k_delay.k_.getValue()==0;});
@@ -68,12 +69,15 @@ class Scope extends pObject {
         k_delay.k_.value0=false;
         k_delay.k.limit=k_delay.k.ticks-1;
         k_delay.k_.limit=k_delay.k_.ticks-1;
+        k_delay.setResetTogether();
         k_xpos=new DoubleKnob(ctx,665,180,201,201,"X Pos","xpos",36,20);
         k_xpos.setPullable("xpos");
+        k_xpos.setResetTogether();
         b_xcal=new IndicatorLed(660,245,24,16,"Cal","on");
         b_ycal=new IndicatorLed(660,430,24,16,"Cal","on");
         k_trigger=new DoubleKnob(ctx,830,520,50,50,"Level","double_s",30,15);
         k_trigger.k.defaultFastRate=1;
+        k_trigger.setResetTogether();
 //        k_hold=new DoubleKnob(880,520,50,50,"HoldOff","double_s",30,15);
         k_slope=new Knob(ctx,-1,830,590,17,2,0,"Slope","knob");
         k_slope.value0=false;
@@ -89,6 +93,7 @@ class Scope extends pObject {
             b_presets.push(new DebugButton(70,20+i*35,24,16,"Preset"+i,"small"));
         k_cursor=new DoubleKnob(ctx,870,75,51,201,"Cursor","cursor",36,23);
         k_cursor.setPullable("cursor");
+        k_cursor.setResetTogether();
         b_storage=new PushButton(ctx,892,120,pbw,pbh,"Storage","readout");
         b_a=new PushButton(ctx,892,165,pbw,pbh,"  A  ","on");
         b_a.state=1;
@@ -191,8 +196,8 @@ class Scope extends pObject {
         var minY=1000000, maxY=-1000000; // for find
         Q=timebase*L/DL/mag;
         // delay
-        delaybase=tb[k_delaybase.k.getValue()+Math.floor(k_delaybase.k.ticks/2-1)]*
-            tb_[k_delaybase.k_.getValue()+Math.floor(k_delaybase.k_.ticks/2)];
+        delaybase=tb[k_time.k.getValueB()+Math.floor(k_time.k.ticks/2-1)]*
+            tb_[k_time.k_.getValue()+Math.floor(k_time.k_.ticks/2)];
         delay=(10*k_delay.k.getValue()+k_delay.k_.getValue()/10)*delaybase;
         delay=delay;
         // loop of channels: second channel first!
@@ -202,14 +207,12 @@ class Scope extends pObject {
             var l_=this.ch[c].k_volts.k_.getValue(); l_=(l_+Math.floor(vpd_.length/2))%vpd_.length;
             volts[c]=vpd[l]*vpd_[l_];
             // x and y pos
-            py[c]=-this.ch[c].k_ypos.getValue();
+            py0=this.y+dd+4*d;
+            py[c]=-10*this.ch[c].k_ypos.k.getValue()-this.ch[c].k_ypos.k_.getValue();
+            if (findState!="off") py[c]/=findValue;
+            py[c]+=py0;
             px0=this.x+dd;
             px=px0+50*k_xpos.k.getValue()+k_xpos.k_.getValue();
-            // find value one adjust at a time
-            if (findState!="off") py[c]/=findValue;
-            // gnd lines position
-            py0=this.y+dd+4*d+py[c]*10;
-            py[c]=py0+(c*2-1)*d;
             // averages for AC coupling
             avgs[c]=0; var n=0;
             for (let i=0; i<sch[c].length; i++) {
@@ -397,10 +400,11 @@ class Scope extends pObject {
         }
         // timing of sweeps
         else {
-//            measuring and setting slowLimit only once
+            // measuring and setting slowLimit only once
             if (slowLimitMeasure) {
                 slowLimitMeasure=false;
             }
+            // set slowLimit based on measurement
             else if (slowLimit==-1) {
                 if (sweepDuration<2) slowLimit=2;
                 else if (sweepDuration<5) slowLimit=5;
@@ -409,42 +413,22 @@ class Scope extends pObject {
                 else if (sweepDuration<50) slowLimit=50;
                 else slowLimit=100;
             }
+            // new portion beginning
             DL1=Math.ceil(50*(runningTime-triggerTime)/timebase);
             if (DL1>=mag*DL) {
+                // end of beam, retrigger needed
                 DL1=-Math.ceil(50*DL/timebase);
                 triggerTime=runningTime+DL/5;
+                // other channel in ALT mode
+                altc=1-altc;
             }
+            // new portion ending
             DL2=DL1+Math.ceil(10*DL/timebase);
             if (DL2<DL1+1) DL2=DL1+1;
             if (DL2>mag*DL) DL2=mag*DL;
         }
-        // Actual beam drawing for Dual, Ch1, Ch2
-        if (b_dual.state==1 || b_ch1.state==1 || b_ch2.state==1) {
-            for (let c=0; c<2; c++) if (c!=1 || b_dual.state!=1 || b_fft.state!=1) {
-                if (b_dual.state==1 || c==0 && b_ch1.state==1 || c==1 && b_ch2.state==1) {
-                    if (b_dual.state==0) py[c]=py0;
-                    ctx.beginPath();
-                    // beam length for beam intensity calcukation
-                    sumdelta[c]=0;
-                    // astigm multiline
-                    var ro=Math.sign(asl);
-                    for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
-                        var ii=findState=="off"?DL1:((DL1+findValue*(DL/2+(DL1-DL/2)/2+px0-px))/(findValue+1));
-                        ctx.moveTo(px+ii*mag+k*asx,py[c]-dispch[c][ii+tptr[0]]-k_rot.getValue()*DL/500+k*asy);
-                        for (let i=DL1+1; i<=DL2; i++) {
-                            ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
-                            ctx.lineTo(px+ii*mag+k*asx,py[c]-dispch[c][i+tptr[0]]
-                                -k_rot.getValue()*(DL/2-ii)/250+k*asy);
-                            sumdelta[c]+=Math.abs(dispch[c][i+tptr[0]]-dispch[c][i-1+tptr[0]]);
-                        }
-                    }
-                    if (findState!="off") sumdelta[c]/=findValue;
-                    this.stroke(c);
-                }
-            }
-        }
         // Beam for Lissajous XY
-        else if (b_xy.state==1) {
+        if (b_xy.state==1) {
             // rotation
             if (k_rot.getValue()!=0) {
                 var fi=k_rot.getValue()*1*Math.PI/30;
@@ -477,18 +461,55 @@ class Scope extends pObject {
             if (findState!="off") sumdelta[2]/=findValue;
             this.stroke(2);
         }
+        // Actual beam drawing for Dual, Ch1, Ch2
+        else if (b_dual.state==1 || b_ch1.state==1 || b_ch2.state==1) {
+            for (let c=0; c<2; c++) {
+                var pyd=(py[c]+py[c])/2;
+                for (let i=DL1; i<=DL2; i++) {
+                    ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
+                    pixelch[c][0][i]=px+ii*mag;
+                    pixelch[c][1][i]=pyd-dispch[c][i+tptr[0]]-k_skew.getValue()*(DL/2-ii)/100;
+                }
+            // rotation
+                if (k_rot.getValue()!=0) {
+                    var fi=-k_rot.getValue()*1*Math.PI/360;
+                    for (let i=0; i<L; i++) {
+                        var x1=pixelch[c][0][i]-px-dd-5*d, y1=pixelch[c][1][i]-py0;
+                        pixelch[c][0][i]=px+dd+5*d+x1*Math.cos(fi)+y1*Math.sin(fi);
+                        pixelch[c][1][i]=py0-x1*Math.sin(fi)+y1*Math.cos(fi);
+                    }
+                }
+            }
+            for (let c=0; c<2; c++) if (c!=1 || b_dual.state!=1 || b_fft.state!=1) {
+                if (b_dual.state==1 || c==0 && b_ch1.state==1 || c==1 && b_ch2.state==1) {
+                    ctx.beginPath();
+                    sumdelta[c]=0;
+                    var ro=Math.sign(asl);
+                    for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
+                        ctx.moveTo(pixelch[c][0][DL1],pixelch[c][1][DL1]);
+                        for (let i=DL1+1; i<=DL2; i++) {
+                            ctx.lineTo(pixelch[c][0][i],pixelch[c][1][i]);
+                            sumdelta[c]+=Math.abs(dispch[c][i+tptr[0]]-dispch[c][i-1+tptr[0]]);
+                        }
+                    }
+                    if (findState!="off") sumdelta[c]/=findValue;
+                    this.stroke(c);
+                }
+            }
+        }
         // Beam for Mode (ADD, AM)
         else {
             ctx.beginPath();
+            var pyd=(py[0]+py[1])/2;
             sumdelta[2]=0;
             var ro=Math.sign(asl);
             for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
                 var ii=findState=="off"?DL1:((DL1+findValue*(DL/2+(DL1-DL/2)/2+px0-px))/(findValue+1));
-                ctx.moveTo(px+ii+k*asx,py0-this.calcModeY(-1,dispch[0][ii+tptr[0]],
+                ctx.moveTo(px+ii*mag+k*asx,pyd-this.calcModeY(-1,dispch[0][ii+tptr[0]],
                     dispch[1][ii+tptr[0]])-k_rot.getValue()*DL/500+k*asy);
                 for (let i=DL1+1; i<DL2; i++) {
                     ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
-                    ctx.lineTo(px+ii+k*asx,py0-this.calcModeY(-1,dispch[0][i+tptr[0]],
+                    ctx.lineTo(px+ii*mag+k*asx,pyd-this.calcModeY(-1,dispch[0][i+tptr[0]],
                         dispch[1][i+tptr[0]])-k_rot.getValue()*(DL/2-ii)/250+k*asy);
                     sumdelta[2]+=Math.abs(this.calcModeY(-1,dispch[0][i-1+tptr[0]],
                         dispch[1][i-1+tptr[0]])-this.calcModeY(-1,dispch[0][i+tptr[0]],dispch[1][i+tptr[0]]));
@@ -613,15 +634,19 @@ function callDraw(ctx,drawShadow) {
     scope.draw(ctx,drawShadow);
 }
 class ScopeChannel {
-    constructor(pX,pY) {
-        this.k_ypos=new Knob(ctx,24,pX+65,pY+247,20,49,0,"Pos Y","knob");
-        this.k_volts=new VoltsKnob(pX,pY+275);
+    constructor(c,pX,pY) {
+//        this.k_ypos=new Knob(ctx,240,pX+65,pY+247,20,481,0,"Pos Y","knob");
+        this.k_ypos=new DoubleKnob(ctx,pX+60,pY+255,201,201,"Pos Y","posy",25,15);
+        if (c==0) this.k_ypos.k.value=10; else if (c==1) this.k_ypos.k.value=-10;
+        this.k_ypos.setResetTogether();
+        this.k_volts=new VoltsKnob(pX-10,pY+280);
         this.k_volts.k.value0=false;
         this.k_volts.k_.value0=false;
-        this.b_ac=new PushButton(ctx,pX+65,pY+310,pbw,pbh,"AC",'on');
-        this.b_gnd=new PushButton(ctx,pX+65,pY+310,pbw,pbh,"Gnd",'on');
-        this.b_dc=new PushButton(ctx,pX+65,pY+310,pbw,pbh,"DC",'on');
+        this.b_ac=new PushButton(ctx,pX+58,pY+309,pbw,pbh,"AC",'on');
+        this.b_gnd=new PushButton(ctx,pX+58,pY+309,pbw,pbh,"Gnd",'on');
+        this.b_dc=new PushButton(ctx,pX+58,pY+309,pbw,pbh,"DC",'on');
         this.b_dc.state=1;
-        this.acdc=new Radio(pX+65,pY+310,[this.b_ac,this.b_gnd,this.b_dc]);
+        this.acdc=new Radio(pX+58,pY+309,[this.b_ac,this.b_gnd,this.b_dc]);
     }
 }
+ 

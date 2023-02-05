@@ -4,9 +4,10 @@ const pullDx=1, pullDy=1, pullDr=1;
 
 class Knob extends pObject {
     constructor(ctx,pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos,pMarker="marker") {
-        const pos={"none":[0,0],"knob":[0,-27],"smallknob":[0,-22],"pot":[-22,1],"double":[0,-44],"sweep":[0,80], 
-        "double_s":[0,-40], "delay":[0,78], "func":[0,-62], "range":[0,-55], 
-        "volts":[0,-55], "sigdouble":[63,-31], "cursor":[0,-46], "xpos":[0,-46]};
+        const pos={"none":[0,0],"knob":[0,-27],"smallknob":[0,-22],
+        "pot":[-22,1],"pot2":[-25,1],"double":[0,-44],"sweep":[0,80], 
+        "double_s":[0,-40], "delay":[0,78], "func":[0,-62], "range":[0,-55], "posy":[0,-35],
+        "volts":[0,-60], "sigdouble":[63,-31], "cursor":[0,-46], "xpos":[0,-46]};
         super(ctx,pX-pR,pY-pR,2*pR,2*pR);
         this.class="Knob";
         this.name=pLabel;
@@ -16,6 +17,8 @@ class Knob extends pObject {
         this.ticks=pTicks;
         this.defaultValue=pValue;
         this.value=pValue;
+        this.valueA=pValue;
+        this.valueB=pValue;
         this.value0=true; // value0: getValue is (- 0 +) not (0 + ++)
         this.l=pLabel;
         this.color="#EEEEEE";
@@ -29,7 +32,7 @@ class Knob extends pObject {
         this.pullShadow=false;
         this.pulledTogether=null;
         this.pullDekorType="";
-        this.turnedTogether=null;
+        this.resetTogether=null;
         uipush(this);
     }
     getValue() {
@@ -39,38 +42,61 @@ class Knob extends pObject {
         }
         else return this.value;
     }
+    getValueA() {
+        if (this.value0) {
+            if (this.valueA<=this.ticks/2) return this.valueA;
+            else return this.valueA-this.ticks;
+        }
+        else return this.valueA;
+    }
+    getValueB() {
+        if (this.value0) {
+            if (this.valueB<=this.ticks/2) return this.valueB;
+            else return this.valueB-this.ticks;
+        }
+        else return this.valueB;
+    }
     reset() {
         this.value=this.defaultValue;
-        if (!this.pulled && this.turnedTogetherIn!=null) {
-            this.turnedTogetherIn.value=this.value;
-            this.turnedTogetherPulled.value=this.value;
+        this.valueA=this.defaultValue;
+        this.valueB=this.defaultValue;
+        if (this.resetTogether!=null) {
+            this.resetTogether.value=this.resetTogether.defaultValue;
         }
-        if (this.pulled && this.turnedTogetherPulled!=null) {
-            this.turnedTogetherPulled.value=this.value;
-        }
-     }
+    }
     clickXY(x,y) {
         this.reset();
         super.clickXY(x,y);
     }
+    limitValue(v,inc,limit) {
+        var ret=v+inc;
+        if (this.limit!=-1) {
+            if (inc>0) if (ret==limit+1) ret--;
+            if (inc<0) if (ret==limit || ret==-1 && limit==this.ticks-1) ret++;
+        }
+        if (ret<0) ret+=this.ticks;
+        else if (ret>=this.ticks) ret-=this.ticks;
+        return ret;
+    }
     turnY(pDelta) {
         // set new value within limit
-        var savedValue=this.value;
-        for (let i=0; i<1; i++) {
-            if (this.limit==-1 ||
-                ((this.value!=this.limit || pDelta<0) &&
-                (this.value!=(this.limit+1)%this.ticks || pDelta>0))) {
-                this.value+=Math.sign(pDelta);
-                if (this.value<0) this.value+=this.ticks;
-                else if (this.value>this.ticks-1) this.value-=this.ticks;
+        var newValueA=this.valueA, newValueB=this.valueB;
+        for (let i=0; i<=Math.abs(this.ticks*pDelta/1000); i++) {
+            this.value=this.limitValue(this.value,Math.sign(pDelta),this.limit);
+            newValueA=this.limitValue(newValueA,Math.sign(pDelta),this.limit);
+            newValueB=this.limitValue(newValueB,Math.sign(pDelta),this.limit);
+        }
+        if (this.pulled) {
+            this.valueB=newValueB;
+        }
+        else {
+            if (this.valueA==this.valueB) {
+                this.valueA=newValueA;
+                this.valueB=newValueB;
             }
-        }
-        if (!this.pulled && this.turnedTogetherIn!=null) {
-            this.turnedTogetherIn.value=this.value;
-            this.turnedTogetherPulled.value=this.value;
-        }
-        if (this.pulled && this.turnedTogetherPulled!=null) {
-            this.turnedTogetherPulled.value=this.value;
+            else {
+                this.valueA=newValueA;
+            }
         }
         super.turnY(pDelta);
     }
@@ -93,12 +119,6 @@ class Knob extends pObject {
                 this.pulledTogether.y-=pullDy;
                 this.pulledTogether.r-=pullDr; 
             }
-            if (this.turnedTogetherIn!=null) {
-                this.turnedTogetherIn.value=this.value;
-                if (this.pulledTogether!=null) {
-                    this.pulledTogether.turnedTogetherIn.value=this.pulledTogether.value;
-                }
-            }
         }
     }
     setPullable() {
@@ -108,7 +128,9 @@ class Knob extends pObject {
     draw(ctx) {
         xd=this.x+this.r;
         yd=this.y+this.r;
-        rd=this.r; nd=this.ticks; kd=this.value;
+        rd=this.r; nd=this.ticks; 
+        kd=this.value;
+        if (this.class=="TimerKnob") kd=this.valueB;
         if (this.shadow) {
             ctx.beginPath();
             ctx.fillStyle = "rgba(60,60,60,0.2)";
@@ -203,6 +225,7 @@ class DoubleKnob extends pObject {
         this.k.limit=Math.floor(this.k.ticks/2);
         this.k_.limit=Math.floor(this.k_.ticks/2);
         this.k.shadow=false;
+//        uipush(this);
     }
     setSwitchBufferNeeded() {
         super.setSwitchBufferNeeded();
@@ -214,26 +237,22 @@ class DoubleKnob extends pObject {
         this.k.initChannelsNeeded=true;
         this.k_.initChannelsNeeded=true;
     }
-    setPullable(pDekorType,pTurnedTogetherIn=null,pTurnedTogetherPulled=null) {
+    setPullable(pDekorType) {
         this.k.pullable=true;
         this.k.pullShadow=true;
         this.k.pulledTogether=this.k_;
         this.k_.pullDekorType=pDekorType;
         this.k_.pullable=true;
         this.k_.pulledTogether=this.k;
-        if (pTurnedTogetherIn!=null) {
-            this.k.turnedTogetherIn=pTurnedTogetherIn.k;
-            this.k_.turnedTogetherIn=pTurnedTogetherIn.k_;
-        }
-        if (pTurnedTogetherPulled!=null) {
-            this.k.turnedTogetherPulled=pTurnedTogetherPulled.k;
-            this.k_.turnedTogetherPulled=pTurnedTogetherPulled.k_;
-        }
+    }
+    setResetTogether() {
+        this.k.resetTogether=this.k_;
+        this.k_.resetTogether=this.k;
     }
 }
 
 class DekorKnob extends DoubleKnob {
-    constructor(ctx,pX,pY,vals,vals_,pLabel,posLabel,r,r_,rDekor) {
+    constructor(ctx,pX,pY,vals,vals_,pLabel,posLabel,r,r_,rDekor,pDekorKnobType) {
         super(ctx,pX,pY,vals.length,vals_.length,pLabel,posLabel,r,r_);
         this.rDekor=rDekor;
         this.k_.color="rgb(200,20,20)";
@@ -243,15 +262,24 @@ class DekorKnob extends DoubleKnob {
         this.varLabel.bgcolor="rgba(200,20,20,0.75)";
         this.varLabel.fgcolor="rgba(220,220,220,1)";
         this.varLabel.background=true;
+        if (pDekorKnobType=="Time") 
+            new UiTimeDekor(ctx,pX,pY,this.rDekor);
+        else if (pDekorKnobType=="Volts") 
+            new UiVoltDekor(pX,pY,this.rDekor);
         this.iconCircle(pX,pY+2,this.rDekor,vals);
         this.captionCircle(pX,pY+3,this.rDekor);
     }
+    // draw(ctx) {
+    //     ctx.beginPath();
+    //     ctx.fillStyle="white";
+    //     ctx.arc(this.x+this.w/2,this.y+this.h/2,this.rDekor,0,2*Math.PI);
+    //     ctx.fill();
+    // }
 }
 
 class TimeDekorKnob extends DekorKnob {
     constructor(ctx,pX,pY,pLabel,pPosType,pR,pR_,rDekor) {
-        super(ctx,pX,pY,tb,tb_,pLabel,pPosType,pR,pR_,rDekor);
-        new UiTimeDekor(ctx,pX,pY,this.rDekor);
+        super(ctx,pX,pY,tb,tb_,pLabel,pPosType,pR,pR_,rDekor,"Time");
     }
     iconCircle(x,y,r,tb) {
         nd=tb.length;
@@ -268,14 +296,36 @@ class TimeDekorKnob extends DekorKnob {
     captionCircle(x,y,r) {
         new Label(this.ctx,x-r-4,y-r+12,"ms",12);
         new Label(this.ctx,x+r-5,y+r-7,"\u03bcs",12);
-        new Label(this.ctx,x-r+6,y+r-7,"sec",12);
+        new Label(this.ctx,x-r+2,y+r-7,"sec",12);
     }
 }
 
 class TimeKnob extends TimeDekorKnob {
     constructor(pX,pY) {
         super(ctx,pX,pY,"A timebase and B DLYD","sweep",50,25,62);
-        this.setPullable("timer",k_timebase,k_delaybase);
+        this.class="TimeKnob";
+        this.setPullable("timer");
+        uictx.push(this);
+    }
+    draw(ctx) {
+        ctx.beginPath();
+        ctx.fillStyle=hl_plastic;
+        ctx.arc(this.x+this.w/2,this.y+this.h/2,this.rDekor+11,0,2*Math.PI);
+        ctx.arc(this.x+this.w/2,this.y+this.h/2,this.rDekor+8,0,2*Math.PI);
+        ctx.fill("evenodd");
+        ctx.beginPath();
+        ctx.strokeStyle=hl_plastic;
+        ctx.lineWidth=18;
+        ctx.lineCap="butt";
+        ctx.arc(this.x+this.w/2,this.y+this.h/2,this.rDekor,
+            this.k.valueA*2*Math.PI/this.k.ticks+0.15-Math.PI/2,
+            this.k.valueA*2*Math.PI/this.k.ticks-0.15-Math.PI/2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.fillStyle=hl_plastic;
+        ctx.arc(this.x+this.w/2,this.y+this.h/2,this.rDekor-9,0,2*Math.PI);
+        ctx.arc(this.x+this.w/2,this.y+this.h/2,this.rDekor-12,0,2*Math.PI);
+        ctx.fill("evenodd");
     }
 }
 
@@ -287,9 +337,8 @@ class DelaybaseKnob extends TimeDekorKnob {
 
 class VoltsKnob extends DekorKnob {
     constructor(pX,pY) {
-        super(ctx,pX,pY,vpd,vpd_,"Volts/Div","volts",30,15,40);
+        super(ctx,pX,pY,vpd,vpd_,"Volts/Div","volts",30,15,40,"Volts");
         this.k.limit=9;
-        new UiVoltDekor(pX,pY,this.rDekor);
     }
     iconCircle(x,y,r,vpd) {
         var n=vpd.length;
@@ -322,7 +371,7 @@ class UiTimeDekor extends pObject {
         ctx.arc(this.x,this.y,this.r,Math.PI*186/180,Math.PI*323/180);
         ctx.stroke();
         ctx.beginPath();
-        ctx.strokeStyle=hl_gray;
+        ctx.strokeStyle=hl_white;
         ctx.arc(this.x,this.y,this.r,Math.PI*324/180,Math.PI*96/180);
         ctx.stroke();
         ctx.lineWidth=1;
@@ -424,7 +473,7 @@ class MonitorKnob extends Knob {
         super.clickXY(x,y);
     }
     callSwitchOff() {
-        this.value=this.defaultValue; // this have to be "Off"
+        super.reset();
         this.switchOff();
     }
     switchOff() {

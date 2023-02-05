@@ -71,11 +71,11 @@ function clearCanvasNoScreen(ctx) {
 
 function draw(ctx) {
     // timebase
-    timebase=tb[k_timebase.k.getValue()+Math.floor(k_timebase.k.ticks/2-1)]*
-        tb_[k_timebase.k_.getValue()+Math.floor(k_timebase.k_.ticks/2)];
+    timebase=tb[k_time.k.getValueA()+Math.floor(k_time.k.ticks/2-1)]*
+        tb_[k_time.k_.getValue()+Math.floor(k_time.k_.ticks/2)];
     // Cal LEDs
     b_xcal.state=0;
-    if (k_timebase.k_.getValue()!=0) b_xcal.showRed();
+    if (k_time.k_.getValue()!=0) b_xcal.showRed();
     b_ycal.state=0;
     if (scope.ch[0].k_volts.k_.getValue()!=0) b_ycal.showRed();
     if (scope.ch[1].k_volts.k_.getValue()!=0) b_ycal.showRed();

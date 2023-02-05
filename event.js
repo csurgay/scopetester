@@ -152,16 +152,18 @@ function processEvent() {
 function actionEvent(evt) {
     if (evt.name=="keypress") {
         if (evt.x=="d") { b_debug.clickXY(0,0); draw(ctx); }
-        else if (evt.x=="0") { b_reset.clickXY(0,0); draw(ctx); }
-        else if (evt.x=="1") { b_presets[0].clickXY(0,0); draw(ctx); }
-        else if (evt.x=="2") { b_presets[1].clickXY(0,0); draw(ctx); }
-        else if (evt.x=="3") { b_presets[2].clickXY(0,0); draw(ctx); }
-        else if (evt.x=="4") { b_presets[3].clickXY(0,0); draw(ctx); }
-        else if (evt.x=="5") { b_presets[4].clickXY(0,0); draw(ctx); }
-        else if (evt.x=="6") { b_presets[5].clickXY(0,0); draw(ctx); }
-        else if (evt.x=="7") { b_presets[6].clickXY(0,0); draw(ctx); }
-        else if (evt.x=="8") { b_presets[7].clickXY(0,0); draw(ctx); }
-        else if (evt.x=="9") { b_presets[8].clickXY(0,0); draw(ctx); }
+        if (evt.x=="0") { b_reset.clickXY(0,0); draw(ctx); }
+        if (b_power.state==1) {
+            if (evt.x=="1") { b_presets[0].clickXY(0,0); draw(ctx); }
+            else if (evt.x=="2") { b_presets[1].clickXY(0,0); draw(ctx); }
+            else if (evt.x=="3") { b_presets[2].clickXY(0,0); draw(ctx); }
+            else if (evt.x=="4") { b_presets[3].clickXY(0,0); draw(ctx); }
+            else if (evt.x=="5") { b_presets[4].clickXY(0,0); draw(ctx); }
+            else if (evt.x=="6") { b_presets[5].clickXY(0,0); draw(ctx); }
+            else if (evt.x=="7") { b_presets[6].clickXY(0,0); draw(ctx); }
+            else if (evt.x=="8") { b_presets[7].clickXY(0,0); draw(ctx); }
+            else if (evt.x=="9") { b_presets[8].clickXY(0,0); draw(ctx); }
+        }
 //            alert(`Key pressed ${evt.x} \r\n Key code value: ${evt.y}`);
     }
     else if (evt.name=="wheel") {
