@@ -88,10 +88,20 @@ class Scope extends pObject {
         k_ffty.value0=false;
         k_fftx=new Knob(ctx,10,800,700,20,21,0,"Xmag","double_s");
         b_readout=new PushButton(ctx,745,588,pbw,pbh,"Readout","readout");
-        b_debug=new DebugButton(20,20,24,16,"Debug","small");
-        b_autotest=new AutotestButton(20,90,24,16,"Test","small");
-        for (let i=0; i<9; i++)
-            b_presets.push(new DebugButton(70,20+i*35,24,16,"Preset"+i,"small"));
+        b_calib=new DebugButton(20,20,pbw,pbh,"Calib","small");
+        b_debug=new DebugButton(20,55,pbw,pbh,"Debug","small");
+        b_frames=new DebugButton(20,90,pbw,pbh,"Frames","small");
+        b_autotest=new AutotestButton(20,125,pbw,pbh,"Test","small");
+        for (let i=0; i<9; i++) {
+            b_presets.push(new DebugButton(70,20+i*35,pbw,pbh,"Preset"+i,"small"));
+            b_presets[b_presets.length-1].illum=false;
+        }
+        b_sch=new DebugButton(160,20,pbw,pbh,"sch ","on");
+        b_gench=new DebugButton(160,20,pbw,pbh,"gench ","on");
+        b_micch=new DebugButton(160,20,pbw,pbh,"micch ","on");
+        b_dispch=new DebugButton(160,20,pbw,pbh,"dispch ","on");
+        b_pixelch=new DebugButton(160,20,pbw,pbh,"pixelch  ","on");
+        debug_channel=new Radio(160,20,[b_sch,b_gench,b_micch,b_dispch,b_pixelch]);
         k_cursor=new DoubleKnob(ctx,870,75,51,201,"Cursor","cursor",36,23);
         k_cursor.setPullable("cursor");
         k_cursor.setResetTogether();

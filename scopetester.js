@@ -83,7 +83,7 @@ function draw(ctx) {
     clearCanvasNoScreen(ctx);
     for (let i=0; i<uictx.length; i++) 
         uictx[i].draw(ctx);
-    if (b_debug.state==1) {
+    if (b_calib.state==1) {
         clearCanvas(debugctx);
         for (let i=0; i<uidebugctx.length; i++) uidebugctx[i].draw(debugctx);
     }
@@ -108,7 +108,7 @@ function log(msg) {
 }
 
 function trace(msg) {
-    if (isNaN(b_debug) || b_debug.state==1) {
+    if (!isNaN(b_debug) && b_debug.state==1) {
         traceString += " . "+msg;
     }
 }

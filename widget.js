@@ -56,7 +56,7 @@ class pObject {
         ctx.stroke();
     }
     draw(ctx) {
-        if (false && b_debug.state==1 && this.debugFrame) this.drawRect(ctx);
+        if (b_frames.state==1 && this.debugFrame) this.drawRect(ctx);
     }
 }
 
@@ -90,7 +90,7 @@ class DebugIcon extends Icon {
         var ret=super(debugctx,pX,pY,pW,pH,pFunc);
     }
     draw(ctx) {
-        if (b_debug.state==1) {
+        if (b_sch.state==1) {
             super.draw(ctx);
         }
     }

@@ -28,7 +28,7 @@ Scope.prototype.drawGrid=function(ctx,illumgrid) {
         for (let i=0; i<4; i++) {
             var x=ax[i]; var y=ay[i];
             ctx.beginPath();
-            var grd = ctx.createRadialGradient(x,y,d1,x,y,d2);
+            grd = ctx.createRadialGradient(x,y,d1,x,y,d2);
             grd.addColorStop(0,"rgba("+illum+", "+illum+", "+illum+",0.5)");
             grd.addColorStop(1, "rgba(50, 100, 50, 0)");
             ctx.arc(x,y,d2,0,2*Math.PI);

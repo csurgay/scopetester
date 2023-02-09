@@ -1,3 +1,4 @@
+/* Generates a signal forms as functions or buffers, has a name */
 class BufferGenerator {
     constructor(pName,pFunction,pHalfBufferIcon) {
         this.name=pName;
@@ -6,6 +7,7 @@ class BufferGenerator {
     }
 }
 
+/* Creates BufferGenerators */
 function initBufgen() {
     trace("initBufgen");
 //    bufgen.push(new BufferGenerator("GND",f_gnd,'fullIcon'));
@@ -37,6 +39,7 @@ function initBufgen() {
 var yy; // for vertical calculation;
 var angle_rad; // for 2*PI calcultions
 
+/* Calc BufferGenerator signals into sch based on siggen control settings */
 function initChannels() {
     trace("initChannels");
     tailParts=[];
@@ -103,6 +106,7 @@ function initChannels() {
     }
 }
 
+/* Scales original plot into signal buffer */
 function initMenomano() {
     trace("initMenomano");
     for (let i=0;i<menomano.length;i++) {
@@ -131,6 +135,10 @@ const morseAbc={"a":".-","b":"-...","c":"-.-.","d":"-..","e":".","f":"..-.",
     "g":"--.","h":"....","i":"..","j":".---","k":"-.-","l":".-..","m":"--",
     "n":"-.","o":"---","p":".--.","q":"--.-","r":".-.","s":"...","t":"-",
     "u":"..-","v":"...-","w":".--","x":"-..-","y":"-.--","z":"--.."};
+const morseText="la linea scopetester rulez";
+const morseTime=7; // ticks in buffer
+var morse=[];
+
 function initMorse() {
     trace("initMorse");
     var low=0;
@@ -158,6 +166,7 @@ function f_morse(x) {
     x=x%L;
     return ampl*morse[x];
 }
+
 const dn=L/102.4; // d for ntsc is 1 microsecond
 function f_ntsc(x) {
     if (x==-17) return 64*dn; // smaple length
