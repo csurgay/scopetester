@@ -4,7 +4,7 @@ class Siggen extends pObject {
         var pY1=pY-15, pY2=pY1+75, pY3=pY2+75, pY4=pY3+75;
         super(ctx,pX,pY,pW,300);
         this.myChannel=pNo;
-        new Frame(pX-65,pY-65,pW-40,pH,"CH"+pNo+" Signal                 ","rightish");
+        new Frame(pX-65,pY-65,pW-40,pH,"CH"+pNo+"  ","centerish");
         this.b_ch=new PushButton(ctx,pX+pW-149,pY-71,34,22,"ON","siggen");
         this.b_ch.illum=false;
         this.b_ch.state=1;

@@ -11,6 +11,6 @@ class ScopeChannel {
         this.b_gnd=new PushButton(ctx,pX+58,pY+309,pbw,pbh,"Gnd",'on');
         this.b_dc=new PushButton(ctx,pX+58,pY+309,pbw,pbh,"DC",'on');
         this.b_dc.state=1;
-        this.acdc=new Radio(pX+58,pY+309,[this.b_ac,this.b_gnd,this.b_dc]);
+        this.acdc=new Radio(ctx,pX+58,pY+309,[this.b_ac,this.b_gnd,this.b_dc]);
     }
 }

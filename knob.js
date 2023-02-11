@@ -233,7 +233,7 @@ class DoubleKnob extends pObject {
         this.k_.setSwitchBufferNeeded();
     }
     setInitChannelsNeeded() {
-        super.initChannelsNeeded=true;
+        super.setInitChannelsNeeded();
         this.k.initChannelsNeeded=true;
         this.k_.initChannelsNeeded=true;
     }

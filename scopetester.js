@@ -88,17 +88,19 @@ function draw(ctx) {
         for (let i=0; i<uidebugctx.length; i++) uidebugctx[i].draw(debugctx);
     }
 }
-
+var b_bnc;
 function start() {
     logWindow=document.getElementById('log');
     log(credit);
     initBufgen();
-    siggen=[new Siggen(75,530,"1"),new Siggen(415,530,"2")];
+    new Frame(10,620,920,320,"Waveform Generator", "left");
+    siggen=[new Siggen(75,700,"1"),new Siggen(415,700,"2")];
     siggen[0].k_scale.value=7;
     scope=new Scope(70,10,DL/10,17);
     initChannels();
     initMonitor();
     b_power=new PowerButton(10,25,40,35,"ON","power");
+    b_bnc=new BncButton(200,500,16,16,"","power");
     draw(ctx);
     setTimeout(processEvent,100);
 }

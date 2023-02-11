@@ -181,6 +181,198 @@ function setPower() {
         else setTimeout(setPower,10);
     }
 }
+class BncButton extends Button {
+    constructor(pX,pY,pW,pH,pLabel,pType) {
+        super(ctx,pX,pY,pW,pH,pLabel,pType);
+    }
+    clickXY(x,y) {
+        // bnc plug event
+        if (this.state==0) {
+        }
+        // bnc unplug event
+        if (this.state==1) {
+        }
+        super.clickXY(x,y);
+    }
+    draw(ctx) {
+        var bx=this.x, by=this.y, br=this.w, bd=this.w/8;
+        ctx.lineWidth=1;
+        if (this.state==0) {
+            ctx.beginPath(); // washer back
+            ctx.fillStyle="rgb(115,115,115)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx,by,br,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // washer front, shiny edge
+            ctx.fillStyle="rgb(205,205,205)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+3,by+3,br,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // back wide
+            ctx.fillStyle="rgb(155,155,155)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+4,by+4,br-1,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // back thinner
+            ctx.fillStyle="rgb(155,155,155)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+4,by+4,br-4,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // 1st ring
+            ctx.fillStyle="rgb(155,155,155)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+6,by+6,br-4,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // 2nd ring
+            ctx.fillStyle="rgb(185,185,185)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+7,by+7,br-5,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // 3rd ring
+            ctx.fillStyle="rgb(155,155,155)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+8,by+8,br-4,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // front ring
+            ctx.fillStyle="rgb(155,155,155)";
+            ctx.strokeStyle="rgb(55,55,55)";
+            ctx.arc(bx+10,by+10,br-5,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // inner part
+            ctx.fillStyle="rgb(105,105,105)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+10,by+10,br-6,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // inner part
+            ctx.fillStyle="rgb(135,135,135)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+8,by+8,br-11,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // golden pin
+            ctx.fillStyle="rgb(135,135,80)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+8,by+8,br-14,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+        }
+        else if (this.state==1) {
+            ctx.beginPath(); // washer back
+            ctx.fillStyle="rgb(115,115,115)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx,by,br,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // washer front, shiny edge
+            ctx.fillStyle="rgb(205,205,205)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+3,by+3,br,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // back wide
+            ctx.fillStyle="rgb(155,155,155)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+4,by+4,br-1,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // back thinner
+            ctx.fillStyle="rgb(155,155,155)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+4,by+4,br-4,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // 1st ring
+            ctx.fillStyle="rgb(155,155,155)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+6,by+6,br-4,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // 2nd ring
+            ctx.fillStyle="rgb(185,185,185)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+7,by+7,br-5,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // 3rd ring
+            ctx.fillStyle="rgb(155,155,155)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+8,by+8,br-4,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // front ring
+            ctx.fillStyle="rgb(155,155,155)";
+            ctx.strokeStyle="rgb(55,55,55)";
+            ctx.arc(bx+6,by+6,br,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // inner part
+            ctx.fillStyle="rgb(155,155,155)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+12,by+12,br,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // inner part
+            ctx.strokeStyle="rgb(35,35,35)";
+            for (let i=1;i<10;i++) {
+                var rad=80*Math.PI/100-i*Math.PI/10;
+                ctx.moveTo(bx+7-br*Math.cos(rad),by+7-br*Math.sin(rad));
+                ctx.lineTo(bx+11-br*Math.cos(rad),by+11-br*Math.sin(rad));
+            }
+            ctx.stroke();
+
+            ctx.beginPath(); // inner part
+            ctx.fillStyle="rgb(155,155,155)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+12,by+12,br-4,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // inner part
+            ctx.fillStyle="rgb(155,155,155)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            ctx.arc(bx+15,by+15,br-4,0,2*Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath(); // inner part
+            ctx.fillStyle="rgb(35,35,35)";
+            ctx.strokeStyle="rgb(35,35,35)";
+            for (let i=0; i<20; i++) {
+                ctx.arc(bx+15+2*i,by+15+2*i,br-11,0,2*Math.PI);
+            }
+            ctx.fill();
+            ctx.stroke();
+        }
+    }
+}
 class ChOnButton extends Button {
     constructor(pX,pY,pW,pH,pLabel,pType) {
         super(ctx,pX,pY,pW,pH,pLabel,pType);
@@ -305,7 +497,7 @@ class PresetButton extends PushButton {
     }
 }
 class Radio extends pObject {
-    constructor(pX,pY,pListButtons,pShow=true) {
+    constructor(ctx,pX,pY,pListButtons,pShow=true) {
         super(ctx,pX,pY,25,pListButtons.length*dButton);
         this.name="Radio";
         this.live=false;

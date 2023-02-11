@@ -39,14 +39,14 @@ class Scope extends pObject {
         b_add=new ChOnButton(795,1000,24,16,"ADD","on",false);
         b_mod=new ChOnButton(795,1000,24,16,"AM","on",false);
         b_xy=new ChOnButton(795,1000,24,16,"X-Y","on",false);
-        radio_mode=new Radio(795,1000,[b_chop,b_alt,b_ch1,b_ch2,b_add,b_mod,b_xy],false);
+        radio_mode=new Radio(ctx,795,1000,[b_chop,b_alt,b_ch1,b_ch2,b_add,b_mod,b_xy],false);
         b_auto=new PushButton(ctx,892,530,pbw,pbh,"Auto","on");
         b_auto.state=1;
         b_ch1tr=new PushButton(ctx,892,530,pbw,pbh,"CH1","on");
         b_ch2tr=new PushButton(ctx,892,530,pbw,pbh,"CH2","on");
-        b_mode=new PushButton(ctx,892,530,pbw,pbh,"Mode","on");
+        b_mode=new PushButton(ctx,892,530,pbw,pbh,"Math","on");
         b_chtr=[b_ch1tr,b_ch2tr];
-        radio_trig=new Radio(892,530,[b_auto,b_ch1tr,b_ch2tr,b_mode]);
+        radio_trig=new Radio(ctx,892,530,[b_auto,b_ch1tr,b_ch2tr,b_mode]);
         b_limit=new IndicatorLed(895,480,24,16,"Limit","on");
         b_find=new FindButton(17,305,pbw,pbh,"Find","small");
         b_reset=new ResetButton(17,360,pbw,pbh,"Reset","small");
@@ -83,6 +83,7 @@ class Scope extends pObject {
         k_slope=new Knob(ctx,-1,830,590,17,2,0,"Slope","knob");
         k_slope.value0=false;
         k_mode=new ModeKnob(735,535);
+        k_mode.setSwitchBufferNeeded();
         b_fft=new PushButton(ctx,755,740,pbw,pbh,"FFT","on");
         k_ffty=new Knob(ctx,39,730,700,20,40,0,"On / Ymag","double_s");
         k_ffty.value0=false;
@@ -101,7 +102,7 @@ class Scope extends pObject {
         b_micch=new DebugButton(160,20,pbw,pbh,"micch ","on");
         b_dispch=new DebugButton(160,20,pbw,pbh,"dispch ","on");
         b_pixelch=new DebugButton(160,20,pbw,pbh,"pixelch  ","on");
-        debug_channel=new Radio(160,20,[b_sch,b_gench,b_micch,b_dispch,b_pixelch]);
+        debug_channel=new Radio(debugctx,160,20,[b_sch,b_gench,b_micch,b_dispch,b_pixelch]);
         k_cursor=new DoubleKnob(ctx,870,75,51,201,"Cursor","cursor",36,23);
         k_cursor.setPullable("cursor");
         k_cursor.setResetTogether();
@@ -112,7 +113,7 @@ class Scope extends pObject {
         b_b=new PushButton(ctx,892,165,pbw,pbh,"DLYD ","on");
         b_aandb=new PushButton(ctx,892,165,pbw,pbh,"ALT","on");
         b_mixed=new PushButton(ctx,892,165,pbw,pbh,"Mixed  ","on");
-        dualtb_mode=new Radio(892,165,[b_a,b_ainten,b_b,b_aandb,b_mixed]);
+        dualtb_mode=new Radio(ctx,892,165,[b_a,b_ainten,b_b,b_aandb,b_mixed]);
     }
     draw(ctx,drawShadow) {
         if (drawInProgress || drawInTimeout) { return; }

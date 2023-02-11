@@ -41,7 +41,7 @@ function switchBuffer() {
         for (let i=0; i<nowBuffering[c].length; i++) {
             nowBuffering[c][i]=0;
             for (let cc=0; cc<2; cc++) mqi[cc]=Math.round(mq[cc]*i)%L;
-            if (sel=="Mode") {
+            if (sel=="Math") {
                 if (siggen[c].b_ch.state==1) {
                     nowBuffering[c][i]=scope.calcModeY(c,sch[0][mqi[0]],sch[1][mqi[1]]) / 290;
                 }

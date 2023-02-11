@@ -156,9 +156,9 @@ function getTextWidth(ctx,pS,pSize) {
 class Frame extends pObject {
     constructor(pX,pY,pW,pH,pLabel,pPos) {
         super(ctx,pX,pY,pW,pH);
-        var x={"center":pX+pW/2,"rightish":pX+245};
+        var x={"left":pX+100,"center":pX+pW/2,"centerish":pX+200,"rightish":pX+245};
         uipush(this);
-        this.label=new Label(ctx,x[pPos],pY+1," "+pLabel+" ",15);
+        this.label=new Label(ctx,x[pPos],pY+2," "+pLabel+" ",15);
         this.label.background=true;
     }
     draw(ctx) {
