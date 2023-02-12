@@ -1,3 +1,20 @@
+Scope.prototype.drawSiggen=function(ctx) {
+    ctx.beginPath();
+    ctx.fillStyle = "rgb(100, 100, 100)";
+    roundRect(ctx, siggenX, siggenY-2, siggenW, siggenH+2, 20);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.fillStyle = bgcolor;
+    roundRect(ctx, siggenX, siggenY+12, siggenW, siggenH-24, 20);
+    ctx.fill();
+    // ctx.beginPath();
+    // ctx.font="normal 900 20px Arial, sans-serif";
+    // ctx.fillStyle = "rgb(25, 50, 25)";
+    // ctx.textAlign="left";
+    // ctx.textBaseline='top';
+    // ctx.fillText("WAVEFORM GENERATOR",siggenX+10,siggenY+5);
+    // ctx.fill();
+}
 Scope.prototype.drawFrame=function(ctx) {
     ctx.beginPath();
     ctx.strokeStyle = "rgb(25, 50, 25)";

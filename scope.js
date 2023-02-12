@@ -15,6 +15,14 @@ var runningTime=Date.now(), sweepDuration, sweepCount=0, elapsedTime=0, triggerT
 var inten=[100,50];
 var altc=0;
 
+const verX=60, verY=465, verW=555, verH=120;
+const horX=623, horY=210, horW=330, horH=242, dualX=290, dualY=135;
+const digiX=horX, digiY=verY, digiW=horW/2-5, digiH=verH;
+const modeX=horX, modeY=10, modeW=160, modeH=horY-modeY-10, moderX=modeW/4+4, moderY=20;
+const monX=horX+digiW+10, monY=digiY, monW=digiW, monH=digiH;
+const trigX=modeX+modeW+10, trigY=modeY, trigW=160, trigH=modeH, trmodeX=120, trmodeY=105;
+const siggenX=0, siggenY=verY+verH+10, siggenW=955, siggenH=940-siggenY;
+
 class Scope extends pObject {
     constructor(pX,pY,pD,pDD) {
         super(ctx,pX,pY,10*pD+2*pDD,8*pD+2*pDD);
@@ -22,39 +30,87 @@ class Scope extends pObject {
         this.d=pD;
         this.dd=pDD;
         uipush(this);
-        new Frame(620,15,310,255,"Horizontal","center");
-        new Frame(620,283,310,170,"Vertical","center");
-        new Frame(690,465,90,150,"Mode","center");
-        new Frame(845,630,85,145,"Monitor","center");
-        new Frame(790,465,140,150,"Trigger","center");
-        new Frame(690,630,145,145,"FFT","center");
-        k_vol=new Knob(ctx,8,885,675,20,17,0,"Volume","knob");
-        k_vol.setSwitchBufferNeeded();
-        k_monitor=new MonitorKnob(885,735);
-        b_ch1=new ChOnButton(795,1000,24,16,"CH1","on",false);
-        b_ch2=new ChOnButton(795,1000,24,16,"CH2","on",false);
+
+        new Frame(verX,verY,verW,verH,"Vertical","center");
+        this.ch=[new ScopeChannel(0,verX,verY), new ScopeChannel(1,verX+287,verY)];
+
+        new Frame(horX,horY,horW,horH,"Horizontal","center");
+        k_xpos=new DoubleKnob(ctx,horX+44,horY+160,201,201,"X Pos","xpos",36,20);
+        k_xpos.setPullable("xpos");
+        k_xpos.setResetTogether();
+        k_time=new TimeKnob(horX+170,horY+150);
+        k_delay=new DoubleKnob(ctx,horX+44,horY+60,100,100,"Delay Mult","cursor",36,23);
+        k_delay.k.value0=false;
+        k_delay.k_.value0=false;
+        k_delay.k.limit=k_delay.k.ticks-1;
+        k_delay.k_.limit=k_delay.k_.ticks-1;
+        k_delay.setResetTogether();
+        new Vfd(horX+horW/2-30,horY+40,4,()=>{return 10*k_delay.k.getValue()+k_delay.k_.getValue()/10;},()=>{
+            return b_power.state==0 || 10*k_delay.k.getValue()+k_delay.k_.getValue()==0;});
+        b_xcal=new IndicatorLed(horX+35,horY+217,24,16,"Cal","on");
+        k_cursor=new DoubleKnob(ctx,horX+dualX-10,horY+60,51,201,"Cursor","cursor",36,23);
+        k_cursor.setPullable("cursor");
+        k_cursor.setResetTogether();
+        b_a=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"  A  ","on");
+        b_a.state=1;
+        b_ainten=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"Inten","on");
+        b_b=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"DLYD ","on");
+        b_aandb=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"ALT","on");
+        b_mixed=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"Mixed  ","on");
+        dualtb_mode=new Radio(ctx,horX+dualX,horY+dualY,[b_a,b_ainten,b_b,b_aandb,b_mixed]);
+
+        new Frame(digiX,digiY,digiW,digiH,"Spectrum","center");
+        b_fft=new PushButton(ctx,digiX+10,digiY+55,pbw,pbh,"FFT","fft");
+        k_ffty=new Knob(ctx,39,digiX+70,digiY+65,20,40,0,"Ymag","double_s");
+        k_ffty.value0=false;
+        k_fftx=new Knob(ctx,10,digiX+125,digiY+65,20,21,0,"Xmag","double_s");
+
+        new Frame(modeX,modeY,modeW,modeH,"Mode","center");
+        b_ch1=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"CH1","on2");
+        b_ch2=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"CH2","on2");
         b_chon=[b_ch1,b_ch2];
-        b_alt=new ChOnButton(795,1000,24,16,"ALT","on",false);
-        b_chop=new ChOnButton(795,1000,24,16,"CHOP","on",false);
-        b_add=new ChOnButton(795,1000,24,16,"ADD","on",false);
-        b_mod=new ChOnButton(795,1000,24,16,"AM","on",false);
-        b_xy=new ChOnButton(795,1000,24,16,"X-Y","on",false);
-        radio_mode=new Radio(ctx,795,1000,[b_chop,b_alt,b_ch1,b_ch2,b_add,b_mod,b_xy],false);
-        b_auto=new PushButton(ctx,892,530,pbw,pbh,"Auto","on");
+        b_alt=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"ALT","on2");
+        b_alt.state=1;
+        b_chop=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"CHOP ","on2");
+        b_add=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"ADD","on2");
+        b_mod=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"AM","on2");
+        b_sub=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"SUB","on2");
+        b_xy=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"X-Y","on2");
+        radio_mode=new Radio(ctx,modeX+moderX,modeY+moderY,[b_alt,b_chop,b_ch1,b_ch2,b_add,b_sub,b_mod,b_xy],2);
+        b_storage=new PushButton(ctx,modeX+80,modeY+140,pbw,pbh,"Storage","readout");
+//        b_storage=new PushButton(ctx,horX+dualX,horY+dualY-30,pbw,pbh,"Storage","readout");
+//        b_storage=new PushButton(ctx,digiX+80,digiY+70,pbw,pbh,"Storage","readout");
+        b_readout=new PushButton(ctx,modeX+80,modeY+160,pbw,pbh,"Readout","readout");
+//        b_readout=new PushButton(ctx,digiX+80,digiY+95,pbw,pbh,"Readout","readout");
+
+        new Frame(monX,monY,monW,monH,"Monitor","center");
+        k_vol=new Knob(ctx,8,monX+monW-40,monY+65,30,17,0,"Volume","volume");
+        k_vol.setSwitchBufferNeeded();
+        k_monitor=new MonitorKnob(monX+40,monY+65);
+
+        new Frame(trigX,trigY,trigW,trigH,"Trigger","center");
+        k_trigger=new DoubleKnob(ctx,trigX+40,trigY+60,50,50,"Level","double_s",30,15);
+        k_trigger.k.defaultFastRate=1;
+        k_trigger.setResetTogether();
+        k_hold=new DoubleKnob(ctx,trigX+40,trigY+150,50,50,"HoldOff","double_s",30,15);
+        k_slope=new Knob(ctx,-1,trigX+110,trigY+75,17,2,0,"Slope","knob");
+        // !!! kellene majd "fel+le mindkettő egyszerre" slope is
+        k_slope.value0=false;
+        b_auto=new PushButton(ctx,trigX+trmodeX,trigY+trmodeY,pbw,pbh,"Auto","on");
         b_auto.state=1;
-        b_ch1tr=new PushButton(ctx,892,530,pbw,pbh,"CH1","on");
-        b_ch2tr=new PushButton(ctx,892,530,pbw,pbh,"CH2","on");
-        b_mode=new PushButton(ctx,892,530,pbw,pbh,"Math","on");
+        b_ch1tr=new PushButton(ctx,trigX+trmodeX,trigY+trmodeY,pbw,pbh,"CH1","on");
+        b_ch2tr=new PushButton(ctx,trigX+trmodeX,trigY+trmodeY,pbw,pbh,"CH2","on");
+        b_mode=new PushButton(ctx,trigX+trmodeX,trigY+trmodeY,pbw,pbh,"Math","on");
         b_chtr=[b_ch1tr,b_ch2tr];
-        radio_trig=new Radio(ctx,892,530,[b_auto,b_ch1tr,b_ch2tr,b_mode]);
-        b_limit=new IndicatorLed(895,480,24,16,"Limit","on");
+        radio_trig=new Radio(ctx,trigX+trmodeX,trigY+trmodeY,[b_auto,b_ch1tr,b_ch2tr,b_mode]);
+        b_limit=new IndicatorLed(trigX+120,trigY+12,24,16,"Limit","on");
+
         b_find=new FindButton(17,305,pbw,pbh,"Find","small");
         b_reset=new ResetButton(17,360,pbw,pbh,"Reset","small");
         b_reset.illum=false;
         b_preset=new PresetButton(17,395,pbw,pbh,"Preset","small");
         b_preset.illum=false;
         b_mic=new MicButton(17,430,pbw,pbh,"Mic","small");
-        this.ch=[new ScopeChannel(0,685,80), new ScopeChannel(1,835,80)];
         k_intensity=new Knob(ctx,8,30,100,15,17,0,"Intensity","smallknob");
         k_focus=new Knob(ctx,8,30,150,15,17,0,"Focus","smallknob");
         k_illum=new Knob(ctx,16,30,200,15,17,0,"Illum","smallknob");
@@ -62,33 +118,6 @@ class Scope extends pObject {
         k_astigm=new CalibPot(ctx,8,40,240,15,17,0,"Ast","pot");
         k_rot=new CalibPot(ctx,15,40,270,15,31,0,"Rot","pot");
         k_skew=new CalibPot(debugctx,15,40,270,15,31,0,"Skew","pot2");
-        k_time=new TimeKnob(783,180);
-        new Vfd(710,75,4,()=>{return 10*k_delay.k.getValue()+k_delay.k_.getValue()/10;},()=>{
-            return b_power.state==0 || 10*k_delay.k.getValue()+k_delay.k_.getValue()==0;});
-        k_delay=new DoubleKnob(ctx,665,75,100,100,"Delay Mult","cursor",36,23);
-        k_delay.k.value0=false;
-        k_delay.k_.value0=false;
-        k_delay.k.limit=k_delay.k.ticks-1;
-        k_delay.k_.limit=k_delay.k_.ticks-1;
-        k_delay.setResetTogether();
-        k_xpos=new DoubleKnob(ctx,665,180,201,201,"X Pos","xpos",36,20);
-        k_xpos.setPullable("xpos");
-        k_xpos.setResetTogether();
-        b_xcal=new IndicatorLed(660,245,24,16,"Cal","on");
-        b_ycal=new IndicatorLed(660,430,24,16,"Cal","on");
-        k_trigger=new DoubleKnob(ctx,830,520,50,50,"Level","double_s",30,15);
-        k_trigger.k.defaultFastRate=1;
-        k_trigger.setResetTogether();
-//        k_hold=new DoubleKnob(880,520,50,50,"HoldOff","double_s",30,15);
-        k_slope=new Knob(ctx,-1,830,590,17,2,0,"Slope","knob");
-        k_slope.value0=false;
-        k_mode=new ModeKnob(735,535);
-        k_mode.setSwitchBufferNeeded();
-        b_fft=new PushButton(ctx,755,740,pbw,pbh,"FFT","on");
-        k_ffty=new Knob(ctx,39,730,700,20,40,0,"On / Ymag","double_s");
-        k_ffty.value0=false;
-        k_fftx=new Knob(ctx,10,800,700,20,21,0,"Xmag","double_s");
-        b_readout=new PushButton(ctx,745,588,pbw,pbh,"Readout","readout");
         b_calib=new DebugButton(20,20,pbw,pbh,"Calib","small");
         b_debug=new DebugButton(20,55,pbw,pbh,"Debug","small");
         b_frames=new DebugButton(20,90,pbw,pbh,"Frames","small");
@@ -103,17 +132,6 @@ class Scope extends pObject {
         b_dispch=new DebugButton(160,20,pbw,pbh,"dispch ","on");
         b_pixelch=new DebugButton(160,20,pbw,pbh,"pixelch  ","on");
         debug_channel=new Radio(debugctx,160,20,[b_sch,b_gench,b_micch,b_dispch,b_pixelch]);
-        k_cursor=new DoubleKnob(ctx,870,75,51,201,"Cursor","cursor",36,23);
-        k_cursor.setPullable("cursor");
-        k_cursor.setResetTogether();
-        b_storage=new PushButton(ctx,892,120,pbw,pbh,"Storage","readout");
-        b_a=new PushButton(ctx,892,165,pbw,pbh,"  A  ","on");
-        b_a.state=1;
-        b_ainten=new PushButton(ctx,892,165,pbw,pbh,"Inten","on");
-        b_b=new PushButton(ctx,892,165,pbw,pbh,"DLYD ","on");
-        b_aandb=new PushButton(ctx,892,165,pbw,pbh,"ALT","on");
-        b_mixed=new PushButton(ctx,892,165,pbw,pbh,"Mixed  ","on");
-        dualtb_mode=new Radio(ctx,892,165,[b_a,b_ainten,b_b,b_aandb,b_mixed]);
     }
     draw(ctx,drawShadow) {
         if (drawInProgress || drawInTimeout) { return; }
@@ -180,7 +198,7 @@ class Scope extends pObject {
             if (DL2>mag*DL) DL2=mag*DL;
         }
         // Beam for Lissajous XY
-        if (b_xy.state==1) {
+        if (b_power.state==1 && b_xy.state==1) {
             for (let c=0; c<2; c++) {
                 pyd=(py[0]+py[1])/2;
                 // calc pixelch
@@ -214,11 +232,11 @@ class Scope extends pObject {
             if (findState!="off") sumdelta/=findValue;
             this.stroke();
         }
-        // Actual beam drawing for Dual, Ch1, Ch2, ADD, AM
-        else {
+        // Beam for all other modes
+        else if (b_power.state==1) {
             for (let c=0; c<2; c++) {
                 pyd=py[c];
-                if (b_add.state==1 || b_mod.state==1) {
+                if (b_add.state==1 || b_sub.state==1 || b_mod.state==1) {
                     pyd=(py[0]+py[1])/2;
                     c=1;
                 }
@@ -244,7 +262,7 @@ class Scope extends pObject {
                 var c=cc;
                 if (b_ch1.state==1 && cc==1) continue;
                 else if (b_ch2.state==1 && cc==0) continue;
-                else if ((b_add.state==1 || b_mod.state==1) && cc==0) continue;
+                else if ((b_add.state==1 || b_sub.state==1 || b_mod.state==1) && cc==0) continue;
                 if (b_alt.state==1 && timebase>=slowLimit && b_storage.state==0) c=altc;
                 ctx.beginPath();
                 sumdelta=0;

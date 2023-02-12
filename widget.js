@@ -97,14 +97,15 @@ class DebugIcon extends Icon {
 }
 
 class Label extends pObject {
-    constructor(ctx,pX,pY,pS,pSize) {        
+    constructor(ctx,pX,pY,pS,pSize,pColor="black") {        
         var ret=super(ctx,pX,pY,getTextWidth(ctx,pS,pSize),pSize+1);
         this.tX=pX; this.tY=pY;
         this.bgcolor=bgcolor;
-        this.fgcolor="black";
+        this.fgcolor=pColor;
         this.adjustRect(this.tX-this.w/2-2,this.tY-this.h/2,this.w+4,this.h-3);
         this.s=pS;
         this.size=pSize;
+        this.color=pColor;
         this.background=false;
         uipush(this);
     }
@@ -124,7 +125,6 @@ class Label extends pObject {
         }
         ctx.fill();
         ctx.beginPath();
-        ctx.fillStyle="black";
         ctx.fillStyle=this.fgcolor;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -156,7 +156,7 @@ function getTextWidth(ctx,pS,pSize) {
 class Frame extends pObject {
     constructor(pX,pY,pW,pH,pLabel,pPos) {
         super(ctx,pX,pY,pW,pH);
-        var x={"left":pX+100,"center":pX+pW/2,"centerish":pX+200,"rightish":pX+245};
+        var x={"left":pX+100,"center":pX+pW/2,"centerish":pX+200,"rightish":pX+245,"right":pX+pW-50};
         uipush(this);
         this.label=new Label(ctx,x[pPos],pY+2," "+pLabel+" ",15);
         this.label.background=true;

@@ -4,10 +4,10 @@ const pullDx=1, pullDy=1, pullDr=1;
 
 class Knob extends pObject {
     constructor(ctx,pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos,pMarker="marker") {
-        const pos={"none":[0,0],"knob":[0,-27],"smallknob":[0,-22],
+        const pos={"none":[0,0],"knob":[0,-27],"smallknob":[0,-22],"volume":[0,-40],
         "pot":[-22,1],"pot2":[-25,1],"double":[0,-44],"sweep":[0,80], 
-        "double_s":[0,-40], "delay":[0,78], "func":[0,-62], "range":[0,-55], "posy":[0,-35],
-        "volts":[0,-60], "sigdouble":[63,-31], "cursor":[0,-46], "xpos":[0,-46]};
+        "double_s":[0,-35], "delay":[0,78], "func":[0,-62], "range":[0,-55], "posy":[-30,0],
+        "volts":[0,-55], "sigdouble":[63,-31], "cursor":[0,-46], "xpos":[0,-46]};
         super(ctx,pX-pR,pY-pR,2*pR,2*pR);
         this.class="Knob";
         this.name=pLabel;
@@ -258,7 +258,7 @@ class DekorKnob extends DoubleKnob {
         this.k_.color="rgb(200,20,20)";
         this.k_.haircolor=this.k_.color;
         this.k_.markercolor="#EEEEEE";
-        this.varLabel=new Label(ctx,pX-rDekor,pY-rDekor,"Var",11);
+        this.varLabel=new Label(ctx,pX-rDekor+3,pY-rDekor+2,"Var",11);
         this.varLabel.bgcolor="rgba(200,20,20,0.75)";
         this.varLabel.fgcolor="rgba(220,220,220,1)";
         this.varLabel.background=true;
@@ -353,7 +353,7 @@ class VoltsKnob extends DekorKnob {
         }
     }
     captionCircle(x,y,r) {
-        new Label(ctx,x,y+r+16,"mV",12);
+        new Label(ctx,x+r,y+r,"mV",12);
     }
 }
 
@@ -484,8 +484,8 @@ class MonitorKnob extends Knob {
 
 class ModeKnob extends Knob {
     constructor(pX,pY) {
-        for (let i=0; i<radio_mode.b.length; i++)
-            a_mode.push(radio_mode.b[i].name);
+        // for (let i=0; i<radio_mode.b.length; i++)
+        //     a_mode.push(radio_mode.b[i].name);
         super(ctx,-1,pX,pY,21,a_mode.length,1,"none","none");
         this.value0=false;
         this.iconCircle(pX,pY+2,34,a_mode);

@@ -76,11 +76,17 @@ function draw(ctx) {
     // Cal LEDs
     b_xcal.state=0;
     if (k_time.k_.getValue()!=0) b_xcal.showRed();
-    b_ycal.state=0;
-    if (scope.ch[0].k_volts.k_.getValue()!=0) b_ycal.showRed();
-    if (scope.ch[1].k_volts.k_.getValue()!=0) b_ycal.showRed();
+    for (let c=0; c<2; c++) {
+        scope.ch[c].cal.state=0;
+        if (scope.ch[c].k_volts.k_.getValue()!=0) scope.ch[c].cal.showRed();
+    }
+    // bnc state
+    for (let c=0; c<2; c++) {
+        scope.ch[c].bnc.state=scope.ch[c].b_ext.state;
+    }
     // draw
     clearCanvasNoScreen(ctx);
+    scope.drawSiggen(ctx);
     for (let i=0; i<uictx.length; i++) 
         uictx[i].draw(ctx);
     if (b_calib.state==1) {
@@ -93,14 +99,12 @@ function start() {
     logWindow=document.getElementById('log');
     log(credit);
     initBufgen();
-    new Frame(10,620,920,320,"Waveform Generator", "left");
-    siggen=[new Siggen(75,700,"1"),new Siggen(415,700,"2")];
+    siggen=[new Siggen(75,680,"1"),new Siggen(550,680,"2")];
     siggen[0].k_scale.value=7;
     scope=new Scope(70,10,DL/10,17);
     initChannels();
     initMonitor();
     b_power=new PowerButton(10,25,40,35,"ON","power");
-    b_bnc=new BncButton(200,500,16,16,"","power");
     draw(ctx);
     setTimeout(processEvent,100);
 }

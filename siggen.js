@@ -1,11 +1,15 @@
 class Siggen extends pObject {
     constructor(pX,pY,pNo) {
-        var pW=370, pH=310, pX2=pX+105, pX3=pX+155;
+        var pW=505, pH=310, pX2=pX+105, pX3=pX+155;
         var pY1=pY-15, pY2=pY1+75, pY3=pY2+75, pY4=pY3+75;
         super(ctx,pX,pY,pW,300);
         this.myChannel=pNo;
-        new Frame(pX-65,pY-65,pW-40,pH,"CH"+pNo+"  ","centerish");
-        this.b_ch=new PushButton(ctx,pX+pW-149,pY-71,34,22,"ON","siggen");
+        if (pNo==1) {
+            new Label(ctx,pX+50,pY-78,"WAVEFORM GENERATOR",16,bgcolor);
+            new Label(ctx,pX+640,pY-78,credit,16,bgcolor);
+        }
+        new Frame(pX-65,pY-65,pW-40,pH,"                  ","right");
+        this.b_ch=new PushButton(ctx,pX+pW-149,pY-71,34,22,"WG"+pNo+"     ","siggen");
         this.b_ch.illum=false;
         this.b_ch.state=1;
         this.b_ch.setSwitchBufferNeeded();

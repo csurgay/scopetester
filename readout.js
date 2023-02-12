@@ -7,9 +7,10 @@ Scope.prototype.readout=function() {
         ctx.textAlign="left";
         ctx.textBaseline="middle";
         for (let c=0; c<2; c++) {
-            if (b_chon[c].state==1 || b_alt.state==1 || b_chop.state==1 || (c==0 && (b_add.state==1 || b_mod.state==1))) {
+            if (b_chon[c].state==1 || b_xy.state==1 || b_alt.state==1 || b_chop.state==1 || (c==0 && (b_add.state==1 || b_sub.state==1 || b_mod.state==1))) {
                 var readoutText=["CH1: ","CH2: "][c]+bufgen[siggen[c].k_func.k.getValue()].name;
                 if (b_add.state==1) readoutText="CH1 CH2 ADD";
+                if (b_sub.state==1) readoutText="CH1 CH2 SUB";
                 if (b_mod.state==1) readoutText="CH1 CH2 AM";
                     if (siggen[c].k_func.k_.getValue()!=0) readoutText+=" ("+siggen[c].k_func.k_.getValue()+")";
                 drawText(readoutText,ROXSIG,ROYSIG[c]);
@@ -21,7 +22,7 @@ Scope.prototype.readout=function() {
                     }
                     else {
                         yResult=dispch[c][ptr]*volts[c]/50;
-                        if (b_add.state==1 || b_mod.state==1) {
+                        if (b_add.state==1 || b_sub.state==1 || b_mod.state==1) {
                             yResult=scope.calcModeY(0,dispch[0][5*d+xCur+tptr[0]]*volts[0]/50,
                                 dispch[1][5*d+xCur+tptr[0]]*volts[1]/50);
                         }

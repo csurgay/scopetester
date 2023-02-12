@@ -1,6 +1,6 @@
 // Button Label position per pType
-var xpos={"power":0,"on":-29, "small":0,"siggen":-32,"readout":-40};
-var ypos={"power":-27,"on":0,"small":-15,"siggen":-3,"readout":0};
+var xpos={"power":0,"on":-29,"on2":-35,"small":0,"siggen":-32,"readout":-40, "bnc":-10, "fft":0};
+var ypos={"power":-27,"on":0,"on2":0,"small":-15,"siggen":-3,"readout":0, "bnc":-35, "fft":-20};
 
 class Button extends pObject {
     constructor(ctx,pX,pY,pW,pH,pLabel,pType,pShow=true) {
@@ -18,7 +18,9 @@ class Button extends pObject {
         this.show=pShow;
         if (pShow) {
             uipush(this);
-            this.label=new Label(ctx,this.cX,this.cY,pLabel,pType=="small"?12:(pType=="on"?12:(pType=="siggen"?15:(pType=="readout"?12:15))));
+            var textSize=15;
+            if (["small","on","on2","readout"].includes(pType)) textSize=12;
+            this.label=new Label(ctx,this.cX,this.cY,pLabel,textSize);
             this.setLabelXY(pType);
         }
         buttons.push(this);
@@ -44,7 +46,7 @@ class Button extends pObject {
         super.clickXY(x,y);
     }
     draw(ctx) {
-        if (this.class=="PushButton") {
+        if (this.class=="PushButton" || this.class=="BncButton") {
             super.draw(ctx);
             return;
         }
@@ -67,7 +69,7 @@ class Button extends pObject {
         super.draw(ctx);
     }
 }
-var pbl1=1, pbl2=1, pbq=1, pbw=28, pbh=19;
+var pbl1=1, pbl2=1, pbq=1, pbw=28, pbh=19, pbw2=35, pbh2=25;
 class PushButton extends Button {
     constructor(ctx,pX,pY,pW,pH,pLabel,pType,pShow) {
         super(ctx,pX,pY,pW,pH,pLabel,pType,pShow);
@@ -167,9 +169,6 @@ class PowerButton extends Button {
             powerState="off";
         }
         super.clickXY(x,y);
-        if (this.state==1) {
-            k_mode.setButtonValue();
-        }
     }
 }
 function setPower() {
@@ -184,6 +183,9 @@ function setPower() {
 class BncButton extends Button {
     constructor(pX,pY,pW,pH,pLabel,pType) {
         super(ctx,pX,pY,pW,pH,pLabel,pType);
+        this.class="BncButton";
+        this.bx=pX; this.by=pY; this.br=pW;
+        this.x-=15; this.y-=15; this.w+=20; this.h+=20;
     }
     clickXY(x,y) {
         // bnc plug event
@@ -195,48 +197,34 @@ class BncButton extends Button {
         super.clickXY(x,y);
     }
     draw(ctx) {
-        var bx=this.x, by=this.y, br=this.w, bd=this.w/8;
+        var bx=this.bx, by=this.by, br=this.br;
         ctx.lineWidth=1;
         if (this.state==0) {
-            ctx.beginPath(); // washer back
+            ctx.beginPath(); // washer side
             ctx.fillStyle="rgb(115,115,115)";
             ctx.strokeStyle="rgb(35,35,35)";
             ctx.arc(bx,by,br,0,2*Math.PI);
             ctx.fill();
             ctx.stroke();
 
-            ctx.beginPath(); // washer front, shiny edge
-            ctx.fillStyle="rgb(205,205,205)";
+            ctx.beginPath(); // washer front
+            ctx.fillStyle="rgb(155,155,155)";
             ctx.strokeStyle="rgb(35,35,35)";
             ctx.arc(bx+3,by+3,br,0,2*Math.PI);
             ctx.fill();
             ctx.stroke();
 
-            ctx.beginPath(); // back wide
+            ctx.beginPath(); // thinner 1st rign
             ctx.fillStyle="rgb(155,155,155)";
             ctx.strokeStyle="rgb(35,35,35)";
-            ctx.arc(bx+4,by+4,br-1,0,2*Math.PI);
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.beginPath(); // back thinner
-            ctx.fillStyle="rgb(155,155,155)";
-            ctx.strokeStyle="rgb(35,35,35)";
-            ctx.arc(bx+4,by+4,br-4,0,2*Math.PI);
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.beginPath(); // 1st ring
-            ctx.fillStyle="rgb(155,155,155)";
-            ctx.strokeStyle="rgb(35,35,35)";
-            ctx.arc(bx+6,by+6,br-4,0,2*Math.PI);
+            ctx.arc(bx+3,by+3,br-4,0,2*Math.PI);
             ctx.fill();
             ctx.stroke();
 
             ctx.beginPath(); // 2nd ring
             ctx.fillStyle="rgb(185,185,185)";
             ctx.strokeStyle="rgb(35,35,35)";
-            ctx.arc(bx+7,by+7,br-5,0,2*Math.PI);
+            ctx.arc(bx+6,by+6,br-4,0,2*Math.PI);
             ctx.fill();
             ctx.stroke();
 
@@ -365,12 +353,13 @@ class BncButton extends Button {
             ctx.beginPath(); // inner part
             ctx.fillStyle="rgb(35,35,35)";
             ctx.strokeStyle="rgb(35,35,35)";
-            for (let i=0; i<20; i++) {
+            for (let i=0; i<20; i+=1) {
                 ctx.arc(bx+15+2*i,by+15+2*i,br-11,0,2*Math.PI);
             }
             ctx.fill();
             ctx.stroke();
         }
+        super.draw(ctx);
     }
 }
 class ChOnButton extends Button {
@@ -497,19 +486,26 @@ class PresetButton extends PushButton {
     }
 }
 class Radio extends pObject {
-    constructor(ctx,pX,pY,pListButtons,pShow=true) {
+    constructor(ctx,pX,pY,pListButtons,pSize=1,pShow=true) {
         super(ctx,pX,pY,25,pListButtons.length*dButton);
         this.name="Radio";
         this.live=false;
         this.b=pListButtons;
+        this.size=pSize;
         this.show=pShow;
+        var xx=pX, yy=pY;
         for (let i=0; i<pListButtons.length; i++) {
             pListButtons[i].radio=this;
-            pListButtons[i].x=pX;
-            pListButtons[i].y=pY+i*dButton;
-            if (pShow) pListButtons[i].label.adjustXY(0,i*dButton);
+            pListButtons[i].x=xx;
+            pListButtons[i].y=yy;
+            if (pShow) pListButtons[i].label.adjustXY(xx-pX,yy-pY);
+            yy+=dButton; 
+            if (this.size==2) {
+                yy+=0;
+                if (i==3) { xx+=70; yy=pY; }
+            }
         }
-        uictx.push(this);
+//        uictx.push(this);
     }
     reset() {
         for (let i=0; i<this.b.length; i++) {

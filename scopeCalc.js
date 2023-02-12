@@ -173,6 +173,7 @@ Scope.prototype.calcModeY=function(c,ych0,ych1) {
     if (b_ch1.state==1) return ych0;
     else if (b_ch2.state==1) return ych1;
     else if (b_add.state==1) return ych0+ych1;
+    else if (b_sub.state==1) return ych0-ych1;
     else if (b_mod.state==1) return (ampls[0]+ampls[1])*ych0*ych1/ampls[0]/ampls[1];
     else if (b_alt.state==1) return [ych0,ych1][c];
     else if (b_chop.state==1) return [ych0,ych1][c];

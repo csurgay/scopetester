@@ -24,6 +24,7 @@ function initBufgen() {
 //    bufgen.push(new BufferGenerator("Exp",f_exp,'fullIcon'));
     bufgen.push(new BufferGenerator("EXP",f_log,'fullIcon'));
     bufgen.push(new BufferGenerator("BEATS",f_beats,'fullIcon'));
+    bufgen.push(new BufferGenerator("WAVE",f_wave,'fullIcon'));
     bufgen.push(new BufferGenerator("ECG",f_ecg,'fullIcon'));
     bufgen.push(new BufferGenerator("NTSC",f_ntsc,'fullIcon'));
     initMorse();
@@ -204,6 +205,12 @@ function f_beats(x,o) {
     o+=2;
     angle_rad = 1.0 * x * Math.PI / L2;
     return ampl*Math.sin(angle_rad*(o+2))*Math.sin(angle_rad);
+}
+function f_wave(x,o) {
+    if (x==-17) return L; // smaple length
+    o+=2;
+    angle_rad = 1.0 * x * Math.PI / L2;
+    return ampl/2*(Math.sin(angle_rad*(o+3))+Math.sin(angle_rad));
 }
 function f_gauss(x,o) {
     if (x==-17) return L; // smaple length
