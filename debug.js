@@ -154,8 +154,8 @@ class DebugButton extends PushButton {
 		            presetManager.add(60,"wheel",siggen[1].k_phase.k_,0,-1,50);
                 }
                 else if (pri==5) { // Lissajous flowers (XY)
-                    presetManager.add(6,"wheel",siggen[0].k_func.k,0,-1);
-                    presetManager.add(6,"wheel",siggen[1].k_func.k,0,-1);
+                    presetManager.add(7,"wheel",siggen[0].k_func.k,0,-1);
+                    presetManager.add(7,"wheel",siggen[1].k_func.k,0,-1);
                     presetManager.add(1,"wheel",siggen[0].k_scale,0,-1);
                     presetManager.add(1,"wheel",siggen[1].k_scale,0,-1);
                     presetManager.add(6,"wheel",siggen[1].k_phase.k,0,1);
@@ -176,7 +176,15 @@ class DebugButton extends PushButton {
                     presetManager.add(8,"wheel",k_focus,0,-1,30);
                     presetManager.add(30,"wheel",k_rot,0,1,30);
                     presetManager.add(8,"wheel",k_focus,0,1,30);
-                    presetManager.add(8,"wheel",k_intensity,0,1,30);
+                    presetManager.add(7,"wheel",k_intensity,0,1,30);
+                    presetManager.add(1,"wheel",k_intensity,0,1,1000);
+                    presetManager.add(1,"wheel",siggen[0].k_func.k,0,1);
+                    presetManager.add(1,"wheel",siggen[1].k_func.k,0,1,1000);
+                    presetManager.add(3,"wheel",siggen[0].k_func.k_,0,-1);
+                    presetManager.add(3,"wheel",siggen[1].k_func.k_,0,-1);
+                    presetManager.add(8,"wheel",k_intensity,0,-1);
+                    presetManager.add(1,"wheel",scope.ch[0].k_volts.k,0,1);
+                    presetManager.add(1,"wheel",scope.ch[1].k_volts.k,0,1,1000);
                 }
                 else if (pri==6) { // Heart (XY) and Smiling face
                     presetManager.add(1,"wheel",siggen[0].k_func.k,0,1);
@@ -189,7 +197,7 @@ class DebugButton extends PushButton {
                     presetManager.add(1,"wheel",scope.ch[1].k_volts.k,0,1);
                     presetManager.add(1,"mousedown",b_xy,0,0);
                     presetManager.add(1,"mouseup",b_xy,0,0,1000);
-                    presetManager.add(7,"wheel",siggen[0].k_func.k,0,-1);
+                    presetManager.add(8,"wheel",siggen[0].k_func.k,0,-1);
                     presetManager.add(7,"wheel",siggen[0].k_func.k_,0,-1);
                     presetManager.add(7,"wheel",siggen[0].k_ampl.k,0,1);
                     presetManager.add(1,"wheel",siggen[1].k_func.k_,0,1);
