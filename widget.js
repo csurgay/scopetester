@@ -170,9 +170,12 @@ class Frame extends pObject {
         super.draw(ctx);
     }
 }
-function drawText(str,pdx,pdy) {
+function drawText(str,pdx,pdy,hlNo=0) {
+    var hlPtr=0;
     ctx.beginPath();
-	var dx=pdx, dy=pdy, dl=0.8, dd=8;
+    ctx.lineCap="round";
+    ctx.lineWidth=2;
+    var dx=pdx, dy=pdy, dl=0.8, dd=8;
 	for (let i=0; i<str.length; i++) {
         var c=str.charAt(i);
 		if (c=='^' || c=='\n') {dx=pdx; dy+=16;}
@@ -182,15 +185,31 @@ function drawText(str,pdx,pdy) {
                 error(c+" ("+str+") is not defined in letters");
                 return;
             }
+            if (imprintState=="scanning") hlPtr++;
 			for (let j=0; j<l.length/4; j++) {
-				ctx.moveTo(dx+dl*l[4*j+0], dy+dl*l[4*j+1]);
+                if (imprintState!="scanning") hlPtr++;
+                if (hlPtr==hlNo) {
+                    ctx.strokeStyle="rgb(0,250,0)";
+                    ctx.stroke();
+                    ctx.beginPath();
+                }
+                ctx.moveTo(dx+dl*l[4*j+0], dy+dl*l[4*j+1]);
 				ctx.lineTo(dx+dl*l[4*j+2], dy+dl*l[4*j+3]);
+                if (hlPtr==hlNo) {
+                    ctx.strokeStyle="rgb(255,255,255)";
+                    ctx.lineWidth=4;
+                    ctx.stroke();
+                    if (["running","completing"].includes(imprintState)) return;
+                }
 			}
 			dx+=dd;
 		}
 	}
+    if (hlNo>0) {
+        imprintState="scanning";
+        if (hlNo>=hlPtr) imprintHlPtr=10; // restart highlight upon reaching the end
+    }
+    ctx.lineWidth=2;
 	ctx.strokeStyle="rgb(0,250,0)";
-	ctx.lineCap="round";
-	ctx.lineWidth=2;
 	ctx.stroke();
 }

@@ -1,2 +1,16 @@
 AC egy hosszabb időátlagot von ki, vagy csak a képernyőn lévő jelét?
 
+Todo:
+=====
+1. lebutított verzió
+2. zaj hozzáadása
+
+
+Issues:
+=======
+1. fokusz a rácsvolágítást is elhomályosítja
+2. mic bementhez nincs megfelelő buffer
+3. új mic gombok még nincsenek bekötve
+4. WG-k elrendezése most hiányos
+5. trigger előtt van a delay, nem utána
+6. gombok benyomásakor hiányzik egy animációs fázis

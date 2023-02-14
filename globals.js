@@ -138,5 +138,8 @@ ALT/CHOP MODE, XY LISSAJOUS, FFT SPECTRUM ANALYZER
 TRIGGER, DELAY, READOUT, CURSOR
 ANIMATED PRESETS, VFD DISPLAYS, AND MANY MORE...
 `;
-var imprintY=1000; // 1000 is not drawing imprint text
-var imprintTimer;
+var imprintState="idle"; // running, completing, scanning, idle
+var imprintY; // scrolling imprint position
+const imprintStart=400, imprintEnd=20; // imprint start end positions
+var imprintTimer; // timer handler
+var imprintHlPtr; // imprint highlight pointer

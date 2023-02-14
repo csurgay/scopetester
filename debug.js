@@ -1,5 +1,5 @@
 function reset() {
-    imprintY=1000;
+    imprintState="idle";
     for (let i=0; i<uictx.length; i++) {
         if (!isNaN(uictx[i].ticks)) {
             uictx[i].reset();
@@ -10,6 +10,7 @@ function reset() {
             uidebugctx[i].reset();
         }
     }
+    if (b_alt.state==0) b_alt.clickXY(0,0);
     if (b_a.state==0) b_a.clickXY(0,0);
     if (b_auto.state==0) b_auto.clickXY(0,0);
     if (b_readout.state==1) b_readout.clickXY(0,0);
@@ -57,11 +58,15 @@ class PresetManager {
     }
 }
 function setImprintY() {
-    if (b_power.state==0 || imprintY==1000) return;
-    imprintY--;
-    if (imprintY<-520) imprintY=440;
-    draw(ctx);
-    setTimeout(setImprintY,50);
+    if (b_power.state==0 || imprintState=="idle") return;
+    if (imprintY<=imprintEnd && imprintState=="running") {
+        imprintState="completing";
+    }
+    if (imprintState=="running") {
+        imprintY-=0.12;
+    }
+    scope.draw(ctx);
+    imprintTimer=setTimeout(setImprintY,1);
 }
 class DebugButton extends PushButton {
     constructor(pX,pY,pW,pH,pLabel,pType) {
@@ -90,9 +95,13 @@ class DebugButton extends PushButton {
                 var pri=parseInt(this.name.substring(6));
                 presetManager.reset();
                 reset();
-                clearTimeout(imprintTimer); imprintY=1000;
+                // switch off imprint timer and trigger
+                clearTimeout(imprintTimer); 
+                imprintState="idle";
                 if (pri==0) { // imprint text scrolling
-                    imprintY=440;
+                    imprintState="running";
+                    imprintHlPtr=0;
+                    imprintY=imprintStart;
                     imprintTimer=setTimeout(setImprintY,50);
                 }
                 else if (pri==1) { // Morse (Range, Freq, AM, Monitor)

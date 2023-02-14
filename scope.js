@@ -21,7 +21,7 @@ const digiX=horX, digiY=verY, digiW=horW/2-5, digiH=verH;
 const modeX=horX, modeY=10, modeW=160, modeH=horY-modeY-10, moderX=modeW/4+4, moderY=20;
 const monX=horX+digiW+10, monY=digiY, monW=digiW, monH=digiH;
 const trigX=modeX+modeW+10, trigY=modeY, trigW=160, trigH=modeH, trmodeX=120, trmodeY=105;
-const siggenX=0, siggenY=verY+verH+10, siggenW=955, siggenH=940-siggenY;
+const siggenX=0, siggenY=verY+verH+10, siggenW=960, siggenH=940-siggenY;
 
 class Scope extends pObject {
     constructor(pX,pY,pD,pDD) {
@@ -153,8 +153,8 @@ class Scope extends pObject {
         this.drawGrid(ctx,"grid");
         this.astigmCalc();
         // imprint text rolling
-        if (b_power.state==1 && imprintY!=1000) {
-            drawText(imprint,px,imprintY--);
+        if (b_power.state==1 && imprintState!="idle") {
+            drawText(imprint,px,imprintY,imprintHlPtr++);
             ctx.restore();
             drawInProgress=false;
             return;
