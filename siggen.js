@@ -1,7 +1,7 @@
 class Siggen extends pObject {
     constructor(pX,pY,pNo) {
         var pW=505, pH=310, pX2=pX+105, pX3=pX+155;
-        var pY1=pY-15, pY2=pY1+75, pY3=pY2+75, pY4=pY3+75;
+        var pY1=pY-20, pY2=pY1+75, pY3=pY2+75, pY4=pY3+75;
         super(ctx,pX,pY,pW,300);
         this.myChannel=pNo;
         if (pNo==1) {
@@ -9,18 +9,24 @@ class Siggen extends pObject {
             new Label(ctx,pX+640,pY-78,credit,16,bgcolor);
         }
         new Frame(pX-65,pY-65,pW-40,pH,"                  ","right");
+
         this.b_ch=new PushButton(ctx,pX+pW-149,pY-71,34,22,"WG"+pNo+"     ","siggen");
         this.b_ch.illum=false;
         this.b_ch.state=1;
         this.b_ch.setSwitchBufferNeeded();
         this.b_ch.initChannelsNeeded=true;
-        this.k_scale=new ScaleKnob(pX,pY+5);
+
+        this.k_func=new FuncKnob(pX+5,pY+115);
+//        this.k_func=new FuncKnob(pX+5,pY+10);
+        this.k_func.setSwitchBufferNeeded();
+        this.k_func.setInitChannelsNeeded();
+
+        this.k_scale=new ScaleKnob(pX+5,pY-5);
+//        this.k_scale=new ScaleKnob(pX+5,pY+133);
         this.k_scale.setSwitchBufferNeeded();
         this.k_scale.value0=false;
         this.k_scale.initChannelsNeeded=true;
-        this.k_func=new FuncKnob(pX+5,pY+130);
-        this.k_func.setSwitchBufferNeeded();
-        this.k_func.setInitChannelsNeeded();
+
         this.k_freq=new DoubleKnob(ctx,pX2,pY1,201,101,"Freq (kHz)       ","sigdouble",30,15);
         this.k_freq.setSwitchBufferNeeded();
         this.k_freq.setInitChannelsNeeded();

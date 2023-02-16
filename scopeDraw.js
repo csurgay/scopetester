@@ -39,6 +39,7 @@ Scope.prototype.drawScreen=function(ctx,drawShadow="No-drawShadow") { // egyelő
 }
 Scope.prototype.drawGrid=function(ctx,illumgrid) {
     if (b_power.state==1 && illum>0) {
+        ctx.filter="blur(0px)";
         var d1=50, d2=65;
         var ax=[this.x-d1,this.x-d1,this.x+this.w+d1,this.x+this.w+d1];
         var ay=[this.y+d2,this.y+this.h-d2,this.y+d2,this.y+this.h-d2];

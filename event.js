@@ -51,7 +51,7 @@ function eventInit(pCanvas) {
     }   
     pCanvas.addEventListener('wheel', function(event) {
         objectUI=hitXY(pCanvas,event.clientX,event.clientY);
-        if (objectUI!=null) {
+        if (objectUI!=null && !event.ctrlKey) {
             event.preventDefault();
             new EventUI("wheel",Date.now(),objectUI,0,-Math.sign(event.deltaY));
         }

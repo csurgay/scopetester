@@ -4,7 +4,7 @@ var illum, int={}, blur={}, alpha1; // for scale grid illumination, inensity and
 var Q,QI; // for frequency calculations
 var tptr=[0,0], lastTptr=[0,0], tcond; // trigger pointer, last valid tptr, trigger condition
 var currValue, prevValue; // curr and prev y value for trigger condition calc
-var slope, tlevel; // trigger level
+var tlevel; // trigger level
 var px0,px,py0,py=[0,0],pyd; // screen center lines for channels and dual
 var lineWidth, strokeStyle, blurWidth, expdays;
 var drawInProgress=false, drawInTimeout=false;
@@ -39,18 +39,15 @@ class Scope extends pObject {
         k_xpos.setPullable("xpos");
         k_xpos.setResetTogether();
         k_time=new TimeKnob(horX+170,horY+150);
-        k_delay=new DoubleKnob(ctx,horX+44,horY+60,100,100,"Delay Mult","cursor",36,23);
+        k_delay=new DoubleKnob(ctx,horX+44,horY+60,100,100,"Delay Multiply","delay",36,23);
         k_delay.k.value0=false;
         k_delay.k_.value0=false;
         k_delay.k.limit=k_delay.k.ticks-1;
         k_delay.k_.limit=k_delay.k_.ticks-1;
         k_delay.setResetTogether();
-        new Vfd(horX+horW/2-30,horY+40,4,()=>{return 10*k_delay.k.getValue()+k_delay.k_.getValue()/10;},()=>{
+        new Vfd(horX+horW/2-47,horY+40,6,()=>{return 10*k_delay.k.getValue()+k_delay.k_.getValue()/10;},()=>{
             return b_power.state==0 || 10*k_delay.k.getValue()+k_delay.k_.getValue()==0;});
         b_xcal=new IndicatorLed(horX+35,horY+217,24,16,"Cal","on");
-        k_cursor=new DoubleKnob(ctx,horX+dualX-10,horY+60,51,201,"Cursor","cursor",36,23);
-        k_cursor.setPullable("cursor");
-        k_cursor.setResetTogether();
         b_a=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"  A  ","on");
         b_a.state=1;
         b_ainten=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"Inten","on");
@@ -77,11 +74,17 @@ class Scope extends pObject {
         b_sub=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"SUB","on2");
         b_xy=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"X-Y","on2");
         radio_mode=new Radio(ctx,modeX+moderX,modeY+moderY,[b_alt,b_chop,b_ch1,b_ch2,b_add,b_sub,b_mod,b_xy],2);
-        b_storage=new PushButton(ctx,modeX+80,modeY+140,pbw,pbh,"Storage","readout");
+        b_storage=new PushButton(ctx,modeX+moderX,modeY+140,pbw,pbh,"STOR.","on2");
 //        b_storage=new PushButton(ctx,horX+dualX,horY+dualY-30,pbw,pbh,"Storage","readout");
 //        b_storage=new PushButton(ctx,digiX+80,digiY+70,pbw,pbh,"Storage","readout");
-        b_readout=new PushButton(ctx,modeX+80,modeY+160,pbw,pbh,"Readout","readout");
+        b_readout=new PushButton(ctx,modeX+moderX,modeY+160,pbw,pbh,"READ.","on2");
 //        b_readout=new PushButton(ctx,digiX+80,digiY+95,pbw,pbh,"Readout","readout");
+        // k_cursor=new DoubleKnob(ctx,horX+dualX-10,horY+60,51,201,"Cursor","cursor",36,23);
+        // k_cursor.setPullable("cursor");
+        // k_cursor.setResetTogether();
+        k_cursor=new DoubleKnob(ctx,modeX+120,modeY+150,51,201,"Cursor","cursor",36,23);
+        k_cursor.setPullable("cursor");
+        k_cursor.setResetTogether();
 
         new Frame(monX,monY,monW,monH,"Monitor","center");
         k_vol=new Knob(ctx,8,monX+monW-40,monY+65,30,17,0,"Volume","volume");
@@ -93,7 +96,7 @@ class Scope extends pObject {
         k_trigger.k.defaultFastRate=1;
         k_trigger.setResetTogether();
         k_hold=new DoubleKnob(ctx,trigX+40,trigY+150,50,50,"HoldOff","double_s",30,15);
-        k_slope=new Knob(ctx,-1,trigX+110,trigY+75,17,2,0,"Slope","knob");
+        k_slope=new SlopeKnob(trigX+125,trigY+75);
         // !!! kellene majd "fel+le mindkettő egyszerre" slope is
         k_slope.value0=false;
         b_auto=new PushButton(ctx,trigX+trmodeX,trigY+trmodeY,pbw,pbh,"Auto","on");

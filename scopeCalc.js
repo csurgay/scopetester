@@ -70,7 +70,6 @@ Scope.prototype.calcDispch=function(mag) {
 }
 // trigger condition seeking
 Scope.prototype.triggerSeek=function() {
-    slope=k_slope.getValue();
     tlevel=10*k_trigger.k.getValue()+k_trigger.k_.getValue();
     b_limit.state=0;
     for (let c=1; c>=0; c--) {
@@ -82,8 +81,8 @@ Scope.prototype.triggerSeek=function() {
             tptr[c]++;
             currValue=dispch[c][tptr[c]];
             if (b_mode.state==1) currValue=this.calcModeY(c,dispch[0][tptr[c]],dispch[1][tptr[c]]);
-            if (k_slope.getValue()==0 && prevValue<tlevel && currValue>=tlevel) tcond=true;
-            if (k_slope.getValue()==1 && prevValue>tlevel && currValue<=tlevel) tcond=true;
+            if (k_slope.getValue()!=1 && prevValue<tlevel && currValue>=tlevel) tcond=true;
+            if (k_slope.getValue()!=0 && prevValue>tlevel && currValue<=tlevel) tcond=true;
             prevValue=currValue;
         }
         if (b_chtr[c].state==1 || b_mode.state==1) {

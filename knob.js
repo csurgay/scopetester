@@ -4,10 +4,11 @@ const pullDx=1, pullDy=1, pullDr=1;
 
 class Knob extends pObject {
     constructor(ctx,pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos,pMarker="marker") {
-        const pos={"none":[0,0],"knob":[0,-27],"smallknob":[0,-22],"volume":[0,-40],
-        "pot":[-22,1],"pot2":[-25,1],"double":[0,-44],"sweep":[0,80], 
-        "double_s":[0,-35], "delay":[0,78], "func":[0,-62], "range":[0,-55], "posy":[-30,0],
-        "volts":[0,-55], "sigdouble":[63,-31], "cursor":[0,-46], "xpos":[0,-46]};
+        const pos={"none":[0,0],"knob":[0,-27],"smallknob":[0,-22],
+        "volume":[0,-40],"pot":[-22,1],"pot2":[-25,1],"double":[0,-44],
+        "sweep":[0,80], "delay":[0,-46],"double_s":[0,-35], "func":[0,-62],
+        "range":[-38,-45], "posy":[-30,0],"volts":[0,-55],"slope":[-25,-20], 
+        "sigdouble":[63,-31], "cursor":[-40,-35], "xpos":[0,-46]};
         super(ctx,pX-pR,pY-pR,2*pR,2*pR);
         this.class="Knob";
         this.name=pLabel;
@@ -479,6 +480,21 @@ class MonitorKnob extends Knob {
     switchOff() {
         stopBuffer(aptr);
         astarted=false;
+    }
+}
+
+class SlopeKnob extends Knob {
+    constructor(pX,pY) {
+        super(ctx,-1,pX,pY,17,3,0,"Slope","slope");
+        this.value0=false;
+        this.iconCircle(pX,pY+2,30,["+","\u2013","+/\u2013"]);
+//        this.iconCircle(pX,pY+2,30,["\u2795","\u2796","\u2795/\u2796"]);
+    }
+    iconCircle(x,y,r,a_monitor) {
+        var n=a_monitor.length;
+        for (let i=0; i<n; i++) {
+            new Label(ctx,x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),a_monitor[i],12);
+        }
     }
 }
 

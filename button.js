@@ -69,6 +69,12 @@ class Button extends pObject {
         super.draw(ctx);
     }
 }
+// function drawPushButton(pushbutton,phase,illum="none") {
+//     const a_phase=[ [1,0],[-1,-1] ];
+//     if (phase>=a_phase.length) return;
+//     pushbutton.draw(pushbutton.ctx,a_phase[phase],illum);
+//     setTimeout(()=>{drawPushButton(pushbutton,phase+1,illum);},200);
+// }
 var pbl1=1, pbl2=1, pbq=1, pbw=28, pbh=19, pbw2=35, pbh2=25;
 class PushButton extends Button {
     constructor(ctx,pX,pY,pW,pH,pLabel,pType,pShow) {
@@ -85,6 +91,8 @@ class PushButton extends Button {
         else if (offpushon=="offnoillum") this.draw(this.ctx,[3,2],"noillum");
         else if (offpushon=="push") this.draw(this.ctx,[-1,-1]);
         else if (offpushon=="pushillum") this.draw(this.ctx,[-1,-1],"illum");
+        // else if (offpushon=="push") drawPushButton(this,0);
+        // else if (offpushon=="pushillum") drawPushButton(this,0,"illum");
         else if (offpushon=="on") this.draw(this.ctx,[0,0]);
     }
     draw(ctx, outxy=[-17,-17], pIllum="none") {

@@ -134,7 +134,11 @@ class DebugButton extends PushButton {
                     presetManager.add(48,"wheel",siggen[1].k_dc.k,0,1,7);
                     presetManager.add(1,"mousedown",siggen[1].b_phalf,0,0);
                     presetManager.add(1,"mouseup",siggen[1].b_phalf,0,0);
-		            presetManager.add(8,"wheel",k_intensity,0,1,7);
+		            presetManager.add(7,"wheel",k_intensity,0,1,7);
+		            presetManager.add(1,"wheel",k_intensity,0,1,1000);
+		            presetManager.add(7,"wheel",k_time.k,0,-1);
+                    presetManager.add(2,"wheel",siggen[0].k_scale,0,-1);
+                    presetManager.add(2,"wheel",siggen[1].k_scale,0,-1);
                 }
                 else if (pri==3) { // NTSC (Scale, CH1, Delaybase, Delay)
                     presetManager.add(1,"mousedown",b_ch1,0,0);
@@ -194,6 +198,14 @@ class DebugButton extends PushButton {
                     presetManager.add(8,"wheel",k_intensity,0,-1);
                     presetManager.add(1,"wheel",scope.ch[0].k_volts.k,0,1);
                     presetManager.add(1,"wheel",scope.ch[1].k_volts.k,0,1,1000);
+                    presetManager.add(1,"wheel",siggen[1].k_func.k,0,-1);
+                    presetManager.add(6,"wheel",siggen[1].k_phase.k,0,-1);
+                    presetManager.add(15,"wheel",k_rot,0,-1);
+                    presetManager.add(1,"wheel",siggen[0].k_func.k_,0,1);
+                    presetManager.add(1,"wheel",siggen[1].k_func.k_,0,1);
+                    presetManager.add(2,"wheel",siggen[0].k_scale,0,-1);
+                    presetManager.add(2,"wheel",siggen[1].k_scale,0,-1);
+                    presetManager.add(6,"wheel",k_time.k,0,-1);
                 }
                 else if (pri==6) { // Heart (XY) and Smiling face
                     presetManager.add(1,"wheel",siggen[0].k_func.k,0,1);
