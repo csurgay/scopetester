@@ -18,6 +18,7 @@ function initBufgen() {
     bufgen.push(new BufferGenerator("HARMSQ",f_square_harmonic,'fullIcon'));
     bufgen.push(new BufferGenerator("TRAP",f_trapezoid,'fullIcon'));
     bufgen.push(new BufferGenerator("RAMP",f_ramp,'fullIcon'));
+    bufgen.push(new BufferGenerator("FISHBONE",f_fishbone,'fullIcon'));
     bufgen.push(new BufferGenerator("GAUSS",f_gauss,'fullIcon'));
     bufgen.push(new BufferGenerator("SINC",f_sinc,'fullIcon'));
     bufgen.push(new BufferGenerator("PULSE",f_pulse,'fullIcon'));
@@ -318,6 +319,18 @@ function f_ramp(x,o) {
     if (x==-17) return L; // smaple length
     x = x % L;
     yResult=-ampl+2*ampl*x/(L*(33-o)/33);
+    if (yResult>ampl) yResult=-ampl;
+    return yResult;
+}
+function f_fishbone(x,o) {
+    if (x==-17) return L; // smaple length
+    x = x % L;
+    if (x<L2) {
+        yResult=-ampl+2*ampl*x/(L*(33-o)/33);
+    }
+    else {
+        yResult=2*ampl-2*ampl*x/(L*(33-o)/33);
+    }
     if (yResult>ampl) yResult=-ampl;
     return yResult;
 }

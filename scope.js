@@ -273,7 +273,10 @@ class Scope extends pObject {
                 for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
                     ctx.moveTo(pixelch[c][0][DL1]+k*asx,pixelch[c][1][DL1]+k*asy);
                     for (let i=DL1+1; i<=DL2; i++) {
-                        ctx.lineTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
+                        // if (Math.abs(pixelch[c][1][i]-pixelch[c][1][i-1])>100)
+                        //     ctx.moveTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
+                        // else
+                            ctx.lineTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
                         var deltaX=pixelch[c][0][i]-pixelch[c][0][i-1];
                         var deltaY=pixelch[c][1][i]-pixelch[c][1][i-1];
                         sumdelta+=Math.sqrt(deltaX*deltaX+deltaY*deltaY);
