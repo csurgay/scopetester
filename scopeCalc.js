@@ -38,7 +38,7 @@ Scope.prototype.calcDispch=function(mag) {
             // if CH is switched on
             if (scope.ch[c].b_gnd.state==0 && siggen[c].b_ch.state==1) {
                 // main y calculation
-                QI=Math.floor(freqs[c]*(10.0*Q*i+delay*L)%(schlen[c]));
+                QI=Math.round(freqs[c]*(10.0*Q*i+delay*L))%(schlen[c]);
                 if (freqs[c]*10*Q>=L/3) { 
                     dispch[c][i]=i%2==0?(minsch-avgs[c])/volts[c]/2:(maxsch-avgs[c])/volts[c]/2;
                 }
@@ -167,6 +167,8 @@ Scope.prototype.stroke=function() {
         ctx.stroke();
     }
     ctx.lineWidth=1;
+    ctx.strokeStyle="rgb(0,150,0)";
+    ctx.stroke(paleBeam);
 }
 Scope.prototype.calcModeY=function(c,ych0,ych1) {
     if (b_ch1.state==1) return ych0;

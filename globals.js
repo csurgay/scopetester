@@ -20,12 +20,15 @@ const hl_plastic="rgba(110,110,70,0.45)";
 var k_intensity, k_focus, k_astigm, k_illum, k_rot, k_xpos, b_xcal, k_vol, k_monitor;
 var b_power;
 var bufgen=[];
+
 var sch=[new Array(L),new Array(L)]; // signal sample channel buffer, no freq
 var schlen=[0,0]; // length of signal buffer data for lower frequencies
+var schdisc=[0,0]; // signal buffer discontinuity threshold
 var gench=[new Array(L),new Array(L)]; // generated signal channel buffer
 var micch=[new Array(L),new Array(L)]; // mic channel buffer
 var dispch=[new Array(L), new Array(L)]; // display channel buffer
 var pixelch=[[new Array(L), new Array(L)],[new Array(L), new Array(L)]]; // actual pixel channel buffer x,y
+
 var order, ampl, freq, ampls=[0,0], ampls_=[0,0], avgs=[0,0];
 var sumdelta; // beam length
 var scales=[0,0], freqs=[0,0], freqs_=[0,0], phases=[0,0], dcs=[0,0], dcs_=[0,0];
@@ -55,7 +58,7 @@ var NaNerror; // jump loops if NaN error happens for easier testing
 var b_debug, b_reset, b_calib, b_frames, b_autotest, b_presets=[], b_storage;
 var k_cursor, xCur;
 var b_a, b_ainten, b_b, b_aandb, b_mixed, dualtb_mode;
-var k_skew;
+var k_skew, b_traceFastBeam;
 var grd; // for grad on Canvas
 var b_sch, b_gench, b_micch, b_dispch, b_pixelch, debug_channel; 
 

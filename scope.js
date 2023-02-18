@@ -14,6 +14,7 @@ var slowLimitMeasure=true, slowLimit=-1;
 var runningTime=Date.now(), sweepDuration, sweepCount=0, elapsedTime=0, triggerTime=0;
 var inten=[100,50];
 var altc=0;
+var ro, discontinuity, delta, prevDelta=[0,0], deltaX, deltaY, paleBeam=new Path2D();
 
 const verX=60, verY=465, verW=555, verH=120;
 const horX=623, horY=210, horW=330, horH=242, dualX=290, dualY=135;
@@ -125,6 +126,7 @@ class Scope extends pObject {
         b_debug=new DebugButton(20,55,pbw,pbh,"Debug","small");
         b_frames=new DebugButton(20,90,pbw,pbh,"Frames","small");
         b_autotest=new AutotestButton(20,125,pbw,pbh,"Test","small");
+        b_traceFastBeam=new DebugButton(20,160,pbw,pbh,"Trace","small");
         for (let i=0; i<9; i++) {
             b_presets.push(new DebugButton(70,20+i*35,pbw,pbh,"Preset"+i,"small"));
             b_presets[b_presets.length-1].illum=false;
@@ -267,18 +269,31 @@ class Scope extends pObject {
                 else if (b_ch2.state==1 && cc==0) continue;
                 else if ((b_add.state==1 || b_sub.state==1 || b_mod.state==1) && cc==0) continue;
                 if (b_alt.state==1 && timebase>=slowLimit && b_storage.state==0) c=altc;
-                ctx.beginPath();
+                ctx.beginPath(); 
+                paleBeam=new Path2D();
+                prevDelta[c]=1000;
                 sumdelta=0;
-                var ro=Math.sign(asl);
+                ro=Math.sign(asl);
+                discontinuity=schdisc[c];
+                if (b_add.state==1 || b_sub.state==1 || b_mod.state==1)
+                    discontinuity+=schdisc[1-c];
                 for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
                     ctx.moveTo(pixelch[c][0][DL1]+k*asx,pixelch[c][1][DL1]+k*asy);
+                    paleBeam.moveTo(pixelch[c][0][DL1]+k*asx,pixelch[c][1][DL1]+k*asy);
                     for (let i=DL1+1; i<=DL2; i++) {
-                        // if (Math.abs(pixelch[c][1][i]-pixelch[c][1][i-1])>100)
-                        //     ctx.moveTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
-                        // else
+                        delta=Math.abs(pixelch[c][1][i-1]-pixelch[c][1][i]);
+                        if (discontinuity>0 && delta>10*prevDelta[c]) {
+                            ctx.moveTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
+                            if (b_traceFastBeam.state==1)
+                                paleBeam.lineTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
+                        }
+                        else {
                             ctx.lineTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
-                        var deltaX=pixelch[c][0][i]-pixelch[c][0][i-1];
-                        var deltaY=pixelch[c][1][i]-pixelch[c][1][i-1];
+                            paleBeam.moveTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
+                        }
+                        prevDelta[c]=delta;
+                        deltaX=pixelch[c][0][i]-pixelch[c][0][i-1];
+                        deltaY=pixelch[c][1][i]-pixelch[c][1][i-1];
                         sumdelta+=Math.sqrt(deltaX*deltaX+deltaY*deltaY);
                     }
                 }

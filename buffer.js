@@ -70,7 +70,7 @@ function initChannels() {
         dcs[c]=dcs[c]/10+dcs_[c]/1000;
     }
     NaNerror=false;
-    // calc mic data into sch
+    // calc mic data into gench
     if (b_mic.state==1) {
         for (let c=0; c<2; c++) {
             schlen[c]=L;
@@ -80,7 +80,7 @@ function initChannels() {
                 sch[c][x]=(1-2*siggen[c].b_inv.state)*micch[c][x];
                 if (isNaN(sch[c][x])) {
                     NaNerror=true;
-                    error("buffer (mic) NaN: sch["+c+"]["+x+"]");
+                    error("buffer (mic) NaN: gench["+c+"]["+x+"]");
                 }
             }
         }
@@ -89,11 +89,13 @@ function initChannels() {
     else {
         for (let c=0; c<2; c++) {
             schlen[c]=bufgen[siggen[c].k_func.k.getValue()].f(-17);
+            schdisc[c]=bufgen[siggen[c].k_func.k.getValue()].f(-21);
             ampl=ampls[c];
             freq=freqs[c];
             order=siggen[c].k_func.k_.getValue();
             for (let x=0; x<schlen[c]; x++) {
-                yy=bufgen[siggen[c].k_func.k.getValue()].f(x+phases[c],order);
+                yy=bufgen[siggen[c].k_func.k.getValue()].f(Math.round(x
+                    +phases[c]),order);
                 yy+=100*dcs[c];
                 if (siggen[c].b_inv.state==1) yy=-yy;
                 if (siggen[c].b_abs.state==1 && yy<0) yy=-yy;
@@ -121,13 +123,15 @@ function initMenomano() {
     }
 }
 function f_menomanoX(x) {
-    if (x==-17) return L; // smaple length
+    if (x==-17) return L; // sample length
+    if (x==-21) return 0; // discontinuity points
     x=Math.floor((x)%L*mmx.length/L);
     if (x>=mmx.length) x=mmx.length-1;
     return ampl*mmx[x]/200;
 }
 function f_menomanoY(x) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return 0; // discontinuity points
     x=Math.floor((x)%L*mmy.length/L);
     if (x>=mmy.length) x=mmy.length-1;
     return ampl*mmy[x]/200;
@@ -165,6 +169,7 @@ function initMorse() {
 }
 function f_morse(x) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return 0; // discontinuity threshold
     x=x%L;
     return ampl*morse[x];
 }
@@ -172,6 +177,7 @@ function f_morse(x) {
 const dn=L/102.4; // d for ntsc is 1 microsecond
 function f_ntsc(x) {
     if (x==-17) return 64*dn; // smaple length
+    if (x==-21) return 0; // discontinuity threshold
     x=x%(64*dn);
     if (x<2*dn) yResult=0;
     else if (x<6*dn) yResult=-0.4;
@@ -187,10 +193,12 @@ function f_ntsc(x) {
 }
 function f_gnd(x) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return 0; // discontinuity threshold
     return 0;
 }
 function f_sine(x,o) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return 0; // discontinuity threshold
     if (o>16) o-=33;
     for (let i=16; i>2; i--) if (Math.abs(o)>i) o*=2;
     angle_rad = 1.0 * x * Math.PI / L2;
@@ -203,18 +211,21 @@ function f_sine(x,o) {
 }
 function f_beats(x,o) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return 0; // discontinuity threshold
     o+=2;
     angle_rad = 1.0 * x * Math.PI / L2;
     return ampl*Math.sin(angle_rad*(o+2))*Math.sin(angle_rad);
 }
 function f_wave(x,o) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return 0; // discontinuity threshold
     o+=2;
     angle_rad = 1.0 * x * Math.PI / L2;
     return ampl/2*(Math.sin(angle_rad*(o+3))+Math.sin(angle_rad));
 }
 function f_gauss(x,o) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return 0; // discontinuity threshold
     x-=L/2;
     if (o>16) o-=33;
     angle_rad = 1.0 * x * Math.PI / L4;
@@ -224,6 +235,7 @@ function f_gauss(x,o) {
 }
 function f_sinc(x,o) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return 0; // discontinuity threshold
     x-=L/2; if (x==0) x=0.001;
     if (o>16) o-=33;
     angle_rad = 1.0 * x * Math.PI / L2;
@@ -231,6 +243,7 @@ function f_sinc(x,o) {
 }
 function f_pulse(x,o) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return 0; // discontinuity threshold
     if (o>16) o-=33;
     var ox=Math.abs(o)+1;
     var Lx=L8/ox;
@@ -240,6 +253,7 @@ function f_pulse(x,o) {
 }
 function f_exp(x,o) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return 0; // discontinuity threshold
     x=x%L;
     angle_rad=x*Math.PI/L2;
     if (o>16) o-=33;
@@ -253,6 +267,7 @@ function f_exp(x,o) {
 }
 function f_log(x,o) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return 0; // discontinuity threshold
     x=x%L;
     if (x==L) return ampl;
     angle_rad=1.0*(L-x)*Math.PI/L2;
@@ -268,17 +283,23 @@ function f_log(x,o) {
 function f_pwm(x,o) {
     if (x==-17) return L; // smaple length
     if (o>16) o-=33;
+    if (x==-21) return 1; // discontinuity threshold
     x = x % L;
     if (x<L2+L2*o/16) return ampl; else return 0;
 }
 function f_square_ideal(x,o) {
     if (x==-17) return L; // smaple length
     if (o>16) o-=33;
+    if (x==-21) return 1; // discontinuity threshold
     x = x % L;
-    if (x<L2+L2*o/16) return ampl; else return -ampl;
+    if (x==0) return ampl;
+    else if (x<Math.round(L2+L2*o/16)) return ampl;
+    else if (x==Math.round(L2+L2*o/16)) return -ampl;
+    else if (x>Math.round(L2+L2*o/16)) return -ampl;
 }
 function f_square_harmonic(x,o) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return []; // discontinuity points
     o+=1;
     angle_rad = 1.0 * x * Math.PI / L2;
     if (o==33) { return f_square_ideal(x,0)};
@@ -293,6 +314,7 @@ function f_square_harmonic(x,o) {
 }
 function f_triangle_ideal(x,o) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return 0; // discontinuity points
     if (o>16) o-=33;
     x = x % L;
     if (x<L4+L4*o/16) return ampl*x/(L4+L4*o/16);
@@ -301,12 +323,14 @@ else return ampl*(x-(L-(L4+L4*o/16)))/(L4+L4*o/16)-ampl;
 }    
 function f_triangle_harmonic(x,o) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return 0; // discontinuity points
     angle_rad = 1.0 * x * Math.PI / L2;
     yResult=0; for (let i=0; i<=o; i++) { var n=2*i+1; yResult+=8*ampl*Math.pow(-1,i)*Math.sin(angle_rad*n)/n/n/Math.PI/Math.PI; }
     return yResult;
 }
 function f_trapezoid(x,o) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return 0; // discontinuity threshold
     if (o>16) o-=33;
     x = x % L;
     if (x<L8+L8*o/16) return ampl*x/(L8+L8*o/16);
@@ -317,6 +341,7 @@ function f_trapezoid(x,o) {
 }
 function f_ramp(x,o) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return 1; // discontinuity threshold
     x = x % L;
     yResult=-ampl+2*ampl*x/(L*(33-o)/33);
     if (yResult>ampl) yResult=-ampl;
@@ -324,18 +349,18 @@ function f_ramp(x,o) {
 }
 function f_fishbone(x,o) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return 1; // discontinuity threshold
     x = x % L;
-    if (x<L2) {
-        yResult=-ampl+2*ampl*x/(L*(33-o)/33);
-    }
-    else {
-        yResult=2*ampl-2*ampl*x/(L*(33-o)/33);
-    }
-    if (yResult>ampl) yResult=-ampl;
+    if (x==0) yResult=-ampl+2*ampl*x/(L*(33-o)/33);
+    else if (x<L2) yResult=-ampl+2*ampl*x/(L*(33-o)/33);
+    else if (x==L2) yResult=-ampl+2*ampl*x/(L*(33-o)/33);
+    else if (x>L2) yResult=2*ampl-2*ampl*x/(L*(33-o)/33);
+//    if (yResult>ampl) yResult=-ampl;
     return yResult;
 }
 function f_sawtooth(x,o) {
     if (x==-17) return L; // smaple length
+    if (x==-21) return 1; // discontinuity threshold
     x = x % L;
     yResult=ampl-2*ampl*x/(L*(33-o)/33);
     if (yResult<-ampl) yResult=ampl;
@@ -343,6 +368,7 @@ function f_sawtooth(x,o) {
 }
 function f_ecg(x,o) {
     if (x==-17) return 4*L; // smaple length
+    if (x==-21) return 0; // discontinuity threshold
     if (o>16) o-=33; o=-o;
     x = x % L;
     var H=140.0*ampl/127;

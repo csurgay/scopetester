@@ -76,10 +76,14 @@ class Icon extends pObject {
             ctx.lineWidth=1;
             ampl=127;
             var halfed=1; if (this.halfIcon=="halfIcon") halfed=3;
-            ctx.moveTo(this.x,this.y-this.h*this.f(0)/ampl/halfed);
-//            order=0;
-            for (let i=0; i<this.w; i++) 
-                ctx.lineTo(this.x+i,this.y-this.h*this.f(Math.floor(this.f(-17)*i/this.w),0)/ampl/halfed);
+            yResult=this.f(0);
+            if (yResult>100000) yResult-=1000000;
+            ctx.moveTo(this.x,this.y-this.h*yResult/ampl/halfed);
+            for (let i=1; i<this.w; i++) {
+                yResult=this.f(Math.floor(this.f(-17)*i/this.w),0);
+                if (yResult>100000) yResult-=1000000;
+                ctx.lineTo(this.x+i,this.y-this.h*yResult/ampl/halfed);
+            }
             ctx.stroke();
         }
     }

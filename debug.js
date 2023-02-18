@@ -90,6 +90,9 @@ class DebugButton extends PushButton {
         else if (this.name=="Frames") {
             super.clickXY(x,y);
         }
+        else if (this.name=="Trace") {
+            super.clickXY(x,y);
+        }
         else if (this.name.substring(0,6)=="Preset") {
             if (true) { 
                 var pri=parseInt(this.name.substring(6));

@@ -6,9 +6,10 @@ class Knob extends pObject {
     constructor(ctx,pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos,pMarker="marker") {
         const pos={"none":[0,0],"knob":[0,-27],"smallknob":[0,-22],
         "volume":[0,-40],"pot":[-22,1],"pot2":[-25,1],"double":[0,-44],
-        "sweep":[0,80], "delay":[0,-46],"double_s":[0,-35], "func":[0,-62],
-        "range":[-38,-45], "posy":[-30,0],"volts":[0,-55],"slope":[-25,-20], 
-        "sigdouble":[63,-31], "cursor":[-40,-35], "xpos":[0,-46]};
+        "sweep":[0,80], "delay":[0,-46],"double_s":[0,-35], "func":[-50,-71],
+        "range":[-45,-55], "posy":[-30,0],"volts":[0,-55],"slope":[-25,-20], 
+        "sigdouble":[63,-31], "cursor":[-40,-35], "xpos":[0,-46],
+        "noise":[-30,-35], "burst":[-30,-30]};
         super(ctx,pX-pR,pY-pR,2*pR,2*pR);
         this.class="Knob";
         this.name=pLabel;
@@ -398,24 +399,23 @@ class UiVoltDekor extends pObject {
 
 class FuncKnob extends DoubleKnob {
     constructor(pX,pY) {
-        super(ctx,pX,pY,bufgen.length,33,"Func                         ","func",42,25);
-        this.dutyLabel=new Label(ctx,pX+40,pY-61,"Param",12);
+        super(ctx,pX,pY,bufgen.length,33,"Func","func",48,27);
+        this.dutyLabel=new Label(ctx,pX+50,pY-71,"Param",12);
         this.dutyLabel.bgcolor=hl_gray;
         this.dutyLabel.background=true;
-        this.k.value=0;
         this.k_.color="gray";
         this.k_.haircolor="#EEEEEE";
         this.k.value0=false;
         this.k_.value0=false;
         this.k.limit=-1;
         this.k_.limit=-1;
-        this.iconCircle(pX-8,pY,55,bufgen);
+        this.iconCircle(pX-8,pY,65,bufgen);
     }
     iconCircle(x,y,r,bufgen) {
         var n=bufgen.length;
         for (let i=0; i<n; i++) {
-            new Icon(ctx,x+r*Math.sin(2*Math.PI*i/n)-2,
-            y-r*Math.cos(2*Math.PI*i/n),20,6,bufgen[i].f,
+            new Icon(ctx,x+r*Math.sin(2*Math.PI*i/n)-3,
+            y-r*Math.cos(2*Math.PI*i/n),22,6,bufgen[i].f,
             bufgen[i].halfIcon);
         }
     }
@@ -423,8 +423,8 @@ class FuncKnob extends DoubleKnob {
 
 class ScaleKnob extends Knob {
     constructor(pX,pY) {
-        super(ctx,3,pX,pY,25,scale.length,0,"Range","range");
-        this.iconCircle(pX+1,pY+2,40,scale);
+        super(ctx,3,pX,pY,35,scale.length,0,"Range","range");
+        this.iconCircle(pX+1,pY+2,50,scale);
     }
     iconCircle(x,y,r,scale) {
         var n=scale.length;
@@ -441,6 +441,42 @@ class ScaleKnob extends Knob {
             else if (unit==".1") unit="100";
             new Label(ctx,x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),unit,12);
         }
+    }
+}
+
+class NoiseKnob extends DoubleKnob {
+    constructor(pX,pY) {
+        super(ctx,pX,pY,5,32,"Noise","noise",30,18);
+        this.iconCircle(pX+1,pY+3,45,["Off","White","Pink","Brown","Blue"]);
+        this.ampLabel=new Label(ctx,pX+35,pY-35,"Ampl",12);
+        this.ampLabel.bgcolor=hl_gray;
+        this.ampLabel.background=true;
+        this.k_.color="gray";
+        this.k_.haircolor="#EEEEEE";
+        this.k.limit=-1;
+        this.k_.limit=31;
+        this.k_.value0=false;
+    }
+    iconCircle(x,y,r,scale) {
+        var n=scale.length;
+        for (let i=0; i<n; i++) {
+            new Label(ctx,x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),scale[i],12);
+        }
+    }
+}
+
+class BurstKnob extends DoubleKnob {
+    constructor(pX,pY) {
+        super(ctx,pX,pY,8,32,"Burst","burst",30,18);
+        this.ampLabel=new Label(ctx,pX+35,pY-30,"Duty",12);
+        this.ampLabel.bgcolor=hl_gray;
+        this.ampLabel.background=true;
+        this.k_.color="gray";
+        this.k_.haircolor="#EEEEEE";
+        this.k.limit=7;
+        this.k.value0=false;
+        this.k_.limit=31;
+        this.k_.value0=false;
     }
 }
 
