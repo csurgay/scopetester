@@ -1,5 +1,5 @@
-const credit="2in1 OSCILLOSCOPE   CSURGAY@GMAIL.COM   Ver.0.42";
-const expdate="Feb, 15, 2023";
+const credit="2in1 OSCILLOSCOPE   CSURGAY@GMAIL.COM   Ver.0.43";
+const expdate="Feb, 23, 2023";
 var canvas, ctx, debugcanvas, debugctx, logWindow, traceString="", now;
 var scope, siggen, presetManager; // global objects
 var no_images_to_load, vfdred, vfd, vfd_, led_on_powers, led_on, led_off_powers, led_off, led_red; // canvas images
