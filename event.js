@@ -155,7 +155,7 @@ function actionEvent(evt) {
         if (evt.x=="d") { b_debug.clickXY(0,0); draw(ctx); }
         if (evt.x=="f") { b_frames.clickXY(0,0); draw(ctx); }
         if (evt.x=="0") { b_reset.clickXY(0,0); draw(ctx); }
-        if (b_power.state==1) {
+        if (scope.b_power.state==1) {
             if (evt.x=="1") { b_presets[0].clickXY(0,0); draw(ctx); }
             else if (evt.x=="2") { b_presets[1].clickXY(0,0); draw(ctx); }
             else if (evt.x=="3") { b_presets[2].clickXY(0,0); draw(ctx); }

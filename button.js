@@ -60,7 +60,7 @@ class Button extends pObject {
         ctx.fillStyle = shadowcolor;
             roundRect(ctx,this.x,this.y,this.w+shadowD-1,this.h+shadowD,shadowR);
         ctx.fill();
-        if (b_power.state==0 || this.state==0) {
+        if (scope.b_power.state==0 || this.state==0) {
             ctx.drawImage(this.img_off,this.x+2,this.y+2,this.w-4,this.h-4);
         }
         else {
@@ -131,11 +131,11 @@ class PushButton extends Button {
         ctx.lineTo(pbx +pbl1+pbl2, pby +pbl1+pbl2);
         ctx.fill();
         if (this.illum) {
-            if (pIllum=="illum" && b_power.state==1 && this.otherIllumCondition()) {
+            if (pIllum=="illum" && scope.b_power.state==1 && this.otherIllumCondition()) {
                 ctx.drawImage(this.img_on,pbx +outxy[0] +pbl1+pbl2+pbq, pby +outxy[1] +pbl1+pbl2+pbq, 
                     pbdx -2*(pbl1+pbl2+pbq), pbdy-2*(pbl1+pbl2+pbq));    
             }
-            else if (pIllum=="noillum" || b_power.state==0 || !this.otherIllumCondition()) {
+            else if (pIllum=="noillum" || scope.b_power.state==0 || !this.otherIllumCondition()) {
             ctx.drawImage(this.img_off,pbx +outxy[0] +pbl1+pbl2+pbq, pby +outxy[1] +pbl1+pbl2+pbq, 
                 pbdx -2*(pbl1+pbl2+pbq), pbdy-2*(pbl1+pbl2+pbq));    
             }
@@ -164,7 +164,7 @@ class PowerButton extends Button {
         // power switch-on event
         if (this.state==0) {
             imprintY=1000;
-            k_monitor.callSwitchOff();
+            scope.k_monitor.callSwitchOff();
             powerState="start"; powerValue=0; setTimeout(setPower,10);
         }
         // power switch-off event
@@ -173,7 +173,7 @@ class PowerButton extends Button {
                 if (buttons[i].class!="PushButton") 
                     buttons[i].callSwitchOff();
             }
-            k_monitor.callSwitchOff();
+            scope.k_monitor.callSwitchOff();
             powerState="off";
         }
         super.clickXY(x,y);
@@ -375,7 +375,7 @@ class ChOnButton extends Button {
         super(ctx,pX,pY,pW,pH,pLabel,pType);
     }
     clickXY(x,y) {
-        if (b_power.state==1) {
+        if (scope.b_power.state==1) {
             super.clickXY(x,y);
         }
     }
@@ -388,12 +388,12 @@ class IndicatorLed extends Button {
         this.live=false;
     }
     clickXY(x,y) {
-        if (b_power.state==1) {
+        if (scope.b_power.state==1) {
             super.clickXY(x,y);
         }
     }
     showRed() {
-        if (b_power.state==1) {
+        if (scope.b_power.state==1) {
             this.state=1;
         }
     }
@@ -409,10 +409,10 @@ class FindButton extends PushButton {
         this.state=0;
     }
     showPushed() {
-        if (b_power.state==0) {
+        if (scope.b_power.state==0) {
             super.showPushed("push");
         }
-        else if (b_power.state==1) {
+        else if (scope.b_power.state==1) {
             super.showPushed("push");
             this.state=1;
             findState="search"; findValue=1.0; setTimeout(setFind,5);
@@ -439,16 +439,17 @@ class AutotestButton extends PushButton {
     }
 }
 class MicButton extends PushButton {
-    constructor(pX,pY,pW,pH,pLabel,pType) {
+    constructor(ctx,pX,pY,pW,pH,pLabel,pType) {
         super(ctx,pX,pY,pW,pH,pLabel,pType);
     }
     clickXY(x,y) {
         super.clickXY(x,y);
-        if (b_power.state==1) {
+        if (scope.b_power.state==1) {
             if (this.state==1) {
-                clearTimeout(micTimeout);
-                recordAudio();
-//            micTimeout=setTimeout(function(){b_mic.callSwitchOff();},10000);
+                if (userAllowed) 
+                    recordAudio();
+                else 
+                    getUserAllow();
             }
             else if (this.state==0) {
                 this.switchOff();
@@ -474,7 +475,7 @@ class ResetButton extends PushButton {
         super(ctx,pX,pY,pW,pH,pLabel,pType);
     }
     clickXY(x,y) {
-        if (b_power.state==1) {
+        if (scope.b_power.state==1) {
             reset();
             siggen[0].k_scale.value=7;
             initChannels();
@@ -487,7 +488,7 @@ class PresetButton extends PushButton {
         super(ctx,pX,pY,pW,pH,pLabel,pType);
     }
     clickXY(x,y) {
-        if (b_power.state==1) {
+        if (scope.b_power.state==1) {
             b_presets[lastPreset++].clickXY(0,0);
             if (lastPreset>=b_presets.length) lastPreset=0;
         }

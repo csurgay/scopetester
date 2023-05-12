@@ -20,7 +20,7 @@ class ScopeChannel {
         new Frame(pX+sc_sourceX-32,pY+12,70,108,"Src","center");
         this.bnc=new BncButton(pX+sc_sourceX+5,pY+105,16,16,"","bnc");
         this.b_ext=new PushButton(ctx,pX+sc_sourceX,pY+sc_sourceY,pbw,pbh,"Ext",'on');
-        this.b_mic=new PushButton(ctx,pX+sc_sourceX,pY+sc_sourceY,pbw,pbh,"Mic",'on');
+        this.b_mic=new MicButton(ctx,pX+sc_sourceX,pY+sc_sourceY,pbw,pbh,"Mic",'on');
         this.b_ch=new PushButton(ctx,pX+sc_sourceX,pY+sc_sourceY,pbw,pbh,"WG"+(c+1),'on');
         this.b_ch.state=1;
         this.source=new Radio(ctx,pX+sc_sourceX,pY+sc_sourceY,[this.b_ch,this.b_mic,this.b_ext]);

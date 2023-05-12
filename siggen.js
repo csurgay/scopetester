@@ -42,10 +42,10 @@ class Siggen extends pObject {
         this.k_dc=new DoubleKnob(ctx,pX2,pY4,201,101,"Offset (V DC)  ","sigdouble",30,15);
         this.k_dc.setSwitchBufferNeeded();
         this.k_dc.setInitChannelsNeeded();
-        new Vfd(pX3-5,pY1,6,()=>{return Math.round(100000*freqs[0+pNo-1])/100000;},()=>{return b_power.state==0 || this.b_ch.state==0;});
-        new Vfd(pX3-5,pY2,6,()=>{return ampls[0+pNo-1]/100;},()=>{return b_power.state==0 || this.b_ch.state==0;});
-        new Vfd(pX3-5,pY3,6,()=>{return Math.round(360*phases[0+pNo-1]/L);},()=>{return b_power.state==0 || this.b_ch.state==0;});
-        new Vfd(pX3-5,pY4,6,()=>{return dcs[0+pNo-1];},()=>{return b_power.state==0 || this.b_ch.state==0;});
+        new Vfd(pX3-5,pY1,6,()=>{return Math.round(100000*freqs[0+pNo-1])/100000;},()=>{return scope.b_power.state==0 || this.b_ch.state==0;});
+        new Vfd(pX3-5,pY2,6,()=>{return ampls[0+pNo-1]/100;},()=>{return scope.b_power.state==0 || this.b_ch.state==0;});
+        new Vfd(pX3-5,pY3,6,()=>{return Math.round(360*phases[0+pNo-1]/L);},()=>{return scope.b_power.state==0 || this.b_ch.state==0;});
+        new Vfd(pX3-5,pY4,6,()=>{return dcs[0+pNo-1];},()=>{return scope.b_power.state==0 || this.b_ch.state==0;});
         this.b_phalf=new PushButton(ctx,pX4,pY5,pbw,pbh,"Pos+","on");
         this.b_phalf.setInitChannelsNeeded();
         this.b_phalf.setOtherIllumCondition(()=>{return this.b_ch.state==1;});
@@ -62,7 +62,7 @@ class Siggen extends pObject {
         this.display.ChOnType=true;
         this.display.parent=this;
 
-        this.noise=new NoiseKnob(pX4+3,pY1+30);
-        this.burst=new BurstKnob(pX4+3,pY1+125);
+        this.noise=new NoiseKnob(pX4+3,pY1+30,"grayed");
+        this.burst=new BurstKnob(pX4+3,pY1+125,"grayed");
     }
 }

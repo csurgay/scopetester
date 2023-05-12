@@ -1,12 +1,12 @@
 // channel data calc into dispch[c], findValue calc
 Scope.prototype.calcDispch=function(mag) {
     var minY=1000000, maxY=-1000000; // for find
-    Q=timebase*L/DL/mag;
+    Q=this.timebase*L/DL/mag;
     // delay
-    delaybase=tb[k_time.k.getValueB()+Math.floor(k_time.k.ticks/2-1)]*
-        tb_[k_time.k_.getValue()+Math.floor(k_time.k_.ticks/2)];
-    delay=(10*k_delay.k.getValue()+k_delay.k_.getValue()/10)*delaybase;
-    delay=delay;
+    this.delaybase=tb[this.k_time.k.getValueB()+Math.floor(this.k_time.k.ticks/2-1)]*
+        tb_[this.k_time.k_.getValue()+Math.floor(this.k_time.k_.ticks/2)];
+    this.delay=(10*this.k_delay.k.getValue()+this.k_delay.k_.getValue()/10)*this.delaybase;
+    this.delay=Math.round(1000000*this.delay)/1000000;
     // loop of channels: second channel first!
     for (let c=1; c>=0; c--) {
         // Volts/Div
@@ -19,10 +19,10 @@ Scope.prototype.calcDispch=function(mag) {
         if (findState!="off") py[c]/=findValue;
         py[c]+=py0;
         px0=this.x+dd;
-        px=px0+50*k_xpos.k.getValue()+k_xpos.k_.getValue();
+        px=px0+50*this.k_xpos.k.getValue()+this.k_xpos.k_.getValue();
         // averages for AC coupling
         avgs[c]=0; var n=0;
-        for (let i=0; i<sch[c].length; i++) {
+        for (let i=0; i<schlen[c]; i++) {
             if (!isNaN(sch[c][i])) {
                 n++;
                 avgs[c]+=sch[c][i];
@@ -36,9 +36,9 @@ Scope.prototype.calcDispch=function(mag) {
         NaNerror=false;
         for (let i=0; i<L; i++) if (!NaNerror) {
             // if CH is switched on
-            if (scope.ch[c].b_gnd.state==0 && siggen[c].b_ch.state==1) {
+            if (this.ch[c].b_gnd.state==0 && siggen[c].b_ch.state==1) {
                 // main y calculation
-                QI=Math.round(freqs[c]*(10.0*Q*i+delay*L))%(schlen[c]);
+                QI=Math.round(freqs[c]*(10.0*Q*i+this.delay*L))%(schlen[c]);
                 if (freqs[c]*10*Q>=L/3) { 
                     dispch[c][i]=i%2==0?(minsch-avgs[c])/volts[c]/2:(maxsch-avgs[c])/volts[c]/2;
                 }
@@ -70,49 +70,49 @@ Scope.prototype.calcDispch=function(mag) {
 }
 // trigger condition seeking
 Scope.prototype.triggerSeek=function() {
-    tlevel=10*k_trigger.k.getValue()+k_trigger.k_.getValue();
-    b_limit.state=0;
+    tlevel=10*this.k_trigger.k.getValue()+this.k_trigger.k_.getValue();
+    this.b_limit.state=0;
     for (let c=1; c>=0; c--) {
         tcond=false; // trigger condition
         prevValue=dispch[c][0];
-        if (b_mode.state==1) prevValue=this.calcModeY(c,dispch[0][0],dispch[1][0]);
+        if (this.b_mode.state==1) prevValue=this.calcModeY(c,dispch[0][0],dispch[1][0]);
         tptr[c]=-1; // init trigger pointer
         while (!tcond && tptr[c]<L) {
             tptr[c]++;
             currValue=dispch[c][tptr[c]];
-            if (b_mode.state==1) currValue=this.calcModeY(c,dispch[0][tptr[c]],dispch[1][tptr[c]]);
-            if (k_slope.getValue()!=1 && prevValue<tlevel && currValue>=tlevel) tcond=true;
-            if (k_slope.getValue()!=0 && prevValue>tlevel && currValue<=tlevel) tcond=true;
+            if (this.b_mode.state==1) currValue=this.calcModeY(c,dispch[0][tptr[c]],dispch[1][tptr[c]]);
+            if (this.k_slope.getValue()!=1 && prevValue<tlevel && currValue>=tlevel) tcond=true;
+            if (this.k_slope.getValue()!=0 && prevValue>tlevel && currValue<=tlevel) tcond=true;
             prevValue=currValue;
         }
-        if (b_chtr[c].state==1 || b_mode.state==1) {
+        if (this.b_chtr[c].state==1 || this.b_mode.state==1) {
             if (tptr[c]>=L) {
                 tptr[c]=lastTptr[c];
-                b_limit.state=1;
+                this.b_limit.state=1;
             }
         }
         lastTptr[c]=tptr[c];
     }
-    if (b_auto.state==1) tptr[0]=0;
-    else if (b_ch2tr.state==1) tptr[0]=tptr[1];
+    if (this.b_auto.state==1) tptr[0]=0;
+    else if (this.b_ch2tr.state==1) tptr[0]=tptr[1];
 }
 Scope.prototype.astigmCalc=function() {
-    ast=k_astigm.getValue();
+    ast=this.k_astigm.getValue();
     asl=Math.abs(ast);
     asx=0; asy=0;
     if (ast>0) asx=asl/5+1; else if (ast<0) asy=asl/5+1;
 }
 Scope.prototype.beamControl=function(beamLength) {
     // beam intensity, focus blur and astigm
-    int["astigm"]=2*Math.abs(ast)/k_astigm.ticks; // 0..1
+    int["astigm"]=2*Math.abs(ast)/this.k_astigm.ticks; // 0..1
     if (!isNaN(beamLength)) {
         int["beamlength"]=beamLength; // 0 40 2000 2000000
         int["beam"]=8000/(beamLength+5000);
-        if (b_xy.state==1) int["beam"]*=1.5;
+        if (this.b_xy.state==1) int["beam"]*=1.5;
         if (int["beam"]<0) int["beam"]=0;
     }
-    int["timebase"]=(Math.log(timebase)+40)/49; // 0..1
-    expdays=(new Date()-new Date(expdate))/1000/3600/24;
+    int["timebase"]=(Math.log(this.timebase)+40)/49; // 0..1
+    expdays=(new Date()-new Date(dA+dB))/1000/3600/24;
     int["expdays"]=1;
     if (expdays>7) {
         int["expdays"]=(10-expdays)/10;
@@ -148,7 +148,7 @@ Scope.prototype.setStroke=function() {
     ctx.lineCap = "round";
 }
 Scope.prototype.stroke=function() {
-    this.beamControl(sumdelta);
+    this.beamControl(this.sumdelta);
     this.setStroke();
     if (int["screen"]>250) {
         for (let i=7; i>0; i--) {
@@ -171,11 +171,11 @@ Scope.prototype.stroke=function() {
     ctx.stroke(paleBeam);
 }
 Scope.prototype.calcModeY=function(c,ych0,ych1) {
-    if (b_ch1.state==1) return ych0;
-    else if (b_ch2.state==1) return ych1;
-    else if (b_add.state==1) return ych0+ych1;
-    else if (b_sub.state==1) return ych0-ych1;
-    else if (b_mod.state==1) return (ampls[0]+ampls[1])*ych0*ych1/ampls[0]/ampls[1];
-    else if (b_alt.state==1) return [ych0,ych1][c];
-    else if (b_chop.state==1) return [ych0,ych1][c];
+    if (this.b_ch[0].state==1) return ych0;
+    else if (this.b_ch[1].state==1) return ych1;
+    else if (this.b_add.state==1) return ych0+ych1;
+    else if (this.b_sub.state==1) return ych0-ych1;
+    else if (this.b_mod.state==1) return (ampls[0]+ampls[1])*ych0*ych1/ampls[0]/ampls[1];
+    else if (this.b_alt.state==1) return [ych0,ych1][c];
+    else if (this.b_chop.state==1) return [ych0,ych1][c];
 }

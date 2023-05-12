@@ -9,7 +9,6 @@ var px0,px,py0,py=[0,0],pyd; // screen center lines for channels and dual
 var lineWidth, strokeStyle, blurWidth, expdays;
 var drawInProgress=false, drawInTimeout=false;
 var mag; // x10 mag multiplier (3.333 for dipsch, 3 for beamdraw)
-var tailParts=[];
 var slowLimitMeasure=true, slowLimit=-1;
 var runningTime=Date.now(), sweepDuration, sweepCount=0, elapsedTime=0, triggerTime=0;
 var inten=[100,50];
@@ -30,97 +29,101 @@ class Scope extends pObject {
         this.class="Scope";
         this.d=pD;
         this.dd=pDD;
+        this.delay; // multiplier for delay base
+        this.delaybase; // delay base in milliseconds
+        this.sumdelta; // beam length aux.variable
         uipush(this);
+
+        this.b_power=new PowerButton(10,25,40,35,"ON","power");
 
         new Frame(verX,verY,verW,verH,"Vertical","center");
         this.ch=[new ScopeChannel(0,verX,verY), new ScopeChannel(1,verX+287,verY)];
 
         new Frame(horX,horY,horW,horH,"Horizontal","center");
-        k_xpos=new DoubleKnob(ctx,horX+44,horY+160,201,201,"X Pos","xpos",36,20);
-        k_xpos.setPullable("xpos");
-        k_xpos.setResetTogether();
-        k_time=new TimeKnob(horX+170,horY+150);
-        k_delay=new DoubleKnob(ctx,horX+44,horY+60,100,100,"Delay Multiply","delay",36,23);
-        k_delay.k.value0=false;
-        k_delay.k_.value0=false;
-        k_delay.k.limit=k_delay.k.ticks-1;
-        k_delay.k_.limit=k_delay.k_.ticks-1;
-        k_delay.setResetTogether();
-        new Vfd(horX+horW/2-47,horY+40,6,()=>{return 10*k_delay.k.getValue()+k_delay.k_.getValue()/10;},()=>{
-            return b_power.state==0 || 10*k_delay.k.getValue()+k_delay.k_.getValue()==0;});
-        b_xcal=new IndicatorLed(horX+35,horY+217,24,16,"Cal","on");
-        b_a=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"  A  ","on");
-        b_a.state=1;
-        b_ainten=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"Inten","on");
-        b_b=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"DLYD ","on");
-        b_aandb=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"ALT","on");
-        b_mixed=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"Mixed  ","on");
-        dualtb_mode=new Radio(ctx,horX+dualX,horY+dualY,[b_a,b_ainten,b_b,b_aandb,b_mixed]);
+        this.k_xpos=new DoubleKnob(ctx,horX+44,horY+160,201,201,"X Pos","xpos",36,20);
+        this.k_xpos.setPullable("xpos");
+        this.k_xpos.setResetTogether();
+        this.k_time=new TimeKnob(horX+170,horY+150);
+        this.k_delay=new DoubleKnob(ctx,horX+44,horY+60,100,100,"Delay Multiply","delay",36,23);
+        this.k_delay.k.value0=false;
+        this.k_delay.k_.value0=false;
+        this.k_delay.k.limit=this.k_delay.k.ticks-1;
+        this.k_delay.k_.limit=this.k_delay.k_.ticks-1;
+        this.k_delay.setResetTogether();
+        new Vfd(horX+horW/2-47,horY+40,6,()=>{return 10*this.k_delay.k.getValue()+this.k_delay.k_.getValue()/10;},()=>{
+            return this.b_power.state==0 || 10*this.k_delay.k.getValue()+this.k_delay.k_.getValue()==0;});
+        this.b_xcal=new IndicatorLed(horX+35,horY+217,24,16,"Cal","on");
+        
+        this.b_a=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"  A  ","on");
+        this.b_a.state=1;
+        this.b_aInten=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"Inten","on");
+        this.b_b=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"DLYD ","on");
+        this.b_aAndB=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"ALT","on");
+        this.b_mixed=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"Mixed  ","on");
+        this.dualTb_mode=new Radio(ctx,horX+dualX,horY+dualY,[this.b_a,this.b_aInten,this.b_b,this.b_aAndB,this.b_mixed]);
 
         new Frame(digiX,digiY,digiW,digiH,"Spectrum","center");
-        b_fft=new PushButton(ctx,digiX+10,digiY+55,pbw,pbh,"FFT","fft");
-        k_ffty=new Knob(ctx,39,digiX+70,digiY+65,20,40,0,"Ymag","double_s");
-        k_ffty.value0=false;
-        k_fftx=new Knob(ctx,10,digiX+125,digiY+65,20,21,0,"Xmag","double_s");
+        this.b_fft=new PushButton(ctx,digiX+10,digiY+55,pbw,pbh,"FFT","fft");
+        this.k_ffty=new Knob(ctx,39,digiX+70,digiY+65,20,40,0,"Ymag","double_s");
+        this.k_ffty.value0=false;
+        this.k_fftx=new Knob(ctx,10,digiX+125,digiY+65,20,21,0,"Xmag","double_s");
 
         new Frame(modeX,modeY,modeW,modeH,"Mode","center");
-        b_ch1=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"CH1","on2");
-        b_ch2=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"CH2","on2");
-        b_chon=[b_ch1,b_ch2];
-        b_alt=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"ALT","on2");
-        b_alt.state=1;
-        b_chop=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"CHOP ","on2");
-        b_add=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"ADD","on2");
-        b_mod=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"AM","on2");
-        b_sub=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"SUB","on2");
-        b_xy=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"X-Y","on2");
-        radio_mode=new Radio(ctx,modeX+moderX,modeY+moderY,[b_alt,b_chop,b_ch1,b_ch2,b_add,b_sub,b_mod,b_xy],2);
-        b_storage=new PushButton(ctx,modeX+moderX,modeY+140,pbw,pbh,"STOR.","on2");
-//        b_storage=new PushButton(ctx,horX+dualX,horY+dualY-30,pbw,pbh,"Storage","readout");
-//        b_storage=new PushButton(ctx,digiX+80,digiY+70,pbw,pbh,"Storage","readout");
-        b_readout=new PushButton(ctx,modeX+moderX,modeY+160,pbw,pbh,"READ.","on2");
+        this.b_ch=[new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"CH1","on2"),
+            new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"CH2","on2")];
+        this.b_alt=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"ALT","on2");
+        this.b_alt.state=1;
+        this.b_chop=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"CHOP ","on2");
+        this.b_add=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"ADD","on2");
+        this.b_mod=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"AM","on2");
+        this.b_sub=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"SUB","on2");
+        this.b_xy=new PushButton(ctx,modeX+moderX,modeY+moderY,pbw,pbh,"X-Y","on2");
+        this.radio_mode=new Radio(ctx,modeX+moderX,modeY+moderY,[this.b_alt,this.b_chop,this.b_ch[0],this.b_ch[1],this.b_add,this.b_sub,this.b_mod,this.b_xy],2);
+        this.b_storage=new PushButton(ctx,modeX+moderX,modeY+140,pbw,pbh,"STOR.","on2");
+//        this.b_storage=new PushButton(ctx,horX+dualX,horY+dualY-30,pbw,pbh,"Storage","readout");
+//        this.b_storage=new PushButton(ctx,digiX+80,digiY+70,pbw,pbh,"Storage","readout");
+        this.b_readout=new PushButton(ctx,modeX+moderX,modeY+160,pbw,pbh,"READ.","on2");
 //        b_readout=new PushButton(ctx,digiX+80,digiY+95,pbw,pbh,"Readout","readout");
-        // k_cursor=new DoubleKnob(ctx,horX+dualX-10,horY+60,51,201,"Cursor","cursor",36,23);
-        // k_cursor.setPullable("cursor");
-        // k_cursor.setResetTogether();
+        // this.k_cursor=new DoubleKnob(ctx,horX+dualX-10,horY+60,51,201,"Cursor","cursor",36,23);
+        // this.k_cursor.setPullable("cursor");
+        // this.k_cursor.setResetTogether();
         k_cursor=new DoubleKnob(ctx,modeX+120,modeY+150,51,201,"Cursor","cursor",36,23);
         k_cursor.setPullable("cursor");
         k_cursor.setResetTogether();
 
         new Frame(monX,monY,monW,monH,"Monitor","center");
-        k_vol=new Knob(ctx,8,monX+monW-40,monY+65,30,17,0,"Volume","volume");
-        k_vol.setSwitchBufferNeeded();
-        k_monitor=new MonitorKnob(monX+40,monY+65);
+        this.k_vol=new Knob(ctx,8,monX+monW-40,monY+65,30,17,0,"Volume","volume");
+        this.k_vol.setSwitchBufferNeeded();
+        this.k_monitor=new MonitorKnob(monX+40,monY+65);
 
         new Frame(trigX,trigY,trigW,trigH,"Trigger","center");
-        k_trigger=new DoubleKnob(ctx,trigX+40,trigY+60,50,50,"Level","double_s",30,15);
-        k_trigger.k.defaultFastRate=1;
-        k_trigger.setResetTogether();
-        k_hold=new DoubleKnob(ctx,trigX+40,trigY+150,50,50,"HoldOff","double_s",30,15);
-        k_slope=new SlopeKnob(trigX+125,trigY+75);
+        this.k_trigger=new DoubleKnob(ctx,trigX+40,trigY+60,50,50,"Level","double_s",30,15);
+        this.k_trigger.k.defaultFastRate=1;
+        this.k_trigger.setResetTogether();
+        this.k_holdoff=new DoubleKnob(ctx,trigX+40,trigY+150,50,50,"HoldOff","double_s",30,15,"grayed");
+        this.k_slope=new SlopeKnob(trigX+125,trigY+75);
         // !!! kellene majd "fel+le mindkettő egyszerre" slope is
-        k_slope.value0=false;
-        b_auto=new PushButton(ctx,trigX+trmodeX,trigY+trmodeY,pbw,pbh,"Auto","on");
-        b_auto.state=1;
-        b_ch1tr=new PushButton(ctx,trigX+trmodeX,trigY+trmodeY,pbw,pbh,"CH1","on");
-        b_ch2tr=new PushButton(ctx,trigX+trmodeX,trigY+trmodeY,pbw,pbh,"CH2","on");
-        b_mode=new PushButton(ctx,trigX+trmodeX,trigY+trmodeY,pbw,pbh,"Math","on");
-        b_chtr=[b_ch1tr,b_ch2tr];
-        radio_trig=new Radio(ctx,trigX+trmodeX,trigY+trmodeY,[b_auto,b_ch1tr,b_ch2tr,b_mode]);
-        b_limit=new IndicatorLed(trigX+120,trigY+12,24,16,"Limit","on");
+        this.k_slope.value0=false;
+        this.b_auto=new PushButton(ctx,trigX+trmodeX,trigY+trmodeY,pbw,pbh,"Auto","on");
+        this.b_auto.state=1;
+        this.b_ch1tr=new PushButton(ctx,trigX+trmodeX,trigY+trmodeY,pbw,pbh,"CH1","on");
+        this.b_ch2tr=new PushButton(ctx,trigX+trmodeX,trigY+trmodeY,pbw,pbh,"CH2","on");
+        this.b_mode=new PushButton(ctx,trigX+trmodeX,trigY+trmodeY,pbw,pbh,"Math","on");
+        this.b_chtr=[this.b_ch1tr,this.b_ch2tr];
+        this.radio_trig=new Radio(ctx,trigX+trmodeX,trigY+trmodeY,[this.b_auto,this.b_ch1tr,this.b_ch2tr,this.b_mode]);
+        this.b_limit=new IndicatorLed(trigX+120,trigY+12,24,16,"Limit","on");
 
-        b_find=new FindButton(17,305,pbw,pbh,"Find","small");
+        this.b_find=new FindButton(17,305,pbw,pbh,"Find","small");
         b_reset=new ResetButton(17,360,pbw,pbh,"Reset","small");
         b_reset.illum=false;
-        b_preset=new PresetButton(17,395,pbw,pbh,"Preset","small");
-        b_preset.illum=false;
-        b_mic=new MicButton(17,430,pbw,pbh,"Mic","small");
-        k_intensity=new Knob(ctx,8,30,100,15,17,0,"Intensity","smallknob");
-        k_focus=new Knob(ctx,8,30,150,15,17,0,"Focus","smallknob");
-        k_illum=new Knob(ctx,16,30,200,15,17,0,"Illum","smallknob");
-        k_illum.value0=false;
-        k_astigm=new CalibPot(ctx,8,40,240,15,17,0,"Ast","pot");
-        k_rot=new CalibPot(ctx,15,40,270,15,31,0,"Rot","pot");
+        this.b_preset=new PresetButton(17,395,pbw,pbh,"Preset","small");
+        this.b_preset.illum=false;
+        this.k_intensity=new Knob(ctx,8,30,100,15,17,0,"Intensity","smallknob");
+        this.k_focus=new Knob(ctx,8,30,150,15,17,0,"Focus","smallknob");
+        this.k_illum=new Knob(ctx,16,30,200,15,17,0,"Illum","smallknob");
+        this.k_illum.value0=false;
+        this.k_astigm=new CalibPot(ctx,8,40,240,15,17,0,"Ast","pot");
+        this.k_rot=new CalibPot(ctx,15,40,270,15,31,0,"Rot","pot");
         k_skew=new CalibPot(debugctx,15,40,270,15,31,0,"Skew","pot2");
         b_calib=new DebugButton(20,20,pbw,pbh,"Calib","small");
         b_debug=new DebugButton(20,55,pbw,pbh,"Debug","small");
@@ -144,12 +147,12 @@ class Scope extends pObject {
         d=this.d;
         dd=this.dd;
         // x10 mag: 10/3x in dispch, 3x in beamdraw
-        this.calcDispch(k_xpos.k.pulled&&findState=="off"?10/3:1);
-        mag=k_xpos.k.pulled&&findState=="off"?3:1;
+        this.calcDispch(this.k_xpos.k.pulled&&findState=="off"?10/3:1);
+        mag=this.k_xpos.k.pulled&&findState=="off"?3:1;
         this.triggerSeek();
         // intensity and focus
-        int["knob"]=(k_intensity.getValue()+8)/16; // 0..1
-        blur["knob"]=Math.abs(k_focus.getValue()/8); // 0..1
+        int["knob"]=(this.k_intensity.getValue()+8)/16; // 0..1
+        blur["knob"]=Math.abs(this.k_focus.getValue()/8); // 0..1
         // draw beams
         this.drawScreen(ctx,drawShadow);
         ctx.save();
@@ -158,7 +161,7 @@ class Scope extends pObject {
         this.drawGrid(ctx,"grid");
         this.astigmCalc();
         // imprint text rolling
-        if (b_power.state==1 && imprintState!="idle") {
+        if (this.b_power.state==1 && imprintState!="idle") {
             drawText(imprint,px,imprintY,imprintHlPtr++);
             ctx.restore();
             drawInProgress=false;
@@ -169,9 +172,8 @@ class Scope extends pObject {
         sweepDuration=Date.now()-runningTime;
         elapsedTime+=sweepDuration;
         runningTime=Date.now();
-        if (timebase<slowLimit || b_storage.state==1) {
+        if (this.timebase<slowLimit || this.b_storage.state==1) {
             DL1=0, DL2=mag*DL;
-            tailParts=[[DL1,DL2]];
         }
         // timing of sweeps
         else {
@@ -189,21 +191,21 @@ class Scope extends pObject {
                 else slowLimit=100;
             }
             // new portion beginning
-            DL1=Math.ceil(50*(runningTime-triggerTime)/timebase);
+            DL1=Math.ceil(50*(runningTime-triggerTime)/this.timebase);
             if (DL1>=mag*DL) {
                 // end of beam, retrigger needed
-                DL1=-Math.ceil(50*DL/timebase);
+                DL1=-Math.ceil(50*DL/this.timebase);
                 triggerTime=runningTime+DL/5;
                 // other channel in ALT mode
                 altc=1-altc;
             }
             // new portion ending
-            DL2=DL1+Math.ceil(10*DL/timebase);
+            DL2=DL1+Math.ceil(10*DL/this.timebase);
             if (DL2<DL1+1) DL2=DL1+1;
             if (DL2>mag*DL) DL2=mag*DL;
         }
         // Beam for Lissajous XY
-        if (b_power.state==1 && b_xy.state==1) {
+        if (this.b_power.state==1 && this.b_xy.state==1) {
             for (let c=0; c<2; c++) {
                 pyd=(py[0]+py[1])/2;
                 // calc pixelch
@@ -212,8 +214,8 @@ class Scope extends pObject {
                     pixelch[0][1][i]=pyd-dispch[1][i]-k_skew.getValue()*(DL/2-i)/100;
                 }
                 // rotation
-                if (k_rot.getValue()!=0) {
-                    var fi=-k_rot.getValue()*1*Math.PI/30;
+                if (this.k_rot.getValue()!=0) {
+                    var fi=-this.k_rot.getValue()*1*Math.PI/30;
                     for (let i=0; i<L; i++) {
                         var x1=pixelch[0][0][i]-px0-5*d, y1=pixelch[0][1][i]-py0;
                         pixelch[0][0][i]=px0+5*d+x1*Math.cos(fi)+y1*Math.sin(fi);
@@ -222,26 +224,26 @@ class Scope extends pObject {
                 }
             }
             ctx.beginPath();
-            sumdelta=0;
+            this.sumdelta=0;
             var ro=Math.sign(asl);
             for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
                 ctx.moveTo(pixelch[0][0][DL1]+k*asx,pixelch[0][1][DL1]+k*asy);
-                for (let i=DL1+1; i<=DL2; i++) {
+                for (let i=DL1+1; i<=DL2; i++) if (i>0) {
                     ctx.lineTo(pixelch[0][0][i]+k*asx,pixelch[0][1][i]+k*asy);
-                    sumdelta+=Math.sqrt((pixelch[0][0][i]-pixelch[0][0][i-1])
+                    this.sumdelta+=Math.sqrt((pixelch[0][0][i]-pixelch[0][0][i-1])
                         *(pixelch[0][0][i]-pixelch[0][0][i-1])
                         +(pixelch[0][1][i]-pixelch[0][1][i-1])*(pixelch[0][1][i]-pixelch[0][1][i-1]));
-                    if (isNaN(sumdelta)) console.error("sumdelta NaN i="+i);
+                    if (isNaN(this.sumdelta)) console.error("sumdelta NaN i="+i);
                 }
             }
-            if (findState!="off") sumdelta/=findValue;
+            if (findState!="off") this.sumdelta/=findValue;
             this.stroke();
         }
         // Beam for all other modes
-        else if (b_power.state==1) {
+        else if (this.b_power.state==1) {
             for (let c=0; c<2; c++) {
                 pyd=py[c];
-                if (b_add.state==1 || b_sub.state==1 || b_mod.state==1) {
+                if (this.b_add.state==1 || this.b_sub.state==1 || this.b_mod.state==1) {
                     pyd=(py[0]+py[1])/2;
                     c=1;
                 }
@@ -253,8 +255,8 @@ class Scope extends pObject {
                         dispch[1][i+tptr[0]])-k_skew.getValue()*(DL/2-ii)/100;
                 }
                 // rotation
-                if (k_rot.getValue()!=0) {
-                    var fi=-k_rot.getValue()*1*Math.PI/360;
+                if (this.k_rot.getValue()!=0) {
+                    var fi=-this.k_rot.getValue()*1*Math.PI/360;
                     for (let i=0; i<L; i++) {
                         var x1=pixelch[c][0][i]-px0-dd-5*d, y1=pixelch[c][1][i]-py0;
                         pixelch[c][0][i]=px0+dd+5*d+x1*Math.cos(fi)+y1*Math.sin(fi);
@@ -265,22 +267,22 @@ class Scope extends pObject {
             // actual beam drawing
             for (let cc=0; cc<2; cc++) {
                 var c=cc;
-                if (b_ch1.state==1 && cc==1) continue;
-                else if (b_ch2.state==1 && cc==0) continue;
-                else if ((b_add.state==1 || b_sub.state==1 || b_mod.state==1) && cc==0) continue;
-                if (b_alt.state==1 && timebase>=slowLimit && b_storage.state==0) c=altc;
+                if (this.b_ch[0].state==1 && cc==1) continue;
+                else if (this.b_ch[1].state==1 && cc==0) continue;
+                else if ((this.b_add.state==1 || this.b_sub.state==1 || this.b_mod.state==1) && cc==0) continue;
+                if (this.b_alt.state==1 && this.timebase>=slowLimit && this.b_storage.state==0) c=altc;
                 ctx.beginPath(); 
                 paleBeam=new Path2D();
                 prevDelta[c]=1000;
-                sumdelta=0;
+                this.sumdelta=0;
                 ro=Math.sign(asl);
                 discontinuity=schdisc[c];
-                if (b_add.state==1 || b_sub.state==1 || b_mod.state==1)
+                if (this.b_add.state==1 || this.b_sub.state==1 || this.b_mod.state==1)
                     discontinuity+=schdisc[1-c];
                 for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
                     ctx.moveTo(pixelch[c][0][DL1]+k*asx,pixelch[c][1][DL1]+k*asy);
                     paleBeam.moveTo(pixelch[c][0][DL1]+k*asx,pixelch[c][1][DL1]+k*asy);
-                    for (let i=DL1+1; i<=DL2; i++) {
+                    for (let i=DL1+1; i<=DL2; i++) if (i>0) {
                         delta=Math.abs(pixelch[c][1][i-1]-pixelch[c][1][i]);
                         if (discontinuity>0 && delta>10*prevDelta[c]) {
                             ctx.moveTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
@@ -294,23 +296,24 @@ class Scope extends pObject {
                         prevDelta[c]=delta;
                         deltaX=pixelch[c][0][i]-pixelch[c][0][i-1];
                         deltaY=pixelch[c][1][i]-pixelch[c][1][i-1];
-                        sumdelta+=Math.sqrt(deltaX*deltaX+deltaY*deltaY);
+                        this.sumdelta+=Math.sqrt(deltaX*deltaX+deltaY*deltaY);
+                        if (isNaN(this.sumdelta)) console.error("sumdelta NaN i="+i);
                     }
                 }
-                if (findState!="off") sumdelta/=findValue;
+                if (findState!="off") this.sumdelta/=findValue;
                 this.stroke();
             }
         }
         // FFT draw
-        if (b_fft.state==1 && b_xy.state!=1 && b_ch2.state!=1 && b_alt.state!=1 && b_chop.state!=1) {
+        if (this.b_fft.state==1 && this.b_xy.state!=1 && scope.b_ch[1].state!=1 && this.b_alt.state!=1 && this.b_chop.state!=1) {
             for (let i=0; i<FFTN; i++) {
                 var ii=Math.floor(DL*i/FFTN);
                 fftIn[i]=this.calcModeY(0,dispch[0][ii],dispch[1][ii])/127;
             }
             f.realTransform(fftOut, fftIn);
             f.completeSpectrum(fftOut);
-            var A=Math.pow(2,k_ffty.getValue()+10)/Math.max(...fftOut);
-            var M=k_fftx.getValue();
+            var A=Math.pow(2,this.k_ffty.getValue()+10)/Math.max(...fftOut);
+            var M=this.k_fftx.getValue();
             ctx.beginPath();
             for (let i=0; i<DL; i++) {
                 ctx.moveTo(px+i,py[1]+2*d);
@@ -330,7 +333,7 @@ class Scope extends pObject {
             ctx.stroke();
         }
         // Cursor
-        if (b_power.state==1 && k_cursor.k.pulled) {
+        if (this.b_power.state==1 && k_cursor.k.pulled) {
             xCur=10*k_cursor.k.getValue()+k_cursor.k_.getValue();
             yResult=px+5*d+xCur;
             ctx.beginPath();
@@ -342,7 +345,7 @@ class Scope extends pObject {
         this.readout();
         this.drawGrid(ctx,"illum");
         ctx.restore();
-        if (!drawInTimeout && timebase>=slowLimit) { 
+        if (!drawInTimeout && this.timebase>=slowLimit) { 
             drawInTimeout=true;
             setTimeout(()=>callDraw(ctx,"noShadow"),1);
         }

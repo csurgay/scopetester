@@ -32,7 +32,7 @@ function switchBuffer() {
     gainNode[aptr].gain.setValueAtTime(0, audioCtx[aptr].currentTime);
     source[aptr].connect(gainNode[aptr]);
     gainNode[aptr].connect(audioCtx[aptr].destination);
-    sel=a_monitor[k_monitor.getValue()];
+    sel=a_monitor[scope.k_monitor.getValue()];
     // Fill the buffer with values between -1.0 and 1.0
     for (let c=0; c<myArrayBuffer[aptr].numberOfChannels; c++) {
         // This gives us the actual array that contains the data
@@ -58,7 +58,7 @@ function switchBuffer() {
     // destination so we can hear the sound
 //    source.connect(audioCtx.destination);
     // start the source playing
-    gainNode[aptr].gain.linearRampToValueAtTime(Math.pow(1.2,k_vol.getValue())/4.3,audioCtx[aptr].currentTime+0.30);
+    gainNode[aptr].gain.linearRampToValueAtTime(Math.pow(1.2,scope.k_vol.getValue())/4.3,audioCtx[aptr].currentTime+0.30);
     source[aptr].start();
     astarted=true;
     draw(ctx);
@@ -68,11 +68,4 @@ function stopBuffer(aptr) {
         gainNode[aptr].gain.linearRampToValueAtTime(0.000001,audioCtx[aptr].currentTime+0.25);
         source[aptr].stop(audioCtx[aptr].currentTime+0.30);
     }
-}
-
-function initMonitor() {
-    new DebugIcon(0,100,900,200,(x)=>{if (x==-17) return L; else return myArrayBuffer[aptr]==null?0:100*myArrayBuffer[aptr].getChannelData(0)[x];});
-    new DebugIcon(0,300,900,200,(x)=>{if (x==-17) return L; else return myArrayBuffer[aptr]==null?0:100*myArrayBuffer[aptr].getChannelData(1)[x];});
-    new DebugIcon(0,200,900,200,(x)=>{if (x==-17) return FFTN; else return 100*fftIn[x];});
-    new DebugIcon(0,400,900,200,(x)=>{if (x==-17) return FFTN; else return 100*fftOut[x];});
 }

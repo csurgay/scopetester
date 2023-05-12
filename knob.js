@@ -3,7 +3,7 @@ var xd, yd, rd, nd, kd; // for x,y for drawing
 const pullDx=1, pullDy=1, pullDr=1;
 
 class Knob extends pObject {
-    constructor(ctx,pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos,pMarker="marker") {
+    constructor(ctx,pLimit,pX,pY,pR,pTicks,pValue,pLabel,lpos,grayed) {
         const pos={"none":[0,0],"knob":[0,-27],"smallknob":[0,-22],
         "volume":[0,-40],"pot":[-22,1],"pot2":[-25,1],"double":[0,-44],
         "sweep":[0,80], "delay":[0,-46],"double_s":[0,-35], "func":[-50,-71],
@@ -12,6 +12,7 @@ class Knob extends pObject {
         "noise":[-30,-35], "burst":[-30,-30]};
         super(ctx,pX-pR,pY-pR,2*pR,2*pR);
         this.class="Knob";
+        this.grayed=grayed;
         this.name=pLabel;
         this.live=true;
         this.limit=pLimit; // ticks/2: végállásos, -1: körbeforog
@@ -27,7 +28,7 @@ class Knob extends pObject {
         this.haircolor="gray";
         this.markercolor="red";
         new Label(ctx,pX+pos[lpos][0],pY+pos[lpos][1],pLabel,12);
-        this.marker=pMarker;
+        this.marker="marker";
         this.shadow=true;
         this.pulled=false;
         this.pullable=false;
@@ -149,7 +150,7 @@ class Knob extends pObject {
         ctx.lineWidth=1;
         ctx.strokeStyle=this.haircolor;
         ctx.lineTo(xd+rd,yd);
-        ctx.fillStyle = this.color;
+        ctx.fillStyle = this.grayed=="grayed"?"rgba(150,150,150,0.5)":this.color;
         ctx.arc(xd,yd,rd,0,2*Math.PI);
         ctx.fill();
         for(var i=0; i<nd; i++) {
@@ -160,7 +161,7 @@ class Knob extends pObject {
         if (this.marker=="marker") {
             ctx.beginPath();
             ctx.lineWidth=2;
-            ctx.strokeStyle=this.markercolor;
+            ctx.strokeStyle=this.grayed=="grayed"?"rgba(150,150,150,0.5)":this.markercolor;
             ctx.moveTo(xd+rd*Math.sin(2*Math.PI*kd/nd),yd-rd*Math.cos(2*Math.PI*kd/nd));
             ctx.lineTo(xd+3*rd/5*Math.sin(2*Math.PI*kd/nd),yd-3*rd/5*Math.cos(2*Math.PI*kd/nd));
             ctx.stroke();
@@ -219,10 +220,10 @@ class CalibPot extends Knob {
 }
 
 class DoubleKnob extends pObject {
-    constructor(ctx,pX,pY,pTicks,pTicks_,pLabel,lpos,pR,pR_) {
+    constructor(ctx,pX,pY,pTicks,pTicks_,pLabel,lpos,pR,pR_,grayed) {
         super(ctx,pX-pR,pY-pR,2*pR,2*pR);
-        this.k=new Knob(ctx,-1,pX,pY,pR,pTicks,0,pLabel,lpos);
-        this.k_=new Knob(ctx,-1,pX,pY,pR_,pTicks_,0,"","none");
+        this.k=new Knob(ctx,-1,pX,pY,pR,pTicks,0,pLabel,lpos,grayed);
+        this.k_=new Knob(ctx,-1,pX,pY,pR_,pTicks_,0,"","none",grayed);
         this.k_.hitPad=2; // so that hit rect is smaller for inner knob
         this.k.limit=Math.floor(this.k.ticks/2);
         this.k_.limit=Math.floor(this.k_.ticks/2);
@@ -445,8 +446,8 @@ class ScaleKnob extends Knob {
 }
 
 class NoiseKnob extends DoubleKnob {
-    constructor(pX,pY) {
-        super(ctx,pX,pY,5,32,"Noise","noise",30,18);
+    constructor(pX,pY,grayed) {
+        super(ctx,pX,pY,5,32,"Noise","noise",30,18,grayed);
         this.iconCircle(pX+1,pY+3,45,["Off","White","Pink","Brown","Blue"]);
         this.ampLabel=new Label(ctx,pX+35,pY-35,"Ampl",12);
         this.ampLabel.bgcolor=hl_gray;
@@ -466,8 +467,8 @@ class NoiseKnob extends DoubleKnob {
 }
 
 class BurstKnob extends DoubleKnob {
-    constructor(pX,pY) {
-        super(ctx,pX,pY,8,32,"Burst","burst",30,18);
+    constructor(pX,pY,grayed) {
+        super(ctx,pX,pY,8,32,"Burst","burst",30,18,grayed);
         this.ampLabel=new Label(ctx,pX+35,pY-30,"Duty",12);
         this.ampLabel.bgcolor=hl_gray;
         this.ampLabel.background=true;
@@ -500,7 +501,7 @@ class MonitorKnob extends Knob {
     }
     turnY(pDelta) {
         super.turnY(pDelta);
-        if (b_power.state==1) {
+        if (scope.b_power.state==1) {
             if (this.on()) switchBuffer();
             else this.switchOff();
         }
@@ -531,38 +532,5 @@ class SlopeKnob extends Knob {
         for (let i=0; i<n; i++) {
             new Label(ctx,x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),a_monitor[i],12);
         }
-    }
-}
-
-class ModeKnob extends Knob {
-    constructor(pX,pY) {
-        // for (let i=0; i<radio_mode.b.length; i++)
-        //     a_mode.push(radio_mode.b[i].name);
-        super(ctx,-1,pX,pY,21,a_mode.length,1,"none","none");
-        this.value0=false;
-        this.iconCircle(pX,pY+2,34,a_mode);
-    }
-    iconCircle(x,y,r,a_mode) {
-        var n=a_mode.length;
-        for (let i=0; i<n; i++) {
-            new Label(ctx,x+r*Math.sin(2*Math.PI*i/n),y-r*Math.cos(2*Math.PI*i/n),a_mode[i],12);
-        }
-    }
-    clickXY(pX,pY) {
-        super.clickXY(pX,pY);
-        this.setButtonValue();
-    }
-    turnY(pDelta) {
-        super.turnY(pDelta);
-        this.setButtonValue();
-    }
-    reset() {
-        super.reset();
-        this.setButtonValue();
-    }
-    setButtonValue() {
-        for (let i=0; i<buttons.length; i++)
-            if (buttons[i].radio==radio_mode && buttons[i].name==a_mode[this.value])
-                buttons[i].clickXY(0,0);
     }
 }

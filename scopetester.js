@@ -71,11 +71,11 @@ function clearCanvasNoScreen(ctx) {
 
 function draw(ctx) {
     // timebase
-    timebase=tb[k_time.k.getValueA()+Math.floor(k_time.k.ticks/2-1)]*
-        tb_[k_time.k_.getValue()+Math.floor(k_time.k_.ticks/2)];
+    scope.timebase=tb[scope.k_time.k.getValueA()+Math.floor(scope.k_time.k.ticks/2-1)]*
+        tb_[scope.k_time.k_.getValue()+Math.floor(scope.k_time.k_.ticks/2)];
     // Cal LEDs
-    b_xcal.state=0;
-    if (k_time.k_.getValue()!=0) b_xcal.showRed();
+    scope.b_xcal.state=0;
+    if (scope.k_time.k_.getValue()!=0) scope.b_xcal.showRed();
     for (let c=0; c<2; c++) {
         scope.ch[c].cal.state=0;
         if (scope.ch[c].k_volts.k_.getValue()!=0) scope.ch[c].cal.showRed();
@@ -103,8 +103,7 @@ function start() {
     siggen[0].k_scale.value=7;
     scope=new Scope(70,10,DL/10,17);
     initChannels();
-    initMonitor();
-    b_power=new PowerButton(10,25,40,35,"ON","power");
+    initDebugIcons();
     draw(ctx);
     setTimeout(processEvent,100);
 }
@@ -136,5 +135,6 @@ function myRoundRect(ctx,x,y,w,h,r) {
 }
 function roundRect(ctx,x,y,w,h,r) {
     if (typeof InstallTrigger !== 'undefined') myRoundRect(ctx,x,y,w,h,r);
-    else ctx.roundRect(x,y,w,h,r);
+//    else ctx.roundRect(x,y,w,h,r);
+    else myRoundRect(ctx,x,y,w,h,r);
 }

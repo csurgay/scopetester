@@ -16,10 +16,10 @@ function initBufgen() {
 //    bufgen.push(new BufferGenerator("PWM",f_pwm,'fullIcon'));
     bufgen.push(new BufferGenerator("SQUARE",f_square_ideal,'fullIcon'));
     bufgen.push(new BufferGenerator("HARMSQ",f_square_harmonic,'fullIcon'));
-    bufgen.push(new BufferGenerator("TRAP",f_trapezoid,'fullIcon'));
+    //bufgen.push(new BufferGenerator("TRAP",f_trapezoid,'fullIcon'));
     bufgen.push(new BufferGenerator("RAMP",f_ramp,'fullIcon'));
     bufgen.push(new BufferGenerator("FISHBONE",f_fishbone,'fullIcon'));
-    bufgen.push(new BufferGenerator("GAUSS",f_gauss,'fullIcon'));
+    //bufgen.push(new BufferGenerator("GAUSS",f_gauss,'fullIcon'));
     bufgen.push(new BufferGenerator("SINC",f_sinc,'fullIcon'));
     bufgen.push(new BufferGenerator("PULSE",f_pulse,'fullIcon'));
 //    bufgen.push(new BufferGenerator("Exp",f_exp,'fullIcon'));
@@ -30,6 +30,10 @@ function initBufgen() {
     bufgen.push(new BufferGenerator("NTSC",f_ntsc,'fullIcon'));
     initMorse();
     bufgen.push(new BufferGenerator("MORSE",f_morse,'fullIcon'));
+    // Korosi Borze (Korosi) eredeti plotter rajz -> buffer function buffer
+    initKorosi();
+    bufgen.push(new BufferGenerator("KBX",f_korosiX,"halfIcon"));
+    bufgen.push(new BufferGenerator("KBY",f_korosiY,"halfIcon"));
     // Menomano (LaLinea) eredeti plotter rajz -> buffer function buffer
     initMenomano();
     bufgen.push(new BufferGenerator("MENO",f_menomanoX,"halfIcon"));
@@ -44,7 +48,6 @@ var angle_rad; // for 2*PI calcultions
 /* Calc BufferGenerator signals into sch based on siggen control settings */
 function initChannels() {
     trace("initChannels");
-    tailParts=[];
     for (let c=0; c<2; c++) {
         // amplitude
         ampls[c]=siggen[c].k_ampl.k.getValue();
@@ -70,9 +73,9 @@ function initChannels() {
         dcs[c]=dcs[c]/10+dcs_[c]/1000;
     }
     NaNerror=false;
-    // calc mic data into gench
-    if (b_mic.state==1) {
-        for (let c=0; c<2; c++) {
+    for (let c=0; c<2; c++) {
+        // calc mic data into gench
+        if (scope.ch[c].b_mic.state==1) {
             schlen[c]=L;
             ampl=ampls[c];
             freq=freqs[c];
@@ -84,26 +87,26 @@ function initChannels() {
                 }
             }
         }
-    }
-    // calc siggen data into sch
-    else {
-        for (let c=0; c<2; c++) {
-            schlen[c]=bufgen[siggen[c].k_func.k.getValue()].f(-17);
-            schdisc[c]=bufgen[siggen[c].k_func.k.getValue()].f(-21);
-            ampl=ampls[c];
-            freq=freqs[c];
-            order=siggen[c].k_func.k_.getValue();
-            for (let x=0; x<schlen[c]; x++) {
-                yy=bufgen[siggen[c].k_func.k.getValue()].f(Math.round(x
-                    +phases[c]),order);
-                yy+=100*dcs[c];
-                if (siggen[c].b_inv.state==1) yy=-yy;
-                if (siggen[c].b_abs.state==1 && yy<0) yy=-yy;
-                if (siggen[c].b_phalf.state==1 && yy<0) yy=0;
-                if (siggen[c].b_nhalf.state==1 && yy>0) yy=0;
-                sch[c][x]=yy;
-                if (isNaN(sch[c][x])) {
-                    error("buffer (siggen) NaN: sch["+c+"]["+x+"]");
+        // calc siggen data into sch
+        else {
+            for (let c=0; c<2; c++) {
+                schlen[c]=bufgen[siggen[c].k_func.k.getValue()].f(-17);
+                schdisc[c]=bufgen[siggen[c].k_func.k.getValue()].f(-21);
+                ampl=ampls[c];
+                freq=freqs[c];
+                order=siggen[c].k_func.k_.getValue();
+                for (let x=0; x<schlen[c]; x++) {
+                    yy=bufgen[siggen[c].k_func.k.getValue()].f(Math.round(x
+                        +phases[c]),order);
+                    yy+=100*dcs[c];
+                    if (siggen[c].b_inv.state==1) yy=-yy;
+                    if (siggen[c].b_abs.state==1 && yy<0) yy=-yy;
+                    if (siggen[c].b_phalf.state==1 && yy<0) yy=0;
+                    if (siggen[c].b_nhalf.state==1 && yy>0) yy=0;
+                    sch[c][x]=yy;
+                    if (isNaN(sch[c][x])) {
+                        error("buffer (siggen) NaN: sch["+c+"]["+x+"]");
+                    }
                 }
             }
         }
@@ -135,6 +138,29 @@ function f_menomanoY(x) {
     x=Math.floor((x)%L*mmy.length/L);
     if (x>=mmy.length) x=mmy.length-1;
     return ampl*mmy[x]/200;
+}
+
+/* Scales original plot into signal buffer */
+function initKorosi() {
+    trace("initKorosi");
+    for (let i=0;i<korosi.length;i++) {
+        if (i%2==0) kbx.push(7*korosi[i]-1550);
+        if (i%2==1) kby.push(-8*korosi[i]+700);
+    }
+}
+function f_korosiX(x) {
+    if (x==-17) return L; // sample length
+    if (x==-21) return 0; // discontinuity points
+    x=Math.floor((x)%L*kbx.length/L);
+    if (x>=kbx.length) x=kbx.length-1;
+    return ampl*kbx[x]/200;
+}
+function f_korosiY(x) {
+    if (x==-17) return L; // smaple length
+    if (x==-21) return 0; // discontinuity points
+    x=Math.floor((x)%L*kby.length/L);
+    if (x>=kby.length) x=kby.length-1;
+    return ampl*kby[x]/200;
 }
 
 const morseAbc={"a":".-","b":"-...","c":"-.-.","d":"-..","e":".","f":"..-.",
@@ -367,7 +393,7 @@ function f_sawtooth(x,o) {
     return yResult;
 }
 function f_ecg(x,o) {
-    if (x==-17) return 4*L; // smaple length
+    if (x==-17) return L; // smaple length
     if (x==-21) return 0; // discontinuity threshold
     if (o>16) o-=33; o=-o;
     x = x % L;

@@ -38,7 +38,7 @@ Scope.prototype.drawScreen=function(ctx,drawShadow="No-drawShadow") { // egyelő
     ctx.fill();
 }
 Scope.prototype.drawGrid=function(ctx,illumgrid) {
-    if (b_power.state==1 && illum>0) {
+    if (this.b_power.state==1 && illum>0) {
         ctx.filter="blur(0px)";
         var d1=50, d2=65;
         var ax=[this.x-d1,this.x-d1,this.x+this.w+d1,this.x+this.w+d1];
@@ -61,12 +61,12 @@ Scope.prototype.drawGrid=function(ctx,illumgrid) {
     // draw grid
     d=this.d;
     dd=this.dd;
-    illum=Math.floor(155*k_illum.getValue()/(k_illum.ticks-1));
-    if (b_power.state==1 && illum>0) {
+    illum=Math.floor(155*scope.k_illum.getValue()/(scope.k_illum.ticks-1));
+    if (this.b_power.state==1 && illum>0) {
         illum=100+illum;
         ctx.strokeStyle = "rgba("+illum+", "+illum+", "+illum+",0.75)";
     }
-    if (illumgrid=="grid" || illumgrid=="illum" && b_power.state==1 && illum>0) {
+    if (illumgrid=="grid" || illumgrid=="illum" && this.b_power.state==1 && illum>0) {
         for (let i=dd; i<=this.w-dd+1; i+=d) {
             ctx.moveTo(this.x+i,this.y+dd);
             ctx.lineTo(this.x+i,this.y+this.h-dd);

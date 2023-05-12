@@ -31,10 +31,10 @@ class pObject {
         this.switchBufferNeeded=true;
     }
     turnY(pDelta) {
-        if (this.live && k_monitor.on() && this.switchBufferNeeded) setTimeout(switchBuffer,10);
+        if (this.live && scope.k_monitor.on() && this.switchBufferNeeded) setTimeout(switchBuffer,10);
     }
     clickXY(x,y) {
-        if (this.live && k_monitor.on() && this.switchBufferNeeded) setTimeout(switchBuffer,10);
+        if (this.live && scope.k_monitor.on() && this.switchBufferNeeded) setTimeout(switchBuffer,10);
     }
     hitXY(x,y) {
         if (this.live) {
