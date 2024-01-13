@@ -31,9 +31,12 @@ function initBufgen() {
     initMorse();
     bufgen.push(new BufferGenerator("MORSE",f_morse,'fullIcon'));
     // Korosi Borze (Korosi) eredeti plotter rajz -> buffer function buffer
-    initKorosi();
-    bufgen.push(new BufferGenerator("KBX",f_korosiX,"halfIcon"));
-    bufgen.push(new BufferGenerator("KBY",f_korosiY,"halfIcon"));
+//    initKorosi();
+//    bufgen.push(new BufferGenerator("KBX",f_korosiX,"halfIcon"));
+//    bufgen.push(new BufferGenerator("KBY",f_korosiY,"halfIcon"));
+    // Heart idofuggvenyek -> buffer function buffer
+    bufgen.push(new BufferGenerator("HeartX",f_heartX,"halfIcon"));
+    bufgen.push(new BufferGenerator("HeartY",f_heartY,"halfIcon"));
     // Menomano (LaLinea) eredeti plotter rajz -> buffer function buffer
     initMenomano();
     bufgen.push(new BufferGenerator("MENO",f_menomanoX,"halfIcon"));
@@ -161,6 +164,21 @@ function f_korosiY(x) {
     x=Math.floor((x)%L*kby.length/L);
     if (x>=kby.length) x=kby.length-1;
     return ampl*kby[x]/200;
+}
+
+function f_heartX(x) {
+    if (x==-17) return L; // sample length
+    if (x==-21) return 0; // discontinuity points
+    x = 1.0 * x * Math.PI / L2;
+    yResult=16*Math.pow(Math.sin(x),3);
+    return ampl*yResult/5;
+}
+function f_heartY(x) {
+    if (x==-17) return L; // smaple length
+    if (x==-21) return 0; // discontinuity points
+    x = 1.0 * x * Math.PI / L2;
+    yResult=13*Math.cos(x)-5*Math.cos(2*x)-2*Math.cos(3*x)-Math.cos(4*x);
+    return ampl*yResult/5;
 }
 
 const morseAbc={"a":".-","b":"-...","c":"-.-.","d":"-..","e":".","f":"..-.",

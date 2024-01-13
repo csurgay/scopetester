@@ -1,12 +1,12 @@
 const credit="2in1 OSCILLOSCOPE   CSURGAY@GMAIL.COM   Ver.0.44";
-const dB="g, 04, 2023";
+const dB="t, 04, 2027";
 const bgcolor="#bbbbbb";
 const shadowcolor="rgba(70,70,70,0.3)";
 const hl_green="rgba(80,160,80,0.35)"; // knob and label highlight
 const hl_gray="rgba(100,100,100,0.35)";
 const hl_white="rgba(255,255,255,0.35)";
 const hl_plastic="rgba(110,110,70,0.45)";var canvas, ctx, debugcanvas, debugctx, logWindow, traceString="", now;
-const dA="Au";
+const dA="Oc";
 var scope, siggen, presetManager; // global objects
 var no_images_to_load, vfdred, vfd, vfd_, led_on_powers, led_on, led_off_powers, led_off, led_red; // canvas images
 const L=2048, L2=L/2, L4=L/4, L8=L/8; // buffer length
