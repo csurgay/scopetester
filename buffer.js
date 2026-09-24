@@ -80,6 +80,7 @@ function initChannels() {
         // calc mic data into gench
         if (scope.ch[c].b_mic.state==1) {
             schlen[c]=L;
+            schdisc[c]=0;
             ampl=ampls[c];
             freq=freqs[c];
             for (let x=0; x<L; x++) if (!NaNerror) {
@@ -90,26 +91,24 @@ function initChannels() {
                 }
             }
         }
-        // calc siggen data into sch
+        // calc siggen data into sch (only this channel: the old inner c-loop overwrote mic data on CH1)
         else {
-            for (let c=0; c<2; c++) {
-                schlen[c]=bufgen[siggen[c].k_func.k.getValue()].f(-17);
-                schdisc[c]=bufgen[siggen[c].k_func.k.getValue()].f(-21);
-                ampl=ampls[c];
-                freq=freqs[c];
-                order=siggen[c].k_func.k_.getValue();
-                for (let x=0; x<schlen[c]; x++) {
-                    yy=bufgen[siggen[c].k_func.k.getValue()].f(Math.round(x
-                        +phases[c]),order);
-                    yy+=100*dcs[c];
-                    if (siggen[c].b_inv.state==1) yy=-yy;
-                    if (siggen[c].b_abs.state==1 && yy<0) yy=-yy;
-                    if (siggen[c].b_phalf.state==1 && yy<0) yy=0;
-                    if (siggen[c].b_nhalf.state==1 && yy>0) yy=0;
-                    sch[c][x]=yy;
-                    if (isNaN(sch[c][x])) {
-                        error("buffer (siggen) NaN: sch["+c+"]["+x+"]");
-                    }
+            schlen[c]=bufgen[siggen[c].k_func.k.getValue()].f(-17);
+            schdisc[c]=bufgen[siggen[c].k_func.k.getValue()].f(-21);
+            ampl=ampls[c];
+            freq=freqs[c];
+            order=siggen[c].k_func.k_.getValue();
+            for (let x=0; x<schlen[c]; x++) {
+                yy=bufgen[siggen[c].k_func.k.getValue()].f(Math.round(x
+                    +phases[c]),order);
+                yy+=100*dcs[c];
+                if (siggen[c].b_inv.state==1) yy=-yy;
+                if (siggen[c].b_abs.state==1 && yy<0) yy=-yy;
+                if (siggen[c].b_phalf.state==1 && yy<0) yy=0;
+                if (siggen[c].b_nhalf.state==1 && yy>0) yy=0;
+                sch[c][x]=yy;
+                if (isNaN(sch[c][x])) {
+                    error("buffer (siggen) NaN: sch["+c+"]["+x+"]");
                 }
             }
         }

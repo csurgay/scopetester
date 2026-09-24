@@ -249,7 +249,7 @@ class Scope extends pObject {
                 }
                 // calc pixelch
                 for (let i=DL1; i<=DL2; i++) {
-                    ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
+                    var ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
                     pixelch[c][0][i]=px+ii*mag; if (mag>1) pixelch[c][0][i]-=5*DL-DL/2;
                     pixelch[c][1][i]=pyd-this.calcModeY(c,dispch[0][i+tptr[0]],
                         dispch[1][i+tptr[0]])-k_skew.getValue()*(DL/2-ii)/100;
@@ -306,27 +306,30 @@ class Scope extends pObject {
         }
         // FFT draw
         if (this.b_fft.state==1 && this.b_xy.state!=1 && scope.b_ch[1].state!=1 && this.b_alt.state!=1 && this.b_chop.state!=1) {
+            // resample the DL display points to FFTN samples (linear interpolation, not sample repeat)
             for (let i=0; i<FFTN; i++) {
-                var ii=Math.floor(DL*i/FFTN);
-                fftIn[i]=this.calcModeY(0,dispch[0][ii],dispch[1][ii])/127;
+                var t=DL*i/FFTN, i0=Math.floor(t), fr=t-i0;
+                fftIn[i]=((1-fr)*this.calcModeY(0,dispch[0][i0],dispch[1][i0])
+                    +fr*this.calcModeY(0,dispch[0][i0+1],dispch[1][i0+1]))/127;
             }
             f.realTransform(fftOut, fftIn);
-            f.completeSpectrum(fftOut);
-            var A=Math.pow(2,this.k_ffty.getValue()+10)/Math.max(...fftOut);
+            // fftOut is interleaved complex [re0,im0,re1,im1,...]: take magnitudes
+            var magMax=0;
+            for (let k=0; k<FFTN/2; k++) {
+                fftMag[k]=Math.hypot(fftOut[2*k],fftOut[2*k+1]);
+                if (k>0 && fftMag[k]>magMax) magMax=fftMag[k]; // DC excluded from scaling
+            }
+            var A=magMax>0?Math.pow(2,this.k_ffty.getValue()+10)/magMax:0;
             var M=this.k_fftx.getValue();
+            var bin;
             ctx.beginPath();
             for (let i=0; i<DL; i++) {
                 ctx.moveTo(px+i,py[1]+2*d);
-                if (M>=0) {
-                    yResult=fftOut[Math.floor(FFTN*i/DL/3/(M+1))];
-                }
-                else if (M<0) {
-                    yResult=0; 
-                    for (let j=0; j<-M; j++) yResult+=fftOut[i+j];
-                    yResult/=(-M);
-                    yResult=fftOut[Math.floor(FFTN*i/DL/3*(-M))];
-                }
-                ctx.lineTo(px+i,py[1]+2*d+A*yResult);
+                // same x scale as before (old index into interleaved array / 2)
+                if (M>=0) bin=Math.floor(FFTN*i/DL/6/(M+1));
+                else bin=Math.floor(FFTN*i/DL/6*(-M));
+                yResult=bin<FFTN/2?fftMag[bin]:0;
+                ctx.lineTo(px+i,py[1]+2*d-A*yResult); // magnitudes are >=0: bars point up
             }
             ctx.strokeStyle="rgb(0,255,0)";
             ctx.lineWidth=1;

@@ -15,7 +15,8 @@ var DL1, DL2; // from-to at slow sweep
 const A = 127; // default amplitude (on integer scale, A -> 1.0)
 const FFTN=2048;
 const f=new FFT(FFTN); // buffer for FFT spectrum data
-var fftIn=new Array(FFTN).fill(0), fftOut=new Array(FFTN).fill(0);
+var fftIn=new Array(FFTN).fill(0), fftOut=f.createComplexArray(); // fftOut: 2*FFTN interleaved re,im
+var fftMag=new Array(FFTN/2).fill(0); // magnitude spectrum, bins 0..FFTN/2-1
 var q, volts=[0,0]; // not sure yet, q=timebase*L/512
 var buttons=[]; // all buttons for switch off at poweroff (except PushButtons)
 

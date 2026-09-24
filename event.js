@@ -70,8 +70,8 @@ function eventInit(pCanvas) {
     pCanvas.addEventListener('touchstart', function(event) {
         mouseDownX=event.changedTouches[0].clientX; mouseDownY=event.changedTouches[0].clientY;
         objectUI=hitXY(pCanvas,mouseDownX,mouseDownY);
-        log("listen touchstart:"+objectUI.class+" "+objectUI.name);
         if (objectUI!=null) {
+            log("listen touchstart:"+objectUI.class+" "+objectUI.name);
             event.preventDefault();
             moveCounter=turnSensitity;
             new EventUI("touchstart",Date.now(),objectUI,mouseDownX,mouseDownY);
