@@ -362,6 +362,11 @@ class Scope extends pObject {
             setTimeout(()=>callDraw(ctx,"noShadow"),40);
         }
         drawInProgress=false;
+        // panel widgets (Limit LED) are only repainted by the full draw(): do one when the Limit state changed
+        if (this.limitChanged) {
+            this.limitChanged=false;
+            setTimeout(()=>draw(ctx),0);
+        }
     }
 }
  

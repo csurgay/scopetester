@@ -93,6 +93,7 @@ Scope.prototype.calcSweep=function() {
 // trigger condition seeking
 Scope.prototype.triggerSeek=function() {
     tlevel=10*this.k_trigger.k.getValue()+this.k_trigger.k_.getValue();
+    var prevLimit=this.b_limit.state;
     this.b_limit.state=0;
     // search at least one full period of the slower channel (a real scope just waits for the next edge)
     var searchLen=L;
@@ -133,6 +134,7 @@ Scope.prototype.triggerSeek=function() {
         }
         lastTptr[c]=tptr[c];
     }
+    if (this.b_limit.state!=prevLimit) this.limitChanged=true; // LED needs a panel repaint (see Scope.draw)
     if (this.b_auto.state==1) tptr[0]=0;
     else if (this.b_ch2tr.state==1) tptr[0]=tptr[1];
 }
