@@ -32,6 +32,7 @@ class Scope extends pObject {
         this.delay; // multiplier for delay base
         this.delaybase; // delay base in milliseconds
         this.sumdelta; // beam length aux.variable
+        this.minsch=[0,0]; this.maxsch=[0,0]; // signal buffer min/max per channel
         uipush(this);
 
         this.b_power=new PowerButton(10,25,40,35,"ON","power");
@@ -150,6 +151,7 @@ class Scope extends pObject {
         this.calcDispch(this.k_xpos.k.pulled&&findState=="off"?10/3:1);
         mag=this.k_xpos.k.pulled&&findState=="off"?3:1;
         this.triggerSeek();
+        this.calcSweep(); // dispch now starts at trigger+delay (analog order)
         // intensity and focus
         int["knob"]=(this.k_intensity.getValue()+8)/16; // 0..1
         blur["knob"]=Math.abs(this.k_focus.getValue()/8); // 0..1
@@ -191,16 +193,17 @@ class Scope extends pObject {
                 else slowLimit=100;
             }
             // new portion beginning
-            DL1=Math.ceil(50*(runningTime-triggerTime)/this.timebase);
+            var spms=50*(mag>1?10/3:1)/this.timebase; // dispch samples per millisecond (x10: 10/3 denser)
+            DL1=Math.ceil(spms*(runningTime-triggerTime));
             if (DL1>=mag*DL) {
                 // end of beam, retrigger needed
-                DL1=-Math.ceil(50*DL/this.timebase);
+                DL1=-Math.ceil(spms*DL);
                 triggerTime=runningTime+DL/5;
                 // other channel in ALT mode
                 altc=1-altc;
             }
             // new portion ending
-            DL2=DL1+Math.ceil(10*DL/this.timebase);
+            DL2=DL1+Math.ceil(spms*DL/5);
             if (DL2<DL1+1) DL2=DL1+1;
             if (DL2>mag*DL) DL2=mag*DL;
         }
@@ -251,8 +254,8 @@ class Scope extends pObject {
                 for (let i=DL1; i<=DL2; i++) {
                     var ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
                     pixelch[c][0][i]=px+ii*mag; if (mag>1) pixelch[c][0][i]-=5*DL-DL/2;
-                    pixelch[c][1][i]=pyd-this.calcModeY(c,dispch[0][i+tptr[0]],
-                        dispch[1][i+tptr[0]])-k_skew.getValue()*(DL/2-ii)/100;
+                    pixelch[c][1][i]=pyd-this.calcModeY(c,dispch[0][i],
+                        dispch[1][i])-k_skew.getValue()*(DL/2-ii)/100;
                 }
                 // rotation
                 if (this.k_rot.getValue()!=0) {

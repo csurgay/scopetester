@@ -33,12 +33,14 @@ Scope.prototype.calcDispch=function(mag) {
         // main y value buffer calculation
         var minsch=Math.min(...sch[c]);
         var maxsch=Math.max(...sch[c]);
+        this.minsch[c]=minsch; this.maxsch[c]=maxsch; // for sampleY()
         NaNerror=false;
         for (let i=0; i<L; i++) if (!NaNerror) {
             // if CH is switched on
             if (this.ch[c].b_gnd.state==0 && siggen[c].b_ch.state==1) {
                 // main y calculation
-                QI=Math.round(freqs[c]*(10.0*Q*i+this.delay*L))%(schlen[c]);
+                // trigger scan buffer: sweep start phase 0, no delay (delay is applied after the trigger in calcSweep)
+                QI=Math.round(freqs[c]*(10.0*Q*i))%(schlen[c]);
                 if (freqs[c]*10*Q>=L/3) { 
                     dispch[c][i]=i%2==0?(minsch-avgs[c])/volts[c]/2:(maxsch-avgs[c])/volts[c]/2;
                 }
@@ -68,25 +70,53 @@ Scope.prototype.calcDispch=function(mag) {
         findState="found";
     }
 }
+// y value (same scale as dispch) of channel c at sample position s (units of Q) from sweep start phase 0
+Scope.prototype.sampleY=function(c,s,delay) {
+    if (!(this.ch[c].b_gnd.state==0 && siggen[c].b_ch.state==1)) return 0;
+    var y;
+    if (freqs[c]*10*Q>=L/3) // signal too fast for the timebase: min/max band
+        y=(Math.round(s)%2==0?this.minsch[c]:this.maxsch[c])-avgs[c];
+    else
+        y=sch[c][Math.round(freqs[c]*(10.0*Q*s+delay*L))%(schlen[c])]-avgs[c];
+    y=y/volts[c]/2;
+    if (findState!="off") y/=findValue;
+    return y;
+}
+// analog order: trigger (tptr[0] in the scan buffer) -> delay -> sweep; dispch[c][0] is the sweep start
+Scope.prototype.calcSweep=function() {
+    if (this.b_xy.state==1) return; // XY: no time base, keep the scan buffer
+    var t0=tptr[0];
+    for (let c=1; c>=0; c--)
+        for (let i=0; i<L; i++)
+            dispch[c][i]=this.sampleY(c,i+t0,this.delay);
+}
 // trigger condition seeking
 Scope.prototype.triggerSeek=function() {
     tlevel=10*this.k_trigger.k.getValue()+this.k_trigger.k_.getValue();
     this.b_limit.state=0;
+    // search at least one full period of the slower channel (a real scope just waits for the next edge)
+    var searchLen=L;
+    for (let c=0; c<2; c++) {
+        var period=schlen[c]/(freqs[c]*10*Q); // signal period in samples
+        if (isFinite(period) && period+2>searchLen) searchLen=Math.ceil(period)+2;
+    }
+    if (searchLen>50*L) searchLen=50*L;
+    var val=(c,s)=>s<L?dispch[c][s]:this.sampleY(c,s,0);
     for (let c=1; c>=0; c--) {
         tcond=false; // trigger condition
         prevValue=dispch[c][0];
         if (this.b_mode.state==1) prevValue=this.calcModeY(c,dispch[0][0],dispch[1][0]);
         tptr[c]=-1; // init trigger pointer
-        while (!tcond && tptr[c]<L) {
+        while (!tcond && tptr[c]<searchLen) {
             tptr[c]++;
-            currValue=dispch[c][tptr[c]];
-            if (this.b_mode.state==1) currValue=this.calcModeY(c,dispch[0][tptr[c]],dispch[1][tptr[c]]);
+            currValue=val(c,tptr[c]);
+            if (this.b_mode.state==1) currValue=this.calcModeY(c,val(0,tptr[c]),val(1,tptr[c]));
             if (this.k_slope.getValue()!=1 && prevValue<tlevel && currValue>=tlevel) tcond=true;
             if (this.k_slope.getValue()!=0 && prevValue>tlevel && currValue<=tlevel) tcond=true;
             prevValue=currValue;
         }
         if (this.b_chtr[c].state==1 || this.b_mode.state==1) {
-            if (tptr[c]>=L) {
+            if (tptr[c]>=searchLen) {
                 tptr[c]=lastTptr[c];
                 this.b_limit.state=1;
             }

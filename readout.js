@@ -16,15 +16,15 @@ Scope.prototype.readout=function() {
                 drawText(readoutText,ROXSIG,ROYSIG[c]);
                 if (k_cursor.k.pulled) {
                     readoutText="V";
-                    var ptr=5*d+xCur+tptr[0];
-                    if (ptr>L) {
+                    var ptr=5*d+xCur; // dispch[0] is the sweep start (trigger+delay)
+                    if (ptr<0 || ptr>=L) {
                         yResult=""; readoutText="TRIG!";
                     }
                     else {
                         yResult=dispch[c][ptr]*volts[c]/50;
                         if (this.b_add.state==1 || this.b_sub.state==1 || this.b_mod.state==1) {
-                            yResult=this.calcModeY(0,dispch[0][5*d+xCur+tptr[0]]*volts[0]/50,
-                                dispch[1][5*d+xCur+tptr[0]]*volts[1]/50);
+                            yResult=this.calcModeY(0,dispch[0][ptr]*volts[0]/50,
+                                dispch[1][ptr]*volts[1]/50);
                         }
                         if (Math.abs(yResult)<0.1) {
                             yResult*=1000;
