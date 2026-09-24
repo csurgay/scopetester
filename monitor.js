@@ -41,15 +41,18 @@ function switchBuffer() {
         for (let i=0; i<nowBuffering[c].length; i++) {
             nowBuffering[c][i]=0;
             for (let cc=0; cc<2; cc++) mqi[cc]=Math.round(mq[cc]*i)%L;
+            // burst: silence between bursts is the idle (offset) level
+            var s0=burstIdle(0,Math.round(mq[0]*i))?schIdle[0]:sch[0][mqi[0]];
+            var s1=burstIdle(1,Math.round(mq[1]*i))?schIdle[1]:sch[1][mqi[1]];
             if (sel=="Math") {
                 if (siggen[c].b_ch.state==1) {
-                    nowBuffering[c][i]=scope.calcModeY(c,sch[0][mqi[0]],sch[1][mqi[1]]) / 290;
+                    nowBuffering[c][i]=scope.calcModeY(c,s0,s1) / 290;
                 }
             }
             else if (sel!="Off") {
                 if ( (c==0 && (sel=="CH1" || sel=="1-2") && siggen[0].b_ch.state==1) 
                 || (c==1 && (sel=="CH2" || sel=="1-2") && siggen[1].b_ch.state==1) ) {
-                    nowBuffering[c][i] = sch[c][mqi[c]] / 290;
+                    nowBuffering[c][i] = [s0,s1][c] / 290;
                 }
             }
         }

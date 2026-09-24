@@ -48,6 +48,17 @@ function initBufgen() {
 var yy; // for vertical calculation;
 var angle_rad; // for 2*PI calcultions
 
+/* Burst mode: burstN[c] cycles on, then silence, burst period burstP[c] cycles (Duty = burstN/burstP).
+   Outer Burst knob: Off,1,2,4,8,16,32,64 cycles. Inner Duty knob 0..31: period = N*(2+value) -> 50%..3%. */
+const burstCounts=[0,1,2,4,8,16,32,64];
+var burstN=[0,0], burstP=[1,1], schIdle=[0,0]; // schIdle: generator output level during the silence
+/* true if unwrapped signal buffer position u (schlen samples per cycle) is in the silent part of a burst */
+function burstIdle(c,u) {
+    if (burstN[c]==0) return false;
+    var cyc=Math.floor(u/schlen[c]);
+    return ((cyc%burstP[c])+burstP[c])%burstP[c]>=burstN[c];
+}
+
 /* Calc BufferGenerator signals into sch based on siggen control settings */
 function initChannels() {
     trace("initChannels");
@@ -74,6 +85,18 @@ function initChannels() {
         dcs[c]=siggen[c].k_dc.k.getValue();
         dcs_[c]=siggen[c].k_dc.k_.getValue();
         dcs[c]=dcs[c]/10+dcs_[c]/1000;
+        // burst
+        var bk=siggen[c].burst;
+        burstN[c]=scope.ch[c].b_mic.state==1?0:burstCounts[bk.k.getValue()];
+        burstP[c]=burstN[c]==0?1:burstN[c]*(2+bk.k_.getValue());
+        bk.showValues(burstN[c],Math.round(100*burstN[c]/burstP[c]));
+        // output level between bursts: zero signal through the same offset/inv/abs/half chain
+        yy=100*dcs[c];
+        if (siggen[c].b_inv.state==1) yy=-yy;
+        if (siggen[c].b_abs.state==1 && yy<0) yy=-yy;
+        if (siggen[c].b_phalf.state==1 && yy<0) yy=0;
+        if (siggen[c].b_nhalf.state==1 && yy>0) yy=0;
+        schIdle[c]=yy;
     }
     NaNerror=false;
     for (let c=0; c<2; c++) {

@@ -63,6 +63,9 @@ class Siggen extends pObject {
         this.display.parent=this;
 
         this.noise=new NoiseKnob(pX4+3,pY1+30,"grayed");
-        this.burst=new BurstKnob(pX4+3,pY1+125,"grayed");
+        // Burst: N cycles of the waveform, then silence (at the DC offset level); Duty = N / burst period
+        this.burst=new BurstKnob(pX4+3,pY1+125);
+        this.burst.setSwitchBufferNeeded();
+        this.burst.setInitChannelsNeeded();
     }
 }

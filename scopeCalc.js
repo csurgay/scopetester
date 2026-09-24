@@ -31,6 +31,8 @@ Scope.prototype.calcDispch=function(mag) {
             }
         }
         avgs[c]/=n;
+        // burst: the silent cycles count in the long-term average (AC coupling)
+        if (burstN[c]>0) avgs[c]=(burstN[c]*avgs[c]+(burstP[c]-burstN[c])*schIdle[c])/burstP[c];
         if (this.ch[c].b_ac.state==0) avgs[c]=0;
         // main y value buffer calculation
         var minsch=Math.min(...sch[c]);
@@ -42,8 +44,12 @@ Scope.prototype.calcDispch=function(mag) {
             if (this.ch[c].b_gnd.state==0 && siggen[c].b_ch.state==1) {
                 // main y calculation
                 // trigger scan buffer: sweep start phase 0, no delay (delay is applied after the trigger in calcSweep)
-                QI=Math.round(freqs[c]*(10.0*Q*i))%(schlen[c]);
-                if (freqs[c]*10*Q>=L/3) { 
+                var u=Math.round(freqs[c]*(10.0*Q*i)); // unwrapped buffer position
+                QI=u%(schlen[c]);
+                if (burstIdle(c,u)) { // silence between bursts
+                    dispch[c][i]=(schIdle[c]-avgs[c])/volts[c]/2;
+                }
+                else if (freqs[c]*10*Q>=L/3) { 
                     dispch[c][i]=i%2==0?(minsch-avgs[c])/volts[c]/2:(maxsch-avgs[c])/volts[c]/2;
                 }
                 // main formula for y calc
@@ -76,11 +82,13 @@ Scope.prototype.calcDispch=function(mag) {
 // phase 0, plus delay (ms), plus sB samples of the B sweep (units of QB). bandQ/parity: min/max band case.
 Scope.prototype.sampleY=function(c,s,delay,sB=0,bandQ=Q,parity=s) {
     if (!(this.ch[c].b_gnd.state==0 && siggen[c].b_ch.state==1)) return 0;
-    var y;
-    if (freqs[c]*10*bandQ>=L/3) // signal too fast for the timebase: min/max band
+    var y, u=Math.round(freqs[c]*(10.0*Q*s+10.0*this.QB*sB+delay*L)); // unwrapped buffer position
+    if (burstIdle(c,u)) // silence between bursts
+        y=schIdle[c]-avgs[c];
+    else if (freqs[c]*10*bandQ>=L/3) // signal too fast for the timebase: min/max band
         y=(Math.round(parity)%2==0?this.minsch[c]:this.maxsch[c])-avgs[c];
     else
-        y=sch[c][((Math.round(freqs[c]*(10.0*Q*s+10.0*this.QB*sB+delay*L))%schlen[c])+schlen[c])%schlen[c]]-avgs[c];
+        y=sch[c][((u%schlen[c])+schlen[c])%schlen[c]]-avgs[c];
     y=y/volts[c]/2;
     if (findState!="off") y/=findValue;
     return y;
@@ -121,7 +129,7 @@ Scope.prototype.triggerSeek=function() {
     // search at least one full period of the slower channel (a real scope just waits for the next edge)
     var searchLen=L;
     for (let c=0; c<2; c++) {
-        var period=schlen[c]/(freqs[c]*10*Q); // signal period in samples
+        var period=burstP[c]*schlen[c]/(freqs[c]*10*Q); // signal (burst) period in samples
         if (isFinite(period) && period+2>searchLen) searchLen=Math.ceil(period)+2;
     }
     if (searchLen>50*L) searchLen=50*L;
