@@ -16,7 +16,8 @@ Scope.prototype.readout=function() {
                 drawText(readoutText,ROXSIG,ROYSIG[c]);
                 if (k_cursor.k.pulled) {
                     readoutText="V";
-                    var ptr=5*d+xCur; // dispch[0] is the sweep start (trigger+delay)
+                    // sample under the cursor line: screen x=px+i*mag (x10: minus 5*DL-DL/2), dispch[0] is the sweep start
+                    var ptr=Math.round((5*d+xCur+(mag>1?5*DL-DL/2:0))/mag);
                     if (ptr<0 || ptr>=L) {
                         yResult=""; readoutText="TRIG!";
                     }

@@ -51,9 +51,13 @@ class Scope extends pObject {
         this.k_delay.k.limit=this.k_delay.k.ticks-1;
         this.k_delay.k_.limit=this.k_delay.k_.ticks-1;
         this.k_delay.setResetTogether();
-        new Vfd(horX+horW/2-47,horY+40,6,()=>{return 10*this.k_delay.k.getValue()+this.k_delay.k_.getValue()/10;},()=>{
-            return this.b_power.state==0 || 10*this.k_delay.k.getValue()+this.k_delay.k_.getValue()==0;});
+        // delay time multiplier 0.000-9.999 (divisions of A)
+        new Vfd(horX+horW/2-47,horY+40,6,()=>{return (100*this.k_delay.k.getValue()+this.k_delay.k_.getValue())/1000;},()=>{
+            return this.b_power.state==0 || 100*this.k_delay.k.getValue()+this.k_delay.k_.getValue()==0;});
         this.b_xcal=new IndicatorLed(horX+35,horY+217,24,16,"Cal","on");
+        // TRACE SEP: vertical position of the B trace relative to A in A/B ALT mode, 0.5 div/step, +-4 div.
+        // Default -4 (stored as 13 of 17 ticks) = B trace 2 div below A; click resets it there.
+        this.k_tsep=new Knob(ctx,8,horX+292,horY+62,15,17,13,"Trace Sep","smallknob");
         
         this.b_a=new PushButton(ctx,horX+dualX,horY+dualY,pbw,pbh,"  A  ","on");
         this.b_a.state=1;
@@ -112,7 +116,9 @@ class Scope extends pObject {
         this.b_mode=new PushButton(ctx,trigX+trmodeX,trigY+trmodeY,pbw,pbh,"Math","on");
         this.b_chtr=[this.b_ch1tr,this.b_ch2tr];
         this.radio_trig=new Radio(ctx,trigX+trmodeX,trigY+trmodeY,[this.b_auto,this.b_ch1tr,this.b_ch2tr,this.b_mode]);
-        this.b_limit=new IndicatorLed(trigX+120,trigY+12,24,16,"Limit","on");
+        this.b_trigd=new IndicatorLed(trigX+120,trigY+12,24,16,"TRIG'D","on"); // lit when triggered
+        this.b_trigd.img_on=led_on; // usual green
+        this.b_trigd.label.size=10; this.b_trigd.label.adjustXY(-3,0); // 3px left, clear of the LED frame
 
         this.b_find=new FindButton(17,305,pbw,pbh,"Find","small");
         b_reset=new ResetButton(17,360,pbw,pbh,"Reset","small");
@@ -150,6 +156,7 @@ class Scope extends pObject {
         // x10 mag: 10/3x in dispch, 3x in beamdraw
         this.calcDispch(this.k_xpos.k.pulled&&findState=="off"?10/3:1);
         mag=this.k_xpos.k.pulled&&findState=="off"?3:1;
+        this.calcTbMode();
         this.triggerSeek();
         this.calcSweep(); // dispch now starts at trigger+delay (analog order)
         // intensity and focus
@@ -174,8 +181,13 @@ class Scope extends pObject {
         sweepDuration=Date.now()-runningTime;
         elapsedTime+=sweepDuration;
         runningTime=Date.now();
-        if (this.timebase<slowLimit || this.b_storage.state==1) {
+        if (this.sweepTb<slowLimit || this.b_storage.state==1) {
             DL1=0, DL2=mag*DL;
+            // A/B ALT with slow A: the fast B sweep is one frame, then the next A sweep
+            if (this.tbMode=="ALT" && this.altTb==1 && this.timebase>=slowLimit) {
+                this.altTb=0;
+                triggerTime=runningTime+DL/5;
+            }
         }
         // timing of sweeps
         else {
@@ -193,7 +205,7 @@ class Scope extends pObject {
                 else slowLimit=100;
             }
             // new portion beginning
-            var spms=50*(mag>1?10/3:1)/this.timebase; // dispch samples per millisecond (x10: 10/3 denser)
+            var spms=50*(mag>1?10/3:1)/this.sweepTb; // dispch samples per millisecond (x10: 10/3 denser)
             DL1=Math.ceil(spms*(runningTime-triggerTime));
             if (DL1>=mag*DL) {
                 // end of beam, retrigger needed
@@ -201,6 +213,8 @@ class Scope extends pObject {
                 triggerTime=runningTime+DL/5;
                 // other channel in ALT mode
                 altc=1-altc;
+                // A/B ALT: A sweep and B sweep alternate
+                if (this.tbMode=="ALT") this.altTb=1-this.altTb;
             }
             // new portion ending
             DL2=DL1+Math.ceil(spms*DL/5);
@@ -244,68 +258,7 @@ class Scope extends pObject {
         }
         // Beam for all other modes
         else if (this.b_power.state==1) {
-            for (let c=0; c<2; c++) {
-                pyd=py[c];
-                if (this.b_add.state==1 || this.b_sub.state==1 || this.b_mod.state==1) {
-                    pyd=(py[0]+py[1])/2;
-                    c=1;
-                }
-                // calc pixelch
-                for (let i=DL1; i<=DL2; i++) {
-                    var ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
-                    pixelch[c][0][i]=px+ii*mag; if (mag>1) pixelch[c][0][i]-=5*DL-DL/2;
-                    pixelch[c][1][i]=pyd-this.calcModeY(c,dispch[0][i],
-                        dispch[1][i])-k_skew.getValue()*(DL/2-ii)/100;
-                }
-                // rotation
-                if (this.k_rot.getValue()!=0) {
-                    var fi=-this.k_rot.getValue()*1*Math.PI/360;
-                    for (let i=0; i<L; i++) {
-                        var x1=pixelch[c][0][i]-px0-dd-5*d, y1=pixelch[c][1][i]-py0;
-                        pixelch[c][0][i]=px0+dd+5*d+x1*Math.cos(fi)+y1*Math.sin(fi);
-                        pixelch[c][1][i]=py0-x1*Math.sin(fi)+y1*Math.cos(fi);
-                    }
-                }
-            }
-            // actual beam drawing
-            for (let cc=0; cc<2; cc++) {
-                var c=cc;
-                if (this.b_ch[0].state==1 && cc==1) continue;
-                else if (this.b_ch[1].state==1 && cc==0) continue;
-                else if ((this.b_add.state==1 || this.b_sub.state==1 || this.b_mod.state==1) && cc==0) continue;
-                if (this.b_alt.state==1 && this.timebase>=slowLimit && this.b_storage.state==0) c=altc;
-                ctx.beginPath(); 
-                paleBeam=new Path2D();
-                prevDelta[c]=1000;
-                this.sumdelta=0;
-                ro=Math.sign(asl);
-                discontinuity=schdisc[c];
-                if (this.b_add.state==1 || this.b_sub.state==1 || this.b_mod.state==1)
-                    discontinuity+=schdisc[1-c];
-                for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
-                    ctx.moveTo(pixelch[c][0][DL1]+k*asx,pixelch[c][1][DL1]+k*asy);
-                    paleBeam.moveTo(pixelch[c][0][DL1]+k*asx,pixelch[c][1][DL1]+k*asy);
-                    for (let i=DL1+1; i<=DL2; i++) if (i>0) {
-                        delta=Math.abs(pixelch[c][1][i-1]-pixelch[c][1][i]);
-                        if (discontinuity>0 && delta>10*prevDelta[c]) {
-                            ctx.moveTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
-                            if (b_traceFastBeam.state==1)
-                                paleBeam.lineTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
-                        }
-                        else {
-                            ctx.lineTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
-                            paleBeam.moveTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
-                        }
-                        prevDelta[c]=delta;
-                        deltaX=pixelch[c][0][i]-pixelch[c][0][i-1];
-                        deltaY=pixelch[c][1][i]-pixelch[c][1][i-1];
-                        this.sumdelta+=Math.sqrt(deltaX*deltaX+deltaY*deltaY);
-                        if (isNaN(this.sumdelta)) console.error("sumdelta NaN i="+i);
-                    }
-                }
-                if (findState!="off") this.sumdelta/=findValue;
-                this.stroke();
-            }
+            this.drawDisplay();
         }
         // FFT draw
         if (this.b_fft.state==1 && this.b_xy.state!=1 && scope.b_ch[1].state!=1 && this.b_alt.state!=1 && this.b_chop.state!=1) {
@@ -351,7 +304,7 @@ class Scope extends pObject {
         this.readout();
         this.drawGrid(ctx,"illum");
         ctx.restore();
-        if (!drawInTimeout && this.timebase>=slowLimit) { 
+        if (!drawInTimeout && (this.sweepTb>=slowLimit || this.tbMode=="ALT" && this.timebase>=slowLimit)) { 
             drawInTimeout=true;
             setTimeout(()=>callDraw(ctx,"noShadow"),1);
         }
@@ -362,11 +315,108 @@ class Scope extends pObject {
             setTimeout(()=>callDraw(ctx,"noShadow"),40);
         }
         drawInProgress=false;
-        // panel widgets (Limit LED) are only repainted by the full draw(): do one when the Limit state changed
-        if (this.limitChanged) {
-            this.limitChanged=false;
+        // panel widgets (TRIG'D LED) are only repainted by the full draw(): do one when its state changed
+        if (this.trigdChanged) {
+            this.trigdChanged=false;
             setTimeout(()=>draw(ctx),0);
         }
     }
 }
- 
+
+// beams of the time-base modes; free run draws several unsynchronised sweeps per frame
+Scope.prototype.drawDisplay=function() {
+    var fast=this.sweepTb<slowLimit || this.b_storage.state==1;
+    // untriggered fast sweep: a real scope overlays many free-running sweeps -> draw 5 dimmer random ones
+    var runs=(this.untriggered && fast && this.b_storage.state==0)?5:1;
+    if (runs>1) { ctx.globalAlpha=0.5; int["overlay"]=0.45; } // each free-running sweep is dimmer
+    for (let r=0; r<runs; r++) {
+        if (r>0) { tptr[0]=Math.random()*L*50; this.calcSweep(); }
+        this.drawTbMode();
+    }
+    ctx.globalAlpha=1; int["overlay"]=1;
+}
+Scope.prototype.drawTbMode=function() {
+    if (this.tbMode=="ALT") {
+        var both=this.timebase<slowLimit || this.b_storage.state==1; // fast: both look continuous
+        if (both || this.altTb==0) this.drawBeams(dispch,0,this.inten);
+        if (both || this.altTb==1) this.drawBeams(dispchB,-this.k_tsep.getValue()*this.d/2,null); // TRACE SEP
+    }
+    else this.drawBeams(dispch,0,this.tbMode=="INTEN"?this.inten:null);
+}
+// draw channel beams from buf (dispch or dispchB), shifted down by yOff, with optional intensified zone
+Scope.prototype.drawBeams=function(buf,yOff,inten) {
+    for (let c=0; c<2; c++) {
+        pyd=py[c]+yOff;
+        if (this.b_add.state==1 || this.b_sub.state==1 || this.b_mod.state==1) {
+            pyd=(py[0]+py[1])/2+yOff;
+            c=1;
+        }
+        // calc pixelch
+        for (let i=DL1; i<=DL2; i++) {
+            var ii=findState=="off"?i:((i+findValue*(DL/2+(i-DL/2)/2+px0-px))/(findValue+1));
+            pixelch[c][0][i]=px+ii*mag; if (mag>1) pixelch[c][0][i]-=5*DL-DL/2;
+            pixelch[c][1][i]=pyd-this.calcModeY(c,buf[0][i],
+                buf[1][i])-k_skew.getValue()*(DL/2-ii)/100;
+        }
+        // rotation
+        if (this.k_rot.getValue()!=0) {
+            var fi=-this.k_rot.getValue()*1*Math.PI/360;
+            for (let i=0; i<L; i++) {
+                var x1=pixelch[c][0][i]-px0-dd-5*d, y1=pixelch[c][1][i]-py0;
+                pixelch[c][0][i]=px0+dd+5*d+x1*Math.cos(fi)+y1*Math.sin(fi);
+                pixelch[c][1][i]=py0-x1*Math.sin(fi)+y1*Math.cos(fi);
+            }
+        }
+    }
+    // actual beam drawing
+    for (let cc=0; cc<2; cc++) {
+        var c=cc;
+        if (this.b_ch[0].state==1 && cc==1) continue;
+        else if (this.b_ch[1].state==1 && cc==0) continue;
+        else if ((this.b_add.state==1 || this.b_sub.state==1 || this.b_mod.state==1) && cc==0) continue;
+        if (this.b_alt.state==1 && this.sweepTb>=slowLimit && this.b_storage.state==0) c=altc;
+        ctx.beginPath(); 
+        paleBeam=new Path2D();
+        prevDelta[c]=1000;
+        this.sumdelta=0;
+        ro=Math.sign(asl);
+        discontinuity=schdisc[c];
+        if (this.b_add.state==1 || this.b_sub.state==1 || this.b_mod.state==1)
+            discontinuity+=schdisc[1-c];
+        for (let k=-ro; k<=ro; k+=2) { // this is one or two lines
+            ctx.moveTo(pixelch[c][0][DL1]+k*asx,pixelch[c][1][DL1]+k*asy);
+            paleBeam.moveTo(pixelch[c][0][DL1]+k*asx,pixelch[c][1][DL1]+k*asy);
+            for (let i=DL1+1; i<=DL2; i++) if (i>0) {
+                delta=Math.abs(pixelch[c][1][i-1]-pixelch[c][1][i]);
+                if (discontinuity>0 && delta>10*prevDelta[c]) {
+                    ctx.moveTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
+                    if (b_traceFastBeam.state==1)
+                        paleBeam.lineTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
+                }
+                else {
+                    ctx.lineTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
+                    paleBeam.moveTo(pixelch[c][0][i]+k*asx,pixelch[c][1][i]+k*asy);
+                }
+                prevDelta[c]=delta;
+                deltaX=pixelch[c][0][i]-pixelch[c][0][i-1];
+                deltaY=pixelch[c][1][i]-pixelch[c][1][i-1];
+                this.sumdelta+=Math.sqrt(deltaX*deltaX+deltaY*deltaY);
+                if (isNaN(this.sumdelta)) console.error("sumdelta NaN i="+i);
+            }
+        }
+        if (findState!="off") this.sumdelta/=findValue;
+        this.stroke();
+        if (inten!=null) this.strokeInten(c,inten);
+    }
+}
+// A INTEN: the part of the A trace covered by the B sweep is drawn brighter
+Scope.prototype.strokeInten=function(c,inten) {
+    var i1=Math.max(DL1+1,Math.ceil(inten[0])), i2=Math.min(DL2,Math.floor(inten[1]));
+    if (i2<=i1) return;
+    ctx.beginPath();
+    ctx.moveTo(pixelch[c][0][i1],pixelch[c][1][i1]);
+    for (let i=i1+1; i<=i2; i++) ctx.lineTo(pixelch[c][0][i],pixelch[c][1][i]);
+    ctx.lineWidth=lineWidth+1.5;
+    ctx.strokeStyle="rgba(190,255,190,0.85)";
+    ctx.stroke();
+}

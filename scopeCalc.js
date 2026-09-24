@@ -5,7 +5,9 @@ Scope.prototype.calcDispch=function(mag) {
     // delay
     this.delaybase=tb[this.k_time.k.getValueB()+Math.floor(this.k_time.k.ticks/2-1)]*
         tb_[this.k_time.k_.getValue()+Math.floor(this.k_time.k_.ticks/2)];
-    this.delay=(10*this.k_delay.k.getValue()+this.k_delay.k_.getValue()/10)*this.delaybase;
+    this.QB=this.delaybase*L/DL/mag; // B sweep sample step (like Q for A)
+    // delay time = delay time multiplier (0.000-9.999 div) x A time/div, as on real dual-timebase scopes
+    this.delay=(this.k_delay.k.getValue()/10+this.k_delay.k_.getValue()/1000)*this.timebase;
     this.delay=Math.round(1000000*this.delay)/1000000;
     // loop of channels: second channel first!
     for (let c=1; c>=0; c--) {
@@ -70,31 +72,52 @@ Scope.prototype.calcDispch=function(mag) {
         findState="found";
     }
 }
-// y value (same scale as dispch) of channel c at sample position s (units of Q) from sweep start phase 0
-Scope.prototype.sampleY=function(c,s,delay) {
+// y value (same scale as dispch) of channel c at sample position s (A samples, units of Q) from sweep start
+// phase 0, plus delay (ms), plus sB samples of the B sweep (units of QB). bandQ/parity: min/max band case.
+Scope.prototype.sampleY=function(c,s,delay,sB=0,bandQ=Q,parity=s) {
     if (!(this.ch[c].b_gnd.state==0 && siggen[c].b_ch.state==1)) return 0;
     var y;
-    if (freqs[c]*10*Q>=L/3) // signal too fast for the timebase: min/max band
-        y=(Math.round(s)%2==0?this.minsch[c]:this.maxsch[c])-avgs[c];
+    if (freqs[c]*10*bandQ>=L/3) // signal too fast for the timebase: min/max band
+        y=(Math.round(parity)%2==0?this.minsch[c]:this.maxsch[c])-avgs[c];
     else
-        y=sch[c][((Math.round(freqs[c]*(10.0*Q*s+delay*L))%schlen[c])+schlen[c])%schlen[c]]-avgs[c];
+        y=sch[c][((Math.round(freqs[c]*(10.0*Q*s+10.0*this.QB*sB+delay*L))%schlen[c])+schlen[c])%schlen[c]]-avgs[c];
     y=y/volts[c]/2;
     if (findState!="off") y/=findValue;
     return y;
 }
+// horizontal display mode (A, A INTEN, B DLYD, A/B ALT, Mixed) and the timebase of the current sweep
+Scope.prototype.calcTbMode=function() {
+    this.tbMode=this.b_aInten.state==1?"INTEN":this.b_b.state==1?"B":this.b_aAndB.state==1?"ALT":
+        this.b_mixed.state==1?"MIXED":"A";
+    if (this.altTb===undefined || this.tbMode!="ALT") this.altTb=0; // ALT: 0 = A sweep, 1 = B sweep
+    this.sweepTb=(this.tbMode=="B" || this.tbMode=="ALT" && this.altTb==1)?this.delaybase:this.timebase;
+    // delay point and B sweep length, in A samples (INTEN zone, MIXED switch point)
+    this.sD=this.delay*L/(10*Q);
+    this.inten=[this.sD, this.sD+this.delaybase*L/Q];
+}
 // analog order: trigger (tptr[0] in the scan buffer) -> delay -> sweep; dispch[c][0] is the sweep start
+//   A, INTEN: A sweep from the trigger (delay only positions the intensified zone)
+//   B: B sweep starting at trigger+delay; MIXED: A sweep up to the delay point, then B sweep
+//   ALT: A sweep in dispch, B sweep in dispchB
 Scope.prototype.calcSweep=function() {
     if (this.b_xy.state==1) return; // XY: no time base, keep the scan buffer
     var t0=tptr[0];
     for (let c=1; c>=0; c--)
-        for (let i=0; i<L; i++)
-            dispch[c][i]=this.sampleY(c,i+t0,this.delay);
+        for (let i=0; i<L; i++) {
+            if (this.tbMode=="B")
+                dispch[c][i]=this.sampleY(c,t0,this.delay,i,this.QB,i);
+            else if (this.tbMode=="MIXED" && i>=this.sD)
+                dispch[c][i]=this.sampleY(c,t0,this.delay,i-this.sD,this.QB,i);
+            else
+                dispch[c][i]=this.sampleY(c,i+t0,0);
+            if (this.tbMode=="ALT")
+                dispchB[c][i]=this.sampleY(c,t0,this.delay,i,this.QB,i);
+        }
 }
 // trigger condition seeking
 Scope.prototype.triggerSeek=function() {
     tlevel=10*this.k_trigger.k.getValue()+this.k_trigger.k_.getValue();
-    var prevLimit=this.b_limit.state;
-    this.b_limit.state=0;
+    var prevTrigd=this.b_trigd.state;
     // search at least one full period of the slower channel (a real scope just waits for the next edge)
     var searchLen=L;
     for (let c=0; c<2; c++) {
@@ -105,7 +128,7 @@ Scope.prototype.triggerSeek=function() {
     var val=(c,s)=>s<L?dispch[c][s]:this.sampleY(c,s,0);
     // free run (no trigger): every sweep starts at a random point, unsynchronised with the signal like an
     // analog AUTO sweep. (A clock-based start would lock stroboscopically, e.g. exactly 1kHz with a 1ms clock.)
-    var slow=!(this.timebase<slowLimit || this.b_storage.state==1); // progressive real-time sweep
+    var slow=!(this.sweepTb<slowLimit || this.b_storage.state==1); // progressive real-time sweep
     if (!slow || this.freeRunSweep!==triggerTime) { // new sweep: every draw when fast, once per sweep when slow
         this.freeRunSweep=triggerTime;
         this.freeRunPtr=Math.random()*L*50;
@@ -128,13 +151,14 @@ Scope.prototype.triggerSeek=function() {
         if (this.b_chtr[c].state==1 || this.b_mode.state==1) {
             if (tptr[c]>=searchLen) {
                 tptr[c]=freePtr; // no trigger: free run
-                this.b_limit.state=1;
                 this.untriggered=true;
             }
         }
         lastTptr[c]=tptr[c];
     }
-    if (this.b_limit.state!=prevLimit) this.limitChanged=true; // LED needs a panel repaint (see Scope.draw)
+    // TRIG'D LED: lit while the sweep is triggered (off when free running and in Auto)
+    this.b_trigd.state=(this.b_auto.state==1 || this.untriggered)?0:1;
+    if (this.b_trigd.state!=prevTrigd) this.trigdChanged=true; // LED needs a panel repaint (see Scope.draw)
     if (this.b_auto.state==1) tptr[0]=0;
     else if (this.b_ch2tr.state==1) tptr[0]=tptr[1];
 }
@@ -153,7 +177,7 @@ Scope.prototype.beamControl=function(beamLength) {
         if (this.b_xy.state==1) int["beam"]*=1.5;
         if (int["beam"]<0) int["beam"]=0;
     }
-    int["timebase"]=(Math.log(this.timebase)+40)/49; // 0..1
+    int["timebase"]=(Math.log(this.sweepTb||this.timebase)+40)/49; // 0..1
     expdays=(new Date()-new Date(dA+dB))/1000/3600/24;
     int["expdays"]=1;
     if (expdays>7) {
@@ -169,6 +193,7 @@ Scope.prototype.beamControl=function(beamLength) {
 //            *int["astigm"]
         *int["beam"]
         *int["timebase"]
+        *(int["overlay"]||1) // free-run overlay dimming
         );
     if (findState!="off") 
         int["screen"]+=20*Math.log(findValue);

@@ -101,6 +101,12 @@ class Knob extends pObject {
                 this.valueA=newValueA;
             }
         }
+        // A/B timebase knob: B (delayed) sweep can never be slower than A, as on real dual-timebase scopes.
+        // Pulled (B only): B stops at A. Pushed (A only): A drags B along when turned faster than B.
+        if (this.abTimebase && this.getValueB()<this.getValueA()) {
+            this.valueB=this.valueA;
+            if (this.pulled) this.value=this.valueB;
+        }
         super.turnY(pDelta);
     }
     pullpush() {
@@ -308,6 +314,7 @@ class TimeKnob extends TimeDekorKnob {
         super(ctx,pX,pY,"A timebase and B DLYD","sweep",50,25,62);
         this.class="TimeKnob";
         this.setPullable("timer");
+        this.k.abTimebase=true;
         uictx.push(this);
     }
     draw(ctx) {

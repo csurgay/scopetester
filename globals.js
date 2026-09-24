@@ -28,6 +28,7 @@ var schdisc=[0,0]; // signal buffer discontinuity threshold
 var gench=[new Array(L),new Array(L)]; // generated signal channel buffer
 var micch=[new Array(L),new Array(L)]; // mic channel buffer
 var dispch=[new Array(L), new Array(L)]; // display channel buffer
+var dispchB=[new Array(L), new Array(L)]; // B (delayed) sweep buffer for A/B ALT mode
 var pixelch=[[new Array(L), new Array(L)],[new Array(L), new Array(L)]]; // actual pixel channel buffer x,y
 
 var order, ampl, freq, ampls=[0,0], ampls_=[0,0], avgs=[0,0];
