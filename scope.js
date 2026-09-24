@@ -8,6 +8,7 @@ var tlevel; // trigger level
 var px0,px,py0,py=[0,0],pyd; // screen center lines for channels and dual
 var lineWidth, strokeStyle, blurWidth, expdays;
 var drawInProgress=false, drawInTimeout=false;
+var freeRunOrigin=Date.now(); // time origin for the free-running (untriggered) sweep
 var mag; // x10 mag multiplier (3.333 for dipsch, 3 for beamdraw)
 var slowLimitMeasure=true, slowLimit=-1;
 var runningTime=Date.now(), sweepDuration, sweepCount=0, elapsedTime=0, triggerTime=0;
@@ -354,6 +355,12 @@ class Scope extends pObject {
         if (!drawInTimeout && this.timebase>=slowLimit) { 
             drawInTimeout=true;
             setTimeout(()=>callDraw(ctx,"noShadow"),1);
+        }
+        // untriggered fast sweep: keep redrawing so the free-running picture runs
+        else if (!drawInTimeout && this.untriggered && this.b_power.state==1
+            && this.b_storage.state==0 && this.b_xy.state==0) {
+            drawInTimeout=true;
+            setTimeout(()=>callDraw(ctx,"noShadow"),40);
         }
         drawInProgress=false;
     }

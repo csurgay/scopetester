@@ -77,7 +77,7 @@ Scope.prototype.sampleY=function(c,s,delay) {
     if (freqs[c]*10*Q>=L/3) // signal too fast for the timebase: min/max band
         y=(Math.round(s)%2==0?this.minsch[c]:this.maxsch[c])-avgs[c];
     else
-        y=sch[c][Math.round(freqs[c]*(10.0*Q*s+delay*L))%(schlen[c])]-avgs[c];
+        y=sch[c][((Math.round(freqs[c]*(10.0*Q*s+delay*L))%schlen[c])+schlen[c])%schlen[c]]-avgs[c];
     y=y/volts[c]/2;
     if (findState!="off") y/=findValue;
     return y;
@@ -102,6 +102,11 @@ Scope.prototype.triggerSeek=function() {
     }
     if (searchLen>50*L) searchLen=50*L;
     var val=(c,s)=>s<L?dispch[c][s]:this.sampleY(c,s,0);
+    // free run (no trigger): sweep start follows real time, so the picture runs unsynchronised like an analog AUTO sweep
+    var slow=!(this.timebase<slowLimit || this.b_storage.state==1); // progressive real-time sweep
+    var spms=50*(mag>1?10/3:1)/this.timebase; // samples per millisecond
+    var freePtr=Math.round(spms*((slow?triggerTime:Date.now())-freeRunOrigin)); // fixed during one slow sweep
+    this.untriggered=false;
     for (let c=1; c>=0; c--) {
         tcond=false; // trigger condition
         prevValue=dispch[c][0];
@@ -117,8 +122,9 @@ Scope.prototype.triggerSeek=function() {
         }
         if (this.b_chtr[c].state==1 || this.b_mode.state==1) {
             if (tptr[c]>=searchLen) {
-                tptr[c]=lastTptr[c];
+                tptr[c]=freePtr; // no trigger: free run
                 this.b_limit.state=1;
+                this.untriggered=true;
             }
         }
         lastTptr[c]=tptr[c];
