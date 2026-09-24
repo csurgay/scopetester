@@ -169,6 +169,55 @@ Scope.prototype.triggerSeek=function() {
     if (this.b_trigd.state!=prevTrigd) this.trigdChanged=true; // LED needs a panel repaint (see Scope.draw)
     if (this.b_auto.state==1) tptr[0]=0;
     else if (this.b_ch2tr.state==1) tptr[0]=tptr[1];
+    // holdoff: which signal edges the successive sweeps actually start on
+    this.trigStarts=null;
+    this.holdoff=(50*this.k_holdoff.k.getValue()+this.k_holdoff.k_.getValue())/625; // 0..~4 sweep lengths
+    if (this.b_trigd.state==1 && this.b_xy.state==0) this.holdoffSequence(val,searchLen,slow);
+}
+// first trigger edge of source c at or after sample position p, -1 if none within limit samples
+Scope.prototype.findEdge=function(c,p,limit,val) {
+    var mode=this.b_mode.state==1;
+    var y=(s)=>mode?this.calcModeY(c,val(0,s),val(1,s)):val(c,s);
+    var prev=y(p), cur;
+    for (let s=p+1; s<=p+limit; s++) {
+        cur=y(s);
+        if (this.k_slope.getValue()!=1 && prev<tlevel && cur>=tlevel) return s;
+        if (this.k_slope.getValue()!=0 && prev>tlevel && cur<=tlevel) return s;
+        prev=cur;
+    }
+    return -1;
+}
+// Analog sweep sequence: sweep starts on an edge, runs 10 div, then the trigger is disarmed for
+// retrace+holdoff; the next sweep starts on the first edge after that. For a burst or a signal with
+// several edges per period this can start on different cycles -> several images. Result: trigStarts
+// [{t: sweep start sample, w: share of sweeps}], steady state of 16 sweeps; cached while nothing changes.
+Scope.prototype.holdoffSequence=function(val,searchLen,slow) {
+    var src=(this.b_ch2tr.state==1 && this.b_mode.state==0)?1:0;
+    var key=[Q,tlevel,this.k_slope.getValue(),src,this.b_mode.state,this.holdoff,mag,chanVersion,
+        freqs[0],freqs[1],avgs[0],avgs[1],volts[0],volts[1],findState,findValue].join();
+    if (key!=this.hoKey) {
+        this.hoKey=key;
+        var Lsw=DL*(mag>1?10/3:1); // one sweep (10 div of A) in scan samples
+        var gap=Math.round(Lsw*(0.1+this.holdoff)); // retrace (0.1 sweep) + holdoff
+        var t=tptr[src], seq=[t];
+        for (let k=1; k<16 && t>=0; k++) {
+            t=this.findEdge(src,Math.ceil(t+Lsw+gap),searchLen,val);
+            if (t>=0) seq.push(t);
+        }
+        if (seq.length>6) seq=seq.slice(4); // steady state
+        // group sweep starts by their position within the signal (burst) period
+        var Pp=burstP[src]*schlen[src]/(freqs[src]*10*Q), groups=[];
+        for (let t of seq) {
+            var ph=((t%Pp)+Pp)%Pp, g=groups.find(g=>Math.min(Math.abs(g.ph-ph),Pp-Math.abs(g.ph-ph))<1.5);
+            if (g) g.n++; else groups.push({ph:ph,t:t,n:1});
+        }
+        groups.sort((a,b)=>b.n-a.n);
+        this.hoStarts=groups.map(g=>({t:g.t,w:g.n/seq.length}));
+    }
+    this.trigStarts=this.hoStarts;
+    // sweep start for this frame: slow sweep shows the sequence sweep by sweep, fast the most frequent
+    var st=this.trigStarts[slow?(this.slowSweepNo||0)%this.trigStarts.length:0];
+    tptr[0]=st.t;
 }
 Scope.prototype.astigmCalc=function() {
     ast=this.k_astigm.getValue();

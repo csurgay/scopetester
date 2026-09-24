@@ -51,7 +51,7 @@ var korosi=[90, 62, 88, 138, 90, 98, 123, 66, 90, 101, 127, 133, 147, 134, 137, 
 var ret, yResult; // for different return results
 var mq=[0,0], mqi=[0,0]; // monitor q and qi for channels
 const ROXSIG=100, ROXVOLTS=300, ROYSIG=[15,431], ROXTB=400, ROYTB=431;
-const ROXDB=500, ROYDB=431, ROXDLY=400, ROYDLY=15;
+const ROXDB=500, ROYDB=431, ROXDLY=400, ROYDLY=15, ROXBST=592; // ROXBST: right edge of burst readout
 var NaNerror; // jump loops if NaN error happens for easier testing
 var b_debug, b_reset, b_calib, b_frames, b_autotest, b_presets=[];
 var k_cursor, xCur;

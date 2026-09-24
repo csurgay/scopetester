@@ -60,8 +60,10 @@ function burstIdle(c,u) {
 }
 
 /* Calc BufferGenerator signals into sch based on siggen control settings */
+var chanVersion=0; // incremented whenever the signal buffers are rebuilt (holdoff sequence cache)
 function initChannels() {
     trace("initChannels");
+    chanVersion++;
     for (let c=0; c<2; c++) {
         // amplitude
         ampls[c]=siggen[c].k_ampl.k.getValue();
@@ -89,7 +91,6 @@ function initChannels() {
         var bk=siggen[c].burst;
         burstN[c]=scope.ch[c].b_mic.state==1?0:burstCounts[bk.k.getValue()];
         burstP[c]=burstN[c]==0?1:burstN[c]*(2+bk.k_.getValue());
-        bk.showValues(burstN[c],Math.round(100*burstN[c]/burstP[c]));
         // output level between bursts: zero signal through the same offset/inv/abs/half chain
         yy=100*dcs[c];
         if (siggen[c].b_inv.state==1) yy=-yy;

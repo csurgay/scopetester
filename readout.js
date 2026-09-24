@@ -58,6 +58,12 @@ Scope.prototype.readout=function() {
             yResult=Math.round(yResult*10000)/10000;
             drawText("DLY: "+yResult+readoutText,ROXDLY,ROYDLY);
         }
+        // burst settings of the generators, top row right-aligned: "BST1 4/25%"
+        var row=0;
+        for (let c=0; c<2; c++) if (burstN[c]>0 && siggen[c].b_ch.state==1) {
+            readoutText="BST"+(c+1)+" "+burstN[c]+"/"+Math.round(100*burstN[c]/burstP[c])+"%";
+            drawText(readoutText,ROXBST-8*readoutText.length,ROYDLY+16*row++);
+        }
         ctx.fill();
     }
 }

@@ -105,7 +105,12 @@ class Scope extends pObject {
         this.k_trigger=new DoubleKnob(ctx,trigX+40,trigY+60,50,50,"Level","double_s",30,15);
         this.k_trigger.k.defaultFastRate=1;
         this.k_trigger.setResetTogether();
-        this.k_holdoff=new DoubleKnob(ctx,trigX+40,trigY+150,50,50,"HoldOff","double_s",30,15,"grayed");
+        // HoldOff: after each sweep the trigger stays disarmed for retrace + holdoff time.
+        // 0 (minimum) .. ~4 sweep lengths, coarse outer / fine inner, end stops.
+        this.k_holdoff=new DoubleKnob(ctx,trigX+40,trigY+150,50,50,"HoldOff","double_s",30,15);
+        this.k_holdoff.k.value0=false; this.k_holdoff.k.limit=this.k_holdoff.k.ticks-1;
+        this.k_holdoff.k_.value0=false; this.k_holdoff.k_.limit=this.k_holdoff.k_.ticks-1;
+        this.k_holdoff.setResetTogether();
         this.k_slope=new SlopeKnob(trigX+125,trigY+75);
         // !!! kellene majd "fel+le mindkettő egyszerre" slope is
         this.k_slope.value0=false;
@@ -210,7 +215,9 @@ class Scope extends pObject {
             if (DL1>=mag*DL) {
                 // end of beam, retrigger needed
                 DL1=-Math.ceil(spms*DL);
-                triggerTime=runningTime+DL/5;
+                // dead time before the next sweep: retrace, or the holdoff if longer
+                triggerTime=runningTime+Math.max(DL/5,this.holdoff*10*this.timebase);
+                this.slowSweepNo=(this.slowSweepNo||0)+1; // next sweep start of the holdoff sequence
                 // other channel in ALT mode
                 altc=1-altc;
                 // A/B ALT: A sweep and B sweep alternate
@@ -327,12 +334,24 @@ class Scope extends pObject {
 Scope.prototype.drawDisplay=function() {
     var fast=this.sweepTb<slowLimit || this.b_storage.state==1;
     // untriggered fast sweep: a real scope overlays many free-running sweeps -> draw 5 dimmer random ones
-    var runs=(this.untriggered && fast && this.b_storage.state==0)?5:1;
-    if (runs>1) { ctx.globalAlpha=0.5; int["overlay"]=0.45; } // each free-running sweep is dimmer
-    for (let r=0; r<runs; r++) {
-        if (r>0) { tptr[0]=Math.random()*L*50; this.calcSweep(); }
-        this.drawTbMode();
+    if (this.untriggered && fast && this.b_storage.state==0) {
+        ctx.globalAlpha=0.5; int["overlay"]=0.45; // each free-running sweep is dimmer
+        for (let r=0; r<5; r++) {
+            if (r>0) { tptr[0]=Math.random()*L*50; this.calcSweep(); }
+            this.drawTbMode();
+        }
     }
+    // triggered with several different sweep starts (holdoff too short for a burst or a complex signal):
+    // the images overlay, each as bright as its share of the sweeps; slow sweep shows them one by one
+    else if (this.trigStarts && this.trigStarts.length>1 && fast) {
+        for (let r=0; r<this.trigStarts.length; r++) {
+            var w=this.trigStarts[r].w;
+            ctx.globalAlpha=0.35+0.65*w; int["overlay"]=0.4+0.6*w;
+            if (r>0) { tptr[0]=this.trigStarts[r].t; this.calcSweep(); }
+            this.drawTbMode();
+        }
+    }
+    else this.drawTbMode();
     ctx.globalAlpha=1; int["overlay"]=1;
 }
 Scope.prototype.drawTbMode=function() {

@@ -486,13 +486,6 @@ class BurstKnob extends DoubleKnob {
         this.k_.limit=31;
         this.k_.value0=false;
     }
-    // labels show the settings: "Burst 4" / "Duty 25%", "Burst Off" / "Duty"
-    showValues(n,duty) {
-        this.k.labelObj.s=n==0?"Burst Off":"Burst "+n;
-        this.k.labelObj.adjustXY(0,0);
-        this.ampLabel.s=n==0?"Duty":"Duty "+duty+"%";
-        this.ampLabel.adjustXY(0,0);
-    }
 }
 
 class MonitorKnob extends Knob {
