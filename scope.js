@@ -45,7 +45,7 @@ class Scope extends pObject {
         this.k_xpos.setPullable("xpos");
         this.k_xpos.setResetTogether();
         this.k_time=new TimeKnob(horX+170,horY+150);
-        this.k_delay=new DoubleKnob(ctx,horX+44,horY+60,100,100,"Delay Multiply","delay",36,23);
+        this.k_delay=new DoubleKnob(ctx,horX+44,horY+60,100,100,"Delay Position","delay",36,23);
         this.k_delay.k.value0=false;
         this.k_delay.k_.value0=false;
         this.k_delay.k.limit=this.k_delay.k.ticks-1;
