@@ -8,7 +8,6 @@ var tlevel; // trigger level
 var px0,px,py0,py=[0,0],pyd; // screen center lines for channels and dual
 var lineWidth, strokeStyle, blurWidth, expdays;
 var drawInProgress=false, drawInTimeout=false;
-var freeRunOrigin=Date.now(); // time origin for the free-running (untriggered) sweep
 var mag; // x10 mag multiplier (3.333 for dipsch, 3 for beamdraw)
 var slowLimitMeasure=true, slowLimit=-1;
 var runningTime=Date.now(), sweepDuration, sweepCount=0, elapsedTime=0, triggerTime=0;

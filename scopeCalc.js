@@ -102,10 +102,14 @@ Scope.prototype.triggerSeek=function() {
     }
     if (searchLen>50*L) searchLen=50*L;
     var val=(c,s)=>s<L?dispch[c][s]:this.sampleY(c,s,0);
-    // free run (no trigger): sweep start follows real time, so the picture runs unsynchronised like an analog AUTO sweep
+    // free run (no trigger): every sweep starts at a random point, unsynchronised with the signal like an
+    // analog AUTO sweep. (A clock-based start would lock stroboscopically, e.g. exactly 1kHz with a 1ms clock.)
     var slow=!(this.timebase<slowLimit || this.b_storage.state==1); // progressive real-time sweep
-    var spms=50*(mag>1?10/3:1)/this.timebase; // samples per millisecond
-    var freePtr=Math.round(spms*((slow?triggerTime:Date.now())-freeRunOrigin)); // fixed during one slow sweep
+    if (!slow || this.freeRunSweep!==triggerTime) { // new sweep: every draw when fast, once per sweep when slow
+        this.freeRunSweep=triggerTime;
+        this.freeRunPtr=Math.random()*L*50;
+    }
+    var freePtr=this.freeRunPtr;
     this.untriggered=false;
     for (let c=1; c>=0; c--) {
         tcond=false; // trigger condition
