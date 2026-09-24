@@ -1,4 +1,4 @@
-const credit="2in1 OSCILLOSCOPE   CSURGAY@GMAIL.COM   Ver.0.44";
+const credit="2in1 OSCILLOSCOPE   CSURGAY@GMAIL.COM   Ver.0.45";
 const dB="t, 04, 2027";
 const bgcolor="#bbbbbb";
 const shadowcolor="rgba(70,70,70,0.3)";
