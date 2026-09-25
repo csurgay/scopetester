@@ -64,6 +64,11 @@ Scope.prototype.readout=function() {
             readoutText="BST"+(c+1)+" "+burstN[c]+"/"+Math.round(100*burstN[c]/burstP[c])+"%";
             drawText(readoutText,ROXBST-8*readoutText.length,ROYDLY+16*row++);
         }
+        // noise settings: "NOI2 WHT 25%" (RMS in % of the signal amplitude)
+        for (let c=0; c<2; c++) if (noiseOn(c) && siggen[c].b_ch.state==1) {
+            readoutText="NOI"+(c+1)+" "+noiseNames[noiseColor[c]]+" "+Math.round(100*noiseRms[c]/ampls[c])+"%";
+            drawText(readoutText,ROXBST-8*readoutText.length,ROYDLY+16*row++);
+        }
         ctx.fill();
     }
 }

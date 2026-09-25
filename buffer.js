@@ -60,6 +60,48 @@ function burstIdle(c,u) {
 }
 
 /* Calc BufferGenerator signals into sch based on siggen control settings */
+/* Noise added to the generator output. Colors (outer knob): 0 Off, 1 White, 2 Pink, 3 Brown, 4 Blue.
+   The scope reads a long noise stream (NOISE_N samples, NOISE_DT ms apart = 1 us) by absolute time, so the
+   noise has a fixed bandwidth: dense grass at slow timebases, smooth wiggles at fast ones. Every sweep reads
+   it from a new random offset (newNoiseOffsets), so it is never frozen. Streams are per channel (uncorrelated)
+   and normalised to RMS 1; noiseRms[c] scales them in signal buffer units. */
+const NOISE_N=65536, NOISE_DT=0.001, noiseNames=["","WHT","PNK","BRN","BLU"];
+var noiseColor=[0,0], noiseRms=[0,0], noiseOff=[0,0], noiseBufs={};
+function gauss() { // Box-Muller
+    var u=1-Math.random(), v=Math.random();
+    return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+/* colored noise, n samples, normalised to mean 0 / RMS 1; leak: brown integrator leak per sample */
+function makeNoise(color,n,leak) {
+    var a=new Float32Array(n), b0=0,b1=0,b2=0, br=0, prevPink=0;
+    for (let i=0; i<n; i++) {
+        var w=gauss(), p;
+        b0=0.99765*b0+w*0.0990460; b1=0.96300*b1+w*0.2965164; b2=0.57000*b2+w*1.0526913; // Paul Kellet pink filter
+        p=b0+b1+b2+w*0.1848;
+        br=leak*br+w; // leaky integrator: brown (red)
+        if (color==1) a[i]=w;
+        else if (color==2) a[i]=p;
+        else if (color==3) a[i]=br;
+        else if (color==4) a[i]=p-prevPink; // differentiated pink: blue (+3 dB/oct)
+        prevPink=p;
+    }
+    var m=0; for (let i=0; i<n; i++) m+=a[i]; m/=n;
+    var r=0; for (let i=0; i<n; i++) { a[i]-=m; r+=a[i]*a[i]; } r=Math.sqrt(r/n)||1;
+    for (let i=0; i<n; i++) a[i]/=r;
+    return a;
+}
+function noiseOn(c) { return noiseColor[c]>0 && noiseRms[c]>0; }
+function newNoiseOffsets() { noiseOff=[Math.random()*NOISE_N, Math.random()*NOISE_N]; }
+/* noise of channel c at time t (ms), in signal buffer units */
+function noiseY(c,t) {
+    if (!noiseOn(c)) return 0;
+    var key=c+"_"+noiseColor[c];
+    if (noiseBufs[key]===undefined) noiseBufs[key]=makeNoise(noiseColor[c],NOISE_N,0.999);
+    var buf=noiseBufs[key], x=t/NOISE_DT+noiseOff[c], i0=Math.floor(x), fr=x-i0;
+    i0=((i0%NOISE_N)+NOISE_N)%NOISE_N;
+    return noiseRms[c]*(buf[i0]*(1-fr)+buf[(i0+1)%NOISE_N]*fr);
+}
+
 var chanVersion=0; // incremented whenever the signal buffers are rebuilt (holdoff sequence cache)
 function initChannels() {
     trace("initChannels");
@@ -98,6 +140,9 @@ function initChannels() {
         if (siggen[c].b_phalf.state==1 && yy<0) yy=0;
         if (siggen[c].b_nhalf.state==1 && yy>0) yy=0;
         schIdle[c]=yy;
+        // noise
+        noiseColor[c]=scope.ch[c].b_mic.state==1?0:siggen[c].noise.k.value;
+        noiseRms[c]=ampls[c]*siggen[c].noise.k_.getValue()/62; // 0..50% of the amplitude
     }
     NaNerror=false;
     for (let c=0; c<2; c++) {

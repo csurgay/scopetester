@@ -33,6 +33,8 @@ function switchBuffer() {
     source[aptr].connect(gainNode[aptr]);
     gainNode[aptr].connect(audioCtx[aptr].destination);
     sel=a_monitor[scope.k_monitor.getValue()];
+    // noise at audio rate for the whole looped buffer (brown leak tuned for the audio sample rate)
+    var aNoise=[0,1].map(cc=>noiseOn(cc)?makeNoise(noiseColor[cc],SAMPLESEC*SAMPLERATE,0.98):null);
     // Fill the buffer with values between -1.0 and 1.0
     for (let c=0; c<myArrayBuffer[aptr].numberOfChannels; c++) {
         // This gives us the actual array that contains the data
@@ -44,6 +46,8 @@ function switchBuffer() {
             // burst: silence between bursts is the idle (offset) level
             var s0=burstIdle(0,Math.round(mq[0]*i))?schIdle[0]:sch[0][mqi[0]];
             var s1=burstIdle(1,Math.round(mq[1]*i))?schIdle[1]:sch[1][mqi[1]];
+            if (aNoise[0]) s0+=noiseRms[0]*aNoise[0][i];
+            if (aNoise[1]) s1+=noiseRms[1]*aNoise[1][i];
             if (sel=="Math") {
                 if (siggen[c].b_ch.state==1) {
                     nowBuffering[c][i]=scope.calcModeY(c,s0,s1) / 290;

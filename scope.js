@@ -156,14 +156,17 @@ class Scope extends pObject {
     draw(ctx,drawShadow) {
         if (drawInProgress || drawInTimeout) { return; }
         drawInProgress=true;
+        // always start on the main canvas (beams may be redirected to storage). Note: this method's
+        // parameter is also called ctx, so both the local and the global (window.ctx) are set.
+        ctx=window.ctx=canvas.getContext("2d");
         d=this.d;
         dd=this.dd;
         // x10 mag: 10/3x in dispch, 3x in beamdraw
-        this.calcDispch(this.k_xpos.k.pulled&&findState=="off"?10/3:1);
+        this.magD=this.k_xpos.k.pulled&&findState=="off"?10/3:1;
         mag=this.k_xpos.k.pulled&&findState=="off"?3:1;
-        this.calcTbMode();
-        this.triggerSeek();
-        this.calcSweep(); // dispch now starts at trigger+delay (analog order)
+        // noise: new noise for every sweep (every frame when fast, once per slow sweep)
+        if (this.timebase<slowLimit || this.noiseSweep!==triggerTime) { this.noiseSweep=triggerTime; newNoiseOffsets(); }
+        this.computeSweep();
         // intensity and focus
         int["knob"]=(this.k_intensity.getValue()+8)/16; // 0..1
         blur["knob"]=Math.abs(this.k_focus.getValue()/8); // 0..1
@@ -186,7 +189,7 @@ class Scope extends pObject {
         sweepDuration=Date.now()-runningTime;
         elapsedTime+=sweepDuration;
         runningTime=Date.now();
-        if (this.sweepTb<slowLimit || this.b_storage.state==1) {
+        if (this.sweepTb<slowLimit) {
             DL1=0, DL2=mag*DL;
             // A/B ALT with slow A: the fast B sweep is one frame, then the next A sweep
             if (this.tbMode=="ALT" && this.altTb==1 && this.timebase>=slowLimit) {
@@ -228,6 +231,9 @@ class Scope extends pObject {
             if (DL2<DL1+1) DL2=DL1+1;
             if (DL2>mag*DL) DL2=mag*DL;
         }
+        // STOR.: digital memory like in hybrid analog/digital scopes (see drawMemory)
+        var storing=this.b_storage.state==1 && this.b_power.state==1 && this.b_xy.state==0;
+        if (!storing) this.memValid=false; // memory is (re)filled when STOR. is switched on
         // Beam for Lissajous XY
         if (this.b_power.state==1 && this.b_xy.state==1) {
             for (let c=0; c<2; c++) {
@@ -262,6 +268,10 @@ class Scope extends pObject {
             }
             if (findState!="off") this.sumdelta/=findValue;
             this.stroke();
+        }
+        // Stored (digital memory) display
+        else if (storing) {
+            this.drawMemory();
         }
         // Beam for all other modes
         else if (this.b_power.state==1) {
@@ -316,8 +326,8 @@ class Scope extends pObject {
             setTimeout(()=>callDraw(ctx,"noShadow"),1);
         }
         // untriggered fast sweep: keep redrawing so the free-running picture runs
-        else if (!drawInTimeout && this.untriggered && this.b_power.state==1
-            && this.b_storage.state==0 && this.b_xy.state==0) {
+        else if (!drawInTimeout && (this.untriggered || noiseOn(0) || noiseOn(1) || storing) && this.b_power.state==1
+            && this.b_xy.state==0) {
             drawInTimeout=true;
             setTimeout(()=>callDraw(ctx,"noShadow"),40);
         }
@@ -330,12 +340,29 @@ class Scope extends pObject {
     }
 }
 
-// beams of the time-base modes; free run draws several unsynchronised sweeps per frame
+// scan buffer, trigger, sweep buffer (dispch starts at trigger+delay, analog order)
+Scope.prototype.computeSweep=function() {
+    this.calcDispch(this.magD);
+    this.calcTbMode();
+    this.triggerSeek();
+    this.calcSweep();
+}
+// beams of the time-base modes. With noise, 3 sweeps per frame with fresh noise (and their own, jittering
+// trigger) overlay like phosphor persistence.
 Scope.prototype.drawDisplay=function() {
-    var fast=this.sweepTb<slowLimit || this.b_storage.state==1;
+    var fast=this.sweepTb<slowLimit;
+    var nImg=((noiseOn(0) || noiseOn(1)) && fast)?3:1;
+    for (let n=0; n<nImg; n++) {
+        if (n>0) { newNoiseOffsets(); this.computeSweep(); }
+        this.drawImages(fast,nImg>1?0.6:1);
+    }
+    ctx.globalAlpha=1; int["overlay"]=1;
+}
+// free run draws several unsynchronised sweeps per frame; a0: extra alpha factor
+Scope.prototype.drawImages=function(fast,a0) {
     // untriggered fast sweep: a real scope overlays many free-running sweeps -> draw 5 dimmer random ones
-    if (this.untriggered && fast && this.b_storage.state==0) {
-        ctx.globalAlpha=0.5; int["overlay"]=0.45; // each free-running sweep is dimmer
+    if (this.untriggered && fast) {
+        ctx.globalAlpha=0.5*a0; int["overlay"]=0.45; // each free-running sweep is dimmer
         for (let r=0; r<5; r++) {
             if (r>0) { tptr[0]=Math.random()*L*50; this.calcSweep(); }
             this.drawTbMode();
@@ -346,17 +373,16 @@ Scope.prototype.drawDisplay=function() {
     else if (this.trigStarts && this.trigStarts.length>1 && fast) {
         for (let r=0; r<this.trigStarts.length; r++) {
             var w=this.trigStarts[r].w;
-            ctx.globalAlpha=0.35+0.65*w; int["overlay"]=0.4+0.6*w;
+            ctx.globalAlpha=(0.35+0.65*w)*a0; int["overlay"]=0.4+0.6*w;
             if (r>0) { tptr[0]=this.trigStarts[r].t; this.calcSweep(); }
             this.drawTbMode();
         }
     }
-    else this.drawTbMode();
-    ctx.globalAlpha=1; int["overlay"]=1;
+    else { ctx.globalAlpha=a0; int["overlay"]=1; this.drawTbMode(); }
 }
 Scope.prototype.drawTbMode=function() {
     if (this.tbMode=="ALT") {
-        var both=this.timebase<slowLimit || this.b_storage.state==1; // fast: both look continuous
+        var both=this.timebase<slowLimit || this.memDisplay; // fast or memory display: both visible
         if (both || this.altTb==0) this.drawBeams(dispch,0,this.inten);
         if (both || this.altTb==1) this.drawBeams(dispchB,-this.k_tsep.getValue()*this.d/2,null); // TRACE SEP
     }
@@ -393,7 +419,7 @@ Scope.prototype.drawBeams=function(buf,yOff,inten) {
         if (this.b_ch[0].state==1 && cc==1) continue;
         else if (this.b_ch[1].state==1 && cc==0) continue;
         else if ((this.b_add.state==1 || this.b_sub.state==1 || this.b_mod.state==1) && cc==0) continue;
-        if (this.b_alt.state==1 && this.sweepTb>=slowLimit && this.b_storage.state==0) c=altc;
+        if (this.b_alt.state==1 && this.sweepTb>=slowLimit && !this.memDisplay) c=altc;
         ctx.beginPath(); 
         paleBeam=new Path2D();
         prevDelta[c]=1000;
@@ -438,4 +464,40 @@ Scope.prototype.strokeInten=function(c,inten) {
     ctx.lineWidth=lineWidth+1.5;
     ctx.strokeStyle="rgba(190,255,190,0.85)";
     ctx.stroke();
+}
+// STOR.: digital memory as in hybrid analog/digital scopes (refresh mode). The screen shows the memory
+// record at constant brightness. Acquisition is continuous: at fast timebases every acquisition replaces the
+// whole record (noise changes record by record, it does not add up); at slow timebases the new record is
+// written into memory left to right as the sweep runs (write point = real beam position DL1), the old record
+// stays visible right of the write point. Memory holds screen values, so knob changes act on new data only.
+Scope.prototype.drawMemory=function() {
+    var n=mag*DL, fast=this.sweepTb<slowLimit;
+    if (!this.mem) this.mem=[[new Array(L),new Array(L)],[new Array(L),new Array(L)]]; // [A,B][channel]
+    // several different sweep starts (holdoff): one per acquisition
+    if (fast && this.trigStarts && this.trigStarts.length>1) {
+        this.acqNo=(this.acqNo||0)+1;
+        tptr[0]=this.trigStarts[this.acqNo%this.trigStarts.length].t;
+        this.calcSweep();
+    }
+    var i1, i2;
+    if (!this.memValid || fast) { i1=0; i2=n; } // fresh memory, or a whole fast acquisition
+    else { // slow: samples since the last frame; a new sweep starts writing at the left again
+        if (DL1<this.memWrite) this.memWrite=0;
+        i1=this.memWrite; i2=Math.min(n,DL1);
+    }
+    for (let c=0; c<2; c++) for (let i=i1; i<=i2; i++) {
+        this.mem[0][c][i]=dispch[c][i];
+        this.mem[1][c][i]=dispchB[c][i];
+    }
+    if (i2>=i1) this.memWrite=i2;
+    this.memValid=true;
+    // display the whole memory record (also used by cursor readout and FFT)
+    for (let c=0; c<2; c++) for (let i=0; i<=n; i++) {
+        dispch[c][i]=this.mem[0][c][i];
+        dispchB[c][i]=this.mem[1][c][i];
+    }
+    var s1=DL1, s2=DL2;
+    DL1=0; DL2=n; this.memDisplay=true;
+    this.drawTbMode();
+    this.memDisplay=false; DL1=s1; DL2=s2;
 }

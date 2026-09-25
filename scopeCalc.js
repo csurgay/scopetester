@@ -46,16 +46,17 @@ Scope.prototype.calcDispch=function(mag) {
                 // trigger scan buffer: sweep start phase 0, no delay (delay is applied after the trigger in calcSweep)
                 var u=Math.round(freqs[c]*(10.0*Q*i)); // unwrapped buffer position
                 QI=u%(schlen[c]);
+                var nz=noiseY(c,10.0*Q*i/L); // noise at this time
                 if (burstIdle(c,u)) { // silence between bursts
-                    dispch[c][i]=(schIdle[c]-avgs[c])/volts[c]/2;
+                    dispch[c][i]=(schIdle[c]+nz-avgs[c])/volts[c]/2;
                 }
                 else if (freqs[c]*10*Q>=L/3) { 
-                    dispch[c][i]=i%2==0?(minsch-avgs[c])/volts[c]/2:(maxsch-avgs[c])/volts[c]/2;
+                    dispch[c][i]=(i%2==0?minsch+nz-avgs[c]:maxsch+nz-avgs[c])/volts[c]/2;
                 }
                 // main formula for y calc
                 else {
 //                        if (b_xy.state==1) QI=i%schlen[c];
-                    dispch[c][i]=(sch[c][QI]-avgs[c])/volts[c]/2;
+                    dispch[c][i]=(sch[c][QI]+nz-avgs[c])/volts[c]/2;
                     if (isNaN(dispch[c][i])) {
                         error("NaN: QI="+QI);
                     }
@@ -89,6 +90,7 @@ Scope.prototype.sampleY=function(c,s,delay,sB=0,bandQ=Q,parity=s) {
         y=(Math.round(parity)%2==0?this.minsch[c]:this.maxsch[c])-avgs[c];
     else
         y=sch[c][((u%schlen[c])+schlen[c])%schlen[c]]-avgs[c];
+    y+=noiseY(c,(10.0*Q*s+10.0*this.QB*sB)/L+delay); // noise at this time (ms)
     y=y/volts[c]/2;
     if (findState!="off") y/=findValue;
     return y;
@@ -136,7 +138,7 @@ Scope.prototype.triggerSeek=function() {
     var val=(c,s)=>s<L?dispch[c][s]:this.sampleY(c,s,0);
     // free run (no trigger): every sweep starts at a random point, unsynchronised with the signal like an
     // analog AUTO sweep. (A clock-based start would lock stroboscopically, e.g. exactly 1kHz with a 1ms clock.)
-    var slow=!(this.sweepTb<slowLimit || this.b_storage.state==1); // progressive real-time sweep
+    var slow=!(this.sweepTb<slowLimit); // progressive real-time sweep
     if (!slow || this.freeRunSweep!==triggerTime) { // new sweep: every draw when fast, once per sweep when slow
         this.freeRunSweep=triggerTime;
         this.freeRunPtr=Math.random()*L*50;
@@ -144,18 +146,8 @@ Scope.prototype.triggerSeek=function() {
     var freePtr=this.freeRunPtr;
     this.untriggered=false;
     for (let c=1; c>=0; c--) {
-        tcond=false; // trigger condition
-        prevValue=dispch[c][0];
-        if (this.b_mode.state==1) prevValue=this.calcModeY(c,dispch[0][0],dispch[1][0]);
-        tptr[c]=-1; // init trigger pointer
-        while (!tcond && tptr[c]<searchLen) {
-            tptr[c]++;
-            currValue=val(c,tptr[c]);
-            if (this.b_mode.state==1) currValue=this.calcModeY(c,val(0,tptr[c]),val(1,tptr[c]));
-            if (this.k_slope.getValue()!=1 && prevValue<tlevel && currValue>=tlevel) tcond=true;
-            if (this.k_slope.getValue()!=0 && prevValue>tlevel && currValue<=tlevel) tcond=true;
-            prevValue=currValue;
-        }
+        tptr[c]=this.findEdge(c,0,searchLen,val); // first trigger edge from sweep start phase 0
+        if (tptr[c]<0) tptr[c]=searchLen; // none
         if (this.b_chtr[c].state==1 || this.b_mode.state==1) {
             if (tptr[c]>=searchLen) {
                 tptr[c]=freePtr; // no trigger: free run
@@ -174,16 +166,23 @@ Scope.prototype.triggerSeek=function() {
     this.holdoff=(50*this.k_holdoff.k.getValue()+this.k_holdoff.k_.getValue())/625; // 0..~4 sweep lengths
     if (this.b_trigd.state==1 && this.b_xy.state==0) this.holdoffSequence(val,searchLen,slow);
 }
-// first trigger edge of source c at or after sample position p, -1 if none within limit samples
+// first trigger edge of source c after sample position p, -1 if none within limit samples.
+// The trigger comparator has hysteresis like a real scope (about 0.3 div trigger sensitivity): a rising
+// edge counts only after the signal was below level-hyst, a falling edge only after it was above level+hyst.
+// So noise smaller than the hysteresis cannot retrigger on the wrong slope, and very small signals
+// (below about 0.3 div p-p) do not trigger at all.
 Scope.prototype.findEdge=function(c,p,limit,val) {
     var mode=this.b_mode.state==1;
     var y=(s)=>mode?this.calcModeY(c,val(0,s),val(1,s)):val(c,s);
-    var prev=y(p), cur;
-    for (let s=p+1; s<=p+limit; s++) {
+    var hyst=0.3*this.d; if (findState!="off") hyst/=findValue;
+    var rise=this.k_slope.getValue()!=1, fall=this.k_slope.getValue()!=0;
+    var armR=false, armF=false, cur;
+    for (let s=p; s<=p+limit; s++) {
         cur=y(s);
-        if (this.k_slope.getValue()!=1 && prev<tlevel && cur>=tlevel) return s;
-        if (this.k_slope.getValue()!=0 && prev>tlevel && cur<=tlevel) return s;
-        prev=cur;
+        if (rise && armR && cur>=tlevel) return s;
+        if (fall && armF && cur<=tlevel) return s;
+        if (cur<tlevel-hyst) armR=true;
+        if (cur>tlevel+hyst) armF=true;
     }
     return -1;
 }
@@ -194,7 +193,8 @@ Scope.prototype.findEdge=function(c,p,limit,val) {
 Scope.prototype.holdoffSequence=function(val,searchLen,slow) {
     var src=(this.b_ch2tr.state==1 && this.b_mode.state==0)?1:0;
     var key=[Q,tlevel,this.k_slope.getValue(),src,this.b_mode.state,this.holdoff,mag,chanVersion,
-        freqs[0],freqs[1],avgs[0],avgs[1],volts[0],volts[1],findState,findValue].join();
+        freqs[0],freqs[1],avgs[0],avgs[1],volts[0],volts[1],findState,findValue,
+        (noiseOn(0)||noiseOn(1))?noiseOff.join():""].join(); // noise: new sequence every sweep
     if (key!=this.hoKey) {
         this.hoKey=key;
         var Lsw=DL*(mag>1?10/3:1); // one sweep (10 div of A) in scan samples
@@ -228,13 +228,15 @@ Scope.prototype.astigmCalc=function() {
 Scope.prototype.beamControl=function(beamLength) {
     // beam intensity, focus blur and astigm
     int["astigm"]=2*Math.abs(ast)/this.k_astigm.ticks; // 0..1
+    // memory display: refreshed at a constant rate -> constant brightness, independent of the sweep speed
+    if (this.memDisplay) beamLength=2000;
     if (!isNaN(beamLength)) {
         int["beamlength"]=beamLength; // 0 40 2000 2000000
         int["beam"]=8000/(beamLength+5000);
         if (this.b_xy.state==1) int["beam"]*=1.5;
         if (int["beam"]<0) int["beam"]=0;
     }
-    int["timebase"]=(Math.log(this.sweepTb||this.timebase)+40)/49; // 0..1
+    int["timebase"]=this.memDisplay?0.75:(Math.log(this.sweepTb||this.timebase)+40)/49; // 0..1
     expdays=(new Date()-new Date(dA+dB))/1000/3600/24;
     int["expdays"]=1;
     if (expdays>7) {
