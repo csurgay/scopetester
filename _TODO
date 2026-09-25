@@ -4,13 +4,5 @@ Todo:
 =====
 0. 2 mic gomb javítása
 1. lebutított verzió
-2. zaj hozzáadása
-3. burst mode
+2. training mode, gradual complexity of GUI and functions with lessons and tasks/awards
 
-
-Issues:
-=======
-2. mic bementhez nincs megfelelő buffer
-3. új mic gombok még nincsenek bekötve
-4. WG-k elrendezése most hiányos
-5. trigger előtt van a delay, nem utána
